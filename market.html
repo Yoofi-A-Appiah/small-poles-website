@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Opportunity — Small Poles</title>
+    <meta name="description" content="The market gap for GPL fantasy sports in Ghana. Audience analysis, competitive landscape, and long-term vision.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pitch: #006436; --pitch-light: #00803f; --pitch-glow: #00ff7f;
+            --carbon: #0a0a0a; --carbon-light: #111111;
+            --surface: #161616; --surface-raised: #1c1c1c;
+            --border: #222222; --border-light: #2a2a2a;
+            --text-primary: #f0f0f0; --text-secondary: #888888; --text-muted: #555555;
+            --accent-gold: #c8a84e; --accent-red: #e04040; --accent-blue: #3b82f6;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); background: var(--carbon); color: var(--text-primary); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+        body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10,10,10,0.8); border-bottom: 1px solid var(--border); }
+        nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
+        .nav-logo-mark { width: 28px; height: 28px; background: var(--pitch); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: white; }
+        .nav-logo-text { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+        .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
+        .nav-cta { background: var(--pitch) !important; color: white !important; padding: 8px 18px; border-radius: 6px; font-weight: 600 !important; }
+        .mobile-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--text-primary); }
+        .mobile-toggle span { display: block; width: 18px; height: 2px; background: var(--text-primary); margin: 4px 0; border-radius: 2px; }
+
+        .page-hero { padding: 160px 0 80px; position: relative; border-bottom: 1px solid var(--border); }
+        .page-hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 70% 0%, rgba(0,100,54,0.12) 0%, transparent 60%); }
+        .page-hero .container { position: relative; z-index: 1; }
+        .page-hero h1 { font-family: var(--font-display); font-size: clamp(40px, 4.5vw, 56px); font-weight: 700; letter-spacing: -2px; line-height: 1.08; margin-top: 12px; margin-bottom: 20px; }
+        .page-hero h1 .accent { color: var(--pitch-glow); }
+        .page-hero-sub { font-size: 17px; line-height: 1.7; color: var(--text-secondary); max-width: 560px; }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 32px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+        .breadcrumb .sep { color: var(--text-muted); }
+        .breadcrumb .current { color: var(--pitch-glow); }
+
+        section { padding: 100px 0; }
+        .alt-bg { background: var(--carbon-light); border-top: 1px solid var(--border); }
+
+        /* ── Big stat row ── */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--border);
+            margin-bottom: 48px;
+        }
+        .stat-cell {
+            background: var(--surface);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        .stat-cell-value {
+            font-family: var(--font-mono);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .stat-cell-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── Audience segments ── */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .audience-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .audience-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .audience-card-header h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .audience-card-header .badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge.primary { background: rgba(0,100,54,0.15); color: var(--pitch-glow); }
+        .badge.secondary { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+        .audience-card-body { padding: 24px; }
+        .audience-detail {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .audience-detail:last-child { border-bottom: none; }
+        .audience-detail-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+        .audience-detail-value { color: var(--text-secondary); }
+
+        /* ── Competitive landscape ── */
+        .comp-table {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .comp-head {
+            display: grid;
+            grid-template-columns: 1.5fr repeat(4, 1fr);
+            padding: 14px 20px;
+            background: var(--surface-raised);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .comp-head span:not(:first-child) { text-align: center; }
+        .comp-row {
+            display: grid;
+            grid-template-columns: 1.5fr repeat(4, 1fr);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            align-items: center;
+        }
+        .comp-row:last-child { border-bottom: none; }
+        .comp-row:hover { background: var(--surface); }
+        .comp-row span:not(:first-child) { text-align: center; font-size: 12px; }
+        .comp-row .comp-name {
+            font-weight: 600;
+        }
+        .comp-row .comp-name small {
+            display: block;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .comp-row .comp-name.highlight { color: var(--pitch-glow); }
+        .comp-yes { color: var(--pitch-glow); font-family: var(--font-mono); font-weight: 600; }
+        .comp-no { color: var(--text-muted); }
+        .comp-partial { color: var(--accent-gold); font-family: var(--font-mono); }
+
+        /* ── Value prop ── */
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .value-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .value-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .value-card.fans::before { background: var(--pitch); }
+        .value-card.gpl::before { background: var(--accent-gold); }
+        .value-card.sponsors::before { background: var(--accent-blue); }
+        .value-card.teams::before { background: var(--accent-red); }
+        .value-card .value-for {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+        .value-card.fans .value-for { color: var(--pitch-glow); }
+        .value-card.gpl .value-for { color: var(--accent-gold); }
+        .value-card.sponsors .value-for { color: var(--accent-blue); }
+        .value-card.teams .value-for { color: var(--accent-red); }
+        .value-card h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .value-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ── Roadmap timeline ── */
+        .roadmap {
+            position: relative;
+            padding-left: 40px;
+        }
+        .roadmap::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .roadmap-phase {
+            position: relative;
+            margin-bottom: 48px;
+        }
+        .roadmap-phase:last-child { margin-bottom: 0; }
+        .roadmap-dot {
+            position: absolute;
+            left: -33px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--pitch);
+            background: var(--carbon);
+        }
+        .roadmap-dot.active {
+            background: var(--pitch);
+            box-shadow: 0 0 12px rgba(0,100,54,0.4);
+        }
+        .roadmap-dot.future {
+            border-color: var(--border-light);
+        }
+        .roadmap-time {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .roadmap-time.active { color: var(--pitch-glow); }
+        .roadmap-phase h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .roadmap-phase p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 560px;
+        }
+        .roadmap-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .roadmap-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        /* ── Partnership cards ── */
+        .partner-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .partner-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 24px;
+        }
+        .partner-card-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+        .partner-card h4 {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .partner-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .page-cta { border-top: 1px solid var(--border); padding: 80px 0; text-align: center; position: relative; }
+        .page-cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(0,100,54,0.1) 0%, transparent 70%); }
+        .page-cta .container { position: relative; z-index: 1; }
+        .page-cta h2 { font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 700; letter-spacing: -1.5px; margin-bottom: 16px; }
+        .page-cta p { font-size: 15px; color: var(--text-secondary); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--pitch); color: white; padding: 14px 28px; border-radius: 8px; font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 30px rgba(0,100,54,0.3); }
+        .btn-primary:hover { background: var(--pitch-light); transform: translateY(-1px); }
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; }
+        .footer-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 48px; }
+        .footer-brand p { font-size: 13px; color: var(--text-muted); margin-top: 12px; max-width: 280px; line-height: 1.6; }
+        .footer-links-group h4 { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .footer-links-group a { display: block; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 4px 0; transition: color 0.2s; }
+        .footer-links-group a:hover { color: var(--text-primary); }
+        .footer-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @media (max-width: 1024px) {
+            .stat-row { grid-template-columns: repeat(2, 1fr); }
+            .audience-grid { grid-template-columns: 1fr; }
+            .value-grid { grid-template-columns: 1fr; }
+            .partner-grid { grid-template-columns: 1fr; }
+            .comp-head, .comp-row { grid-template-columns: 1.2fr repeat(4, 1fr); font-size: 11px; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: block; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--carbon); border-bottom: 1px solid var(--border); padding: 20px 24px; gap: 16px; }
+            .stat-row { grid-template-columns: 1fr 1fr; }
+            .comp-head, .comp-row { grid-template-columns: 1fr repeat(2, 1fr); }
+            .comp-head span:nth-child(4), .comp-head span:nth-child(5),
+            .comp-row span:nth-child(4), .comp-row span:nth-child(5) { display: none; }
+            .footer-top { flex-direction: column; gap: 36px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-logo"><div class="nav-logo-mark">SP</div><span class="nav-logo-text">Small Poles</span></a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="scoring.html">Scoring</a></li>
+            <li><a href="market.html" class="active">Market</a></li>
+            <li><a href="index.html#waitlist" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<section class="page-hero">
+    <div class="page-hero-bg"></div>
+    <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Market</span></div>
+        <span class="label">The Opportunity</span>
+        <h1>An underserved market<br>of <span class="accent">millions</span>.</h1>
+        <p class="page-hero-sub">Ghana's most passionate football fans have no localized fantasy platform. International offerings ignore the GPL entirely. Small Poles fills that gap.</p>
+    </div>
+</section>
+
+<!-- Market Stats -->
+<section>
+    <div class="container">
+        <div class="stat-row reveal">
+            <div class="stat-cell">
+                <div class="stat-cell-value">~130%</div>
+                <div class="stat-cell-label">Mobile penetration in Ghana</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-cell-value">~0</div>
+                <div class="stat-cell-label">GPL-specific fantasy platforms</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-cell-value">18</div>
+                <div class="stat-cell-label">GPL clubs with active fanbases</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-cell-value">34</div>
+                <div class="stat-cell-label">Matchdays per season</div>
+            </div>
+        </div>
+
+        <!-- Audience Segments -->
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Target Audience</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Two segments,<br>one platform.</h2>
+        </div>
+        <div class="audience-grid reveal">
+            <div class="audience-card">
+                <div class="audience-card-header">
+                    <h3>Urban Ghana</h3>
+                    <span class="badge primary">Primary</span>
+                </div>
+                <div class="audience-card-body">
+                    <div class="audience-detail"><span class="audience-detail-label">Age</span><span class="audience-detail-value">18–35 years old</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Location</span><span class="audience-detail-value">Accra, Kumasi, Takoradi, Tema</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Income</span><span class="audience-detail-value">Middle class, disposable income for entertainment</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Behavior</span><span class="audience-detail-value">Active on social media, follow GPL regularly</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Devices</span><span class="audience-detail-value">Smartphone owners with growing data access</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Motivation</span><span class="audience-detail-value">Deeper GPL engagement, bragging rights, competition</span></div>
+                </div>
+            </div>
+            <div class="audience-card">
+                <div class="audience-card-header">
+                    <h3>Ghanaian Diaspora</h3>
+                    <span class="badge secondary">Secondary</span>
+                </div>
+                <div class="audience-card-body">
+                    <div class="audience-detail"><span class="audience-detail-label">Age</span><span class="audience-detail-value">25–45 years old</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Location</span><span class="audience-detail-value">UK, US, Canada, Europe, other African nations</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Income</span><span class="audience-detail-value">Higher disposable income potential</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Behavior</span><span class="audience-detail-value">Maintaining connection to home through GPL</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Devices</span><span class="audience-detail-value">High smartphone/broadband access</span></div>
+                    <div class="audience-detail"><span class="audience-detail-label">Motivation</span><span class="audience-detail-value">Nostalgia, social connection, cultural identity</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Competitive Landscape -->
+<section class="alt-bg">
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Competitive Analysis</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Nobody owns the<br>GPL fantasy space.</h2>
+            <p style="font-size:15px;color:var(--text-secondary);margin-top:12px;max-width:520px;line-height:1.7">Existing fantasy platforms focus exclusively on European leagues. The GPL has zero dedicated fantasy coverage — that's the entire opportunity.</p>
+        </div>
+        <div class="comp-table reveal">
+            <div class="comp-head">
+                <span>Platform</span><span>GPL Coverage</span><span>Local Payments</span><span>Ghanaian UX</span><span>Player Analytics</span>
+            </div>
+            <div class="comp-row">
+                <span class="comp-name">FPL (Premier League)<small>fantasy.premierleague.com</small></span>
+                <span class="comp-no">None</span>
+                <span class="comp-no">None</span>
+                <span class="comp-no">None</span>
+                <span class="comp-yes">✓</span>
+            </div>
+            <div class="comp-row">
+                <span class="comp-name">LaLiga Fantasy<small>fantasy.laliga.com</small></span>
+                <span class="comp-no">None</span>
+                <span class="comp-no">None</span>
+                <span class="comp-no">None</span>
+                <span class="comp-yes">✓</span>
+            </div>
+            <div class="comp-row">
+                <span class="comp-name">SuperBru<small>superbru.com</small></span>
+                <span class="comp-partial">Score predictions only</span>
+                <span class="comp-no">None</span>
+                <span class="comp-partial">Partial</span>
+                <span class="comp-no">None</span>
+            </div>
+            <div class="comp-row" style="background:rgba(0,100,54,0.04)">
+                <span class="comp-name highlight">Small Poles<small>smallpole.com</small></span>
+                <span class="comp-yes">Full ✓</span>
+                <span class="comp-yes">Planned ✓</span>
+                <span class="comp-yes">Native ✓</span>
+                <span class="comp-yes">✓</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Value Proposition -->
+<section>
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Value Proposition</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Value for every<br>stakeholder.</h2>
+        </div>
+        <div class="value-grid reveal">
+            <div class="value-card fans">
+                <div class="value-for">For Fans</div>
+                <h3>Deeper GPL engagement</h3>
+                <p>Strategic gameplay transforms passive viewership into active participation. Compete with friends, analyze players, and have a reason to watch every GPL match — not just your team's games.</p>
+            </div>
+            <div class="value-card gpl">
+                <div class="value-for">For the GPL</div>
+                <h3>Increased viewership & engagement</h3>
+                <p>Fantasy managers watch more matches and follow more teams. Every fixture becomes relevant when your players are on the pitch. Enhanced fan engagement creates additional partnership and revenue opportunities.</p>
+            </div>
+            <div class="value-card sponsors">
+                <div class="value-for">For Sponsors</div>
+                <h3>Engaged, data-rich audience</h3>
+                <p>Access to a highly engaged demographic of football enthusiasts aged 18–35. Rich interaction data provides precise targeting for brands reaching Ghana's urban middle class.</p>
+            </div>
+            <div class="value-card teams">
+                <div class="value-for">For GPL Teams</div>
+                <h3>Revenue & player insights</h3>
+                <p>Partnership revenue streams, individual player performance analytics, and deeper understanding of which players drive fan interest. Data-backed insights for scouting and fan engagement strategies.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Roadmap -->
+<section class="alt-bg">
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Product Roadmap</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">From GPL beta<br>to pan-African platform.</h2>
+            <p style="font-size:15px;color:var(--text-secondary);margin-top:12px;max-width:520px;line-height:1.7">Small Poles starts with a focused GPL MVP and expands methodically — validating at each stage before scaling.</p>
+        </div>
+        <div class="roadmap reveal">
+            <div class="roadmap-phase">
+                <div class="roadmap-dot active"></div>
+                <div class="roadmap-time active">NOW — Year 1</div>
+                <h3>GPL MVP Launch</h3>
+                <p>Web-based platform with core fantasy features — player browsing, team creation, scoring, transfers, and private leagues. Targeting 50–100 beta testers with a data-light strategy that fits within free API tiers.</p>
+                <div class="roadmap-tags">
+                    <span class="roadmap-tag">Web App</span>
+                    <span class="roadmap-tag">50–100 Beta Users</span>
+                    <span class="roadmap-tag">Core Fantasy</span>
+                    <span class="roadmap-tag">Private Leagues</span>
+                    <span class="roadmap-tag">Free Tier Data</span>
+                </div>
+            </div>
+            <div class="roadmap-phase">
+                <div class="roadmap-dot"></div>
+                <div class="roadmap-time">Year 2–3</div>
+                <h3>Mobile & Growth</h3>
+                <p>Native iOS and Android apps. Enhanced social features and community tools. Begin exploring other African leagues for expansion. Potential B2B partnerships with GPL teams for fan engagement platforms.</p>
+                <div class="roadmap-tags">
+                    <span class="roadmap-tag">iOS App</span>
+                    <span class="roadmap-tag">Android App</span>
+                    <span class="roadmap-tag">Social Features</span>
+                    <span class="roadmap-tag">Other African Leagues</span>
+                    <span class="roadmap-tag">B2B Partnerships</span>
+                </div>
+            </div>
+            <div class="roadmap-phase">
+                <div class="roadmap-dot future"></div>
+                <div class="roadmap-time">Year 3–5</div>
+                <h3>Pan-African Platform</h3>
+                <p>Multi-league coverage across Africa. Multiple sport offerings including basketball and cricket. Regional tournaments and championships. Become the continent's definitive fantasy sports destination.</p>
+                <div class="roadmap-tags">
+                    <span class="roadmap-tag">Pan-African</span>
+                    <span class="roadmap-tag">Multi-Sport</span>
+                    <span class="roadmap-tag">Tournaments</span>
+                    <span class="roadmap-tag">Regional Championships</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Partnership Opportunities -->
+<section>
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Growth Channels</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Built for<br>partnerships.</h2>
+        </div>
+        <div class="partner-grid reveal">
+            <div class="partner-card">
+                <div class="partner-card-icon">🏟️</div>
+                <h4>GPL Teams</h4>
+                <p>Official fan engagement partnerships. Co-branded leagues, match-day integrations, and player content exclusives that benefit both the club and the platform.</p>
+            </div>
+            <div class="partner-card">
+                <div class="partner-card-icon">📺</div>
+                <h4>Media & Broadcasters</h4>
+                <p>Fantasy data overlays for GPL broadcasts. Weekly fantasy roundup content. Cross-promotion with sports media outlets covering Ghanaian football.</p>
+            </div>
+            <div class="partner-card">
+                <div class="partner-card-icon">📱</div>
+                <h4>Mobile Networks</h4>
+                <p>Data bundle partnerships with Ghana's mobile operators. Zero-rated access to Small Poles drives adoption among price-sensitive users while increasing network engagement.</p>
+            </div>
+            <div class="partner-card">
+                <div class="partner-card-icon">💳</div>
+                <h4>Mobile Money</h4>
+                <p>Local payment integration via Mobile Money for premium features. Ghana's dominant payment method ensures frictionless transactions for the target audience.</p>
+            </div>
+            <div class="partner-card">
+                <div class="partner-card-icon">🏢</div>
+                <h4>Brand Sponsors</h4>
+                <p>Sponsored leagues, branded gameweeks, and targeted advertising to a highly engaged demographic. Rich engagement data enables precise campaign measurement.</p>
+            </div>
+            <div class="partner-card">
+                <div class="partner-card-icon">🎓</div>
+                <h4>Universities & Community</h4>
+                <p>Campus ambassador programs, inter-university leagues, and community competitions that drive organic adoption among the primary age demographic.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="page-cta">
+    <div class="page-cta-bg"></div>
+    <div class="container reveal">
+        <h2>The opportunity is open.<br>We're building the answer.</h2>
+        <p>Be part of the first GPL fantasy community. Join the waitlist for early access.</p>
+        <a href="index.html#waitlist" class="btn-primary">Join the Waitlist →</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="index.html" class="nav-logo"><div class="nav-logo-mark">SP</div><span class="nav-logo-text">Small Poles</span></a>
+                <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
+            </div>
+            <div style="display:flex;gap:64px">
+                <div class="footer-links-group"><h4>Platform</h4><a href="features.html">Features</a><a href="scoring.html">Scoring Rules</a><a href="how-it-works.html">How It Works</a><a href="market.html">Market</a></div>
+                <div class="footer-links-group"><h4>Company</h4><a href="#">About</a><a href="#">Blog</a><a href="#">Contact</a><a href="#">Partnerships</a></div>
+                <div class="footer-links-group"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>&copy; 2026 Small Poles. All rights reserved.</span><span>Built in Accra 🇬🇭</span></div>
+    </div>
+</footer>
+
+<script>
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works — Small Poles</title>
+    <meta name="description" content="From sign-up to gameweek hero in four steps. Learn how Small Poles GPL fantasy football works.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pitch: #006436; --pitch-light: #00803f; --pitch-glow: #00ff7f;
+            --carbon: #0a0a0a; --carbon-light: #111111;
+            --surface: #161616; --surface-raised: #1c1c1c;
+            --border: #222222; --border-light: #2a2a2a;
+            --text-primary: #f0f0f0; --text-secondary: #888888; --text-muted: #555555;
+            --accent-gold: #c8a84e; --accent-red: #e04040; --accent-blue: #3b82f6;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); background: var(--carbon); color: var(--text-primary); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+        body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10,10,10,0.8); border-bottom: 1px solid var(--border); }
+        nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
+        .nav-logo-mark { width: 28px; height: 28px; background: var(--pitch); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: white; }
+        .nav-logo-text { font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: -0.3px; }
+        .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
+        .nav-cta { background: var(--pitch) !important; color: white !important; padding: 8px 18px; border-radius: 6px; font-weight: 600 !important; }
+        .mobile-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--text-primary); }
+        .mobile-toggle span { display: block; width: 18px; height: 2px; background: var(--text-primary); margin: 4px 0; border-radius: 2px; }
+
+        .page-hero { padding: 160px 0 80px; position: relative; border-bottom: 1px solid var(--border); }
+        .page-hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 60% 0%, rgba(0,100,54,0.12) 0%, transparent 60%); }
+        .page-hero .container { position: relative; z-index: 1; }
+        .page-hero h1 { font-family: var(--font-display); font-size: clamp(40px, 4.5vw, 56px); font-weight: 700; letter-spacing: -2px; line-height: 1.08; margin-top: 12px; margin-bottom: 20px; }
+        .page-hero h1 .accent { color: var(--pitch-glow); }
+        .page-hero-sub { font-size: 17px; line-height: 1.7; color: var(--text-secondary); max-width: 560px; }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 32px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--text-secondary); }
+        .breadcrumb .sep { color: var(--text-muted); }
+        .breadcrumb .current { color: var(--pitch-glow); }
+
+        section { padding: 100px 0; }
+        .alt-bg { background: var(--carbon-light); border-top: 1px solid var(--border); }
+
+        /* ── Journey Steps (expanded) ── */
+        .journey-step {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+            padding: 56px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .journey-step:last-child { border-bottom: none; }
+        .journey-num {
+            font-family: var(--font-mono);
+            font-size: 72px;
+            font-weight: 700;
+            color: var(--border-light);
+            line-height: 1;
+            position: sticky;
+            top: 100px;
+        }
+        .journey-content h3 {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+        .journey-content > p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        .journey-details {
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .journey-detail {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .journey-detail-icon {
+            width: 28px; height: 28px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; flex-shrink: 0;
+            background: rgba(0,100,54,0.1);
+            border: 1px solid rgba(0,100,54,0.2);
+        }
+        .journey-detail h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .journey-detail p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+        /* Journey visual */
+        .journey-visual {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .jv-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-raised);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .jv-body { padding: 20px; }
+
+        /* Mock form */
+        .mock-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--carbon);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .mock-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--pitch);
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+        }
+
+        /* Mock transfer preview */
+        .mock-transfer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .mock-transfer-player {
+            display: flex; align-items: center; gap: 10px; flex: 1;
+        }
+        .mock-transfer-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+        }
+        .mock-transfer-avatar.out { background: rgba(224,64,64,0.15); border: 1px solid rgba(224,64,64,0.3); color: var(--accent-red); }
+        .mock-transfer-avatar.in { background: rgba(0,100,54,0.15); border: 1px solid rgba(0,100,54,0.3); color: var(--pitch-glow); }
+        .mock-transfer-arrow {
+            font-family: var(--font-mono); font-size: 16px; color: var(--text-muted);
+        }
+        .mock-transfer-name { font-size: 12px; font-weight: 500; }
+        .mock-transfer-name small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+
+        /* Gameweek lifecycle */
+        .lifecycle-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--border);
+        }
+        .lifecycle-step {
+            background: var(--surface);
+            padding: 28px 20px;
+            text-align: center;
+            position: relative;
+        }
+        .lifecycle-step.active {
+            background: rgba(0,100,54,0.06);
+        }
+        .lifecycle-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .lifecycle-step h4 {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .lifecycle-step p {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+        .lifecycle-step .lifecycle-time {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--pitch-glow);
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* Rules quick-ref */
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .rule-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 24px;
+        }
+        .rule-card-num {
+            font-family: var(--font-mono);
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .rule-card h4 {
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .rule-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* FAQ */
+        .faq-list { max-width: 720px; }
+        .faq-item {
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+        }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-q {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .faq-q::before {
+            content: '→';
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--pitch);
+        }
+        .faq-a {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            padding-left: 28px;
+        }
+
+        .page-cta { border-top: 1px solid var(--border); padding: 80px 0; text-align: center; position: relative; }
+        .page-cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(0,100,54,0.1) 0%, transparent 70%); }
+        .page-cta .container { position: relative; z-index: 1; }
+        .page-cta h2 { font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 700; letter-spacing: -1.5px; margin-bottom: 16px; }
+        .page-cta p { font-size: 15px; color: var(--text-secondary); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--pitch); color: white; padding: 14px 28px; border-radius: 8px; font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 30px rgba(0,100,54,0.3); }
+        .btn-primary:hover { background: var(--pitch-light); transform: translateY(-1px); }
+
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; }
+        .footer-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 48px; }
+        .footer-brand p { font-size: 13px; color: var(--text-muted); margin-top: 12px; max-width: 280px; line-height: 1.6; }
+        .footer-links-group h4 { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .footer-links-group a { display: block; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 4px 0; transition: color 0.2s; }
+        .footer-links-group a:hover { color: var(--text-primary); }
+        .footer-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 1024px) {
+            .journey-step { grid-template-columns: 80px 1fr; gap: 24px; }
+            .journey-step .journey-visual { grid-column: 1 / -1; }
+            .lifecycle-grid { grid-template-columns: repeat(3, 1fr); }
+            .rules-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: block; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--carbon); border-bottom: 1px solid var(--border); padding: 20px 24px; gap: 16px; }
+            .journey-step { grid-template-columns: 1fr; gap: 16px; }
+            .journey-num { position: static; font-size: 48px; }
+            .lifecycle-grid { grid-template-columns: 1fr; }
+            .footer-top { flex-direction: column; gap: 36px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-logo">
+            <div class="nav-logo-mark">SP</div>
+            <span class="nav-logo-text">Small Poles</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="how-it-works.html" class="active">How It Works</a></li>
+            <li><a href="scoring.html">Scoring</a></li>
+            <li><a href="market.html">Market</a></li>
+            <li><a href="index.html#waitlist" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<section class="page-hero">
+    <div class="page-hero-bg"></div>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="index.html">Home</a><span class="sep">/</span><span class="current">How It Works</span>
+        </div>
+        <span class="label">Getting Started</span>
+        <h1>Four steps to<br><span class="accent">gameweek hero</span>.</h1>
+        <p class="page-hero-sub">Sign up, build your squad, earn points from real GPL matches, and climb the rankings. Here's exactly how every piece fits together.</p>
+    </div>
+</section>
+
+<!-- The four steps, expanded -->
+<section>
+    <div class="container">
+        <!-- Step 1 -->
+        <div class="journey-step reveal">
+            <div class="journey-num">01</div>
+            <div class="journey-content">
+                <h3>Create your account</h3>
+                <p>Sign up with your email or phone number, set a secure password, choose a display name, and pick your favorite GPL team. Verification email confirms your identity, then you're in.</p>
+                <div class="journey-details">
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">📧</div>
+                        <div><h4>Email or Phone</h4><p>Register with either. Duplicate accounts are prevented automatically.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">🔒</div>
+                        <div><h4>Secure by Default</h4><p>Min 8 characters, mixed case + numbers. Failed login rate-limiting protects you.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">💚</div>
+                        <div><h4>Pick Your Club</h4><p>Hearts, Kotoko, Medeama — your favorite GPL team shows on your profile.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-visual">
+                <div class="jv-header">Create Account</div>
+                <div class="jv-body">
+                    <div class="mock-input">email@example.com</div>
+                    <div class="mock-input">Display name</div>
+                    <div class="mock-input">••••••••</div>
+                    <div class="mock-input" style="color:var(--pitch-glow)">♥ Hearts of Oak</div>
+                    <div class="mock-btn" style="margin-top:6px">Create Account</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="journey-step reveal">
+            <div class="journey-num">02</div>
+            <div class="journey-content">
+                <h3>Build your 15-player squad</h3>
+                <p>Browse the Scout Room and pick 15 real GPL players within your GHS 100M budget. You need exactly 2 goalkeepers, 5 defenders, 5 midfielders, and 3 attackers. Choose a formation, set your starting XI, and name your captain.</p>
+                <div class="journey-details">
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">💰</div>
+                        <div><h4>GHS 100M Budget</h4><p>Every player has a price. Spend wisely — expensive stars or balanced depth?</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">📐</div>
+                        <div><h4>Choose Formation</h4><p>4-4-2 or 4-3-3 at MVP. Your formation determines which positions start.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">👑</div>
+                        <div><h4>Captain = Double Points</h4><p>Your captain earns 2× points. Pick based on form and fixture difficulty.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-visual">
+                <div class="jv-header">Squad — 14/15 selected</div>
+                <div class="jv-body">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+                        <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--pitch-glow)">₵6.8M left</div>
+                        <div style="font-family:var(--font-mono);font-size:11px;color:var(--accent-gold);padding:4px 8px;border:1px solid rgba(200,168,78,0.2);border-radius:4px;background:rgba(200,168,78,0.06)">Need 1 MID</div>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:93.2%;background:var(--pitch);border-radius:3px"></div></div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+                        <div style="padding:10px 0;background:var(--carbon);border-radius:6px;border:1px solid var(--border)">
+                            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700">2</div>
+                            <div style="font-size:10px;color:var(--text-muted)">GK</div>
+                        </div>
+                        <div style="padding:10px 0;background:var(--carbon);border-radius:6px;border:1px solid var(--border)">
+                            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700">5</div>
+                            <div style="font-size:10px;color:var(--text-muted)">DEF</div>
+                        </div>
+                        <div style="padding:10px 0;background:var(--carbon);border-radius:6px;border:1px solid rgba(200,168,78,0.3)">
+                            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--accent-gold)">4</div>
+                            <div style="font-size:10px;color:var(--accent-gold)">MID</div>
+                        </div>
+                        <div style="padding:10px 0;background:var(--carbon);border-radius:6px;border:1px solid var(--border)">
+                            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700">3</div>
+                            <div style="font-size:10px;color:var(--text-muted)">ATT</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="journey-step reveal">
+            <div class="journey-num">03</div>
+            <div class="journey-content">
+                <h3>Earn points from real matches</h3>
+                <p>When the GPL matchday arrives, your players earn fantasy points based on their real performance. Goals, assists, clean sheets, and saves earn points. Cards, own goals, and missed penalties cost points. Your captain earns double everything.</p>
+                <div class="journey-details">
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">⚽</div>
+                        <div><h4>Automated Scoring</h4><p>Points calculated from match data within hours of the final whistle.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">🔄</div>
+                        <div><h4>Auto-Substitution</h4><p>If a starter doesn't play, the first eligible bench player fills in automatically.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">📊</div>
+                        <div><h4>Full Breakdown</h4><p>See exactly which actions earned or cost points — per player, per match.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-visual">
+                <div class="jv-header">GW 12 — Score Breakdown</div>
+                <div class="jv-body" style="padding:0">
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:0;padding:14px 16px;border-bottom:1px solid var(--border);align-items:center">
+                        <div>
+                            <div style="font-size:13px;font-weight:600">M. Kudus <span style="font-family:var(--font-mono);font-size:10px;color:var(--accent-gold);margin-left:4px">C</span></div>
+                            <div style="font-size:10px;color:var(--text-muted)">MID · 90 min · Goal + Assist</div>
+                        </div>
+                        <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--pitch-glow)">24</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:0;padding:14px 16px;border-bottom:1px solid var(--border);align-items:center">
+                        <div>
+                            <div style="font-size:13px;font-weight:600">K. Baako</div>
+                            <div style="font-size:10px;color:var(--text-muted)">ATT · 90 min · 2 Goals</div>
+                        </div>
+                        <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--pitch-glow)">14</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:0;padding:14px 16px;border-bottom:1px solid var(--border);align-items:center">
+                        <div>
+                            <div style="font-size:13px;font-weight:600">D. Abalora</div>
+                            <div style="font-size:10px;color:var(--text-muted)">GK · 90 min · Clean Sheet + 3 Saves</div>
+                        </div>
+                        <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--pitch-glow)">8</div>
+                    </div>
+                    <div style="padding:14px 16px;display:flex;justify-content:space-between;background:var(--surface-raised)">
+                        <span style="font-size:12px;color:var(--text-muted)">Gameweek Total</span>
+                        <span style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--pitch-glow)">67 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="journey-step reveal">
+            <div class="journey-num">04</div>
+            <div class="journey-content">
+                <h3>Transfer, compete, repeat</h3>
+                <p>Each gameweek you get 2 free transfers to strengthen your squad. Additional transfers cost 4 points each. Climb the global rankings, challenge friends in private leagues, and adapt your strategy as the GPL season unfolds across 34 gameweeks.</p>
+                <div class="journey-details">
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">🔄</div>
+                        <div><h4>2 Free Transfers / GW</h4><p>Reset every gameweek. Extra transfers deduct 4 points from your total.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">⏰</div>
+                        <div><h4>Deadline Enforced</h4><p>No transfers after the gameweek deadline. Plan ahead or lose your window.</p></div>
+                    </div>
+                    <div class="journey-detail">
+                        <div class="journey-detail-icon">📈</div>
+                        <div><h4>Preview Before Confirming</h4><p>See exact cost, budget impact, and point deductions before you commit.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-visual">
+                <div class="jv-header">Transfer Preview</div>
+                <div class="jv-body">
+                    <div class="mock-transfer">
+                        <div class="mock-transfer-player">
+                            <div class="mock-transfer-avatar out">OUT</div>
+                            <div class="mock-transfer-name">A. Mensah<small>₵5.0M · DEF</small></div>
+                        </div>
+                        <div class="mock-transfer-arrow">→</div>
+                        <div class="mock-transfer-player">
+                            <div class="mock-transfer-avatar in">IN</div>
+                            <div class="mock-transfer-name">E. Baffour<small>₵6.0M · DEF</small></div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                        <div style="padding:10px;background:var(--carbon);border-radius:6px;border:1px solid var(--border);text-align:center">
+                            <div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--pitch-glow)">FREE</div>
+                            <div style="font-size:10px;color:var(--text-muted)">Transfer Cost</div>
+                        </div>
+                        <div style="padding:10px;background:var(--carbon);border-radius:6px;border:1px solid var(--border);text-align:center">
+                            <div style="font-family:var(--font-mono);font-size:14px;font-weight:700">₵14.2M</div>
+                            <div style="font-size:10px;color:var(--text-muted)">Budget After</div>
+                        </div>
+                    </div>
+                    <div class="mock-btn">Confirm Transfer</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Gameweek Lifecycle -->
+<section class="alt-bg">
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Gameweek Lifecycle</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">The rhythm of every<br>GPL gameweek.</h2>
+            <p style="font-size:15px;color:var(--text-secondary);margin-top:12px;max-width:520px;line-height:1.7">Each of the 34 gameweeks follows the same cycle. Understanding the rhythm is key to making smart, timely decisions.</p>
+        </div>
+        <div class="lifecycle-grid reveal">
+            <div class="lifecycle-step">
+                <div class="lifecycle-icon">📋</div>
+                <h4>Planning</h4>
+                <p>Browse players, research form, analyze fixtures</p>
+                <span class="lifecycle-time">Mon–Thu</span>
+            </div>
+            <div class="lifecycle-step">
+                <div class="lifecycle-icon">🔄</div>
+                <h4>Transfers</h4>
+                <p>Make transfers, set captain, finalize formation</p>
+                <span class="lifecycle-time">Before deadline</span>
+            </div>
+            <div class="lifecycle-step active">
+                <div class="lifecycle-icon">🔒</div>
+                <h4>Deadline</h4>
+                <p>Transfers lock. Squad is finalized for matchday</p>
+                <span class="lifecycle-time">Fri 11:30 AM</span>
+            </div>
+            <div class="lifecycle-step">
+                <div class="lifecycle-icon">⚽</div>
+                <h4>Matchday</h4>
+                <p>Real GPL matches played. Stats collected</p>
+                <span class="lifecycle-time">Fri–Sun</span>
+            </div>
+            <div class="lifecycle-step">
+                <div class="lifecycle-icon">📊</div>
+                <h4>Results</h4>
+                <p>Points calculated. Rankings updated. Prices shift</p>
+                <span class="lifecycle-time">Sunday night</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Rules Reference -->
+<section>
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Quick Reference</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">The numbers<br>that matter.</h2>
+        </div>
+        <div class="rules-grid reveal">
+            <div class="rule-card">
+                <div class="rule-card-num">₵100M</div>
+                <h4>Total Budget</h4>
+                <p>Your starting budget for 15 players. It never increases — only smart transfers keep you competitive.</p>
+            </div>
+            <div class="rule-card">
+                <div class="rule-card-num">15</div>
+                <h4>Squad Size</h4>
+                <p>2 GK, 5 DEF, 5 MID, 3 ATT. 11 starters + 4 bench. No exceptions.</p>
+            </div>
+            <div class="rule-card">
+                <div class="rule-card-num">2</div>
+                <h4>Free Transfers</h4>
+                <p>Per gameweek. Every additional transfer costs 4 points from your gameweek total.</p>
+            </div>
+            <div class="rule-card">
+                <div class="rule-card-num">×2</div>
+                <h4>Captain Multiplier</h4>
+                <p>Your captain's points are doubled. The highest-impact decision you make each week.</p>
+            </div>
+            <div class="rule-card">
+                <div class="rule-card-num">34</div>
+                <h4>Gameweeks</h4>
+                <p>One full GPL season. Rankings accumulate across every gameweek from start to finish.</p>
+            </div>
+            <div class="rule-card">
+                <div class="rule-card-num">-4</div>
+                <h4>Paid Transfer Cost</h4>
+                <p>Points deducted for each transfer beyond your 2 free ones. Use them wisely.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="alt-bg">
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">FAQ</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Common questions.</h2>
+        </div>
+        <div class="faq-list reveal">
+            <div class="faq-item">
+                <div class="faq-q">Can I change my team after the deadline?</div>
+                <div class="faq-a">No. Once the gameweek deadline passes, your squad is locked until the next gameweek opens. This includes captain changes, formation swaps, and transfers.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">What happens if my starter doesn't play?</div>
+                <div class="faq-a">The first eligible bench player automatically substitutes in, following your bench order and position requirements. Set your bench order carefully.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">How are player prices determined?</div>
+                <div class="faq-a">Prices update weekly after gameweek completion. They're calculated based on fantasy points earned, selection percentage (demand), recent form over the last 3 gameweeks, and injury/suspension status. Maximum change is ±20% per week.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Can I join multiple leagues?</div>
+                <div class="faq-a">Yes. You can create and join as many private leagues as you want. Each league has its own separate standings, but your team and points are the same across all of them.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Is there a limit to league size?</div>
+                <div class="faq-a">At MVP launch, private leagues support up to 20 members. We'll increase this limit based on demand after launch.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">When do scores update?</div>
+                <div class="faq-a">Fantasy points are calculated within 2 hours of each GPL match completion. Final gameweek scores and rankings update Sunday night after all matches are processed.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="page-cta">
+    <div class="page-cta-bg"></div>
+    <div class="container reveal">
+        <h2>Simple enough to start.<br>Deep enough to master.</h2>
+        <p>Join the waitlist and be ready when the first gameweek kicks off.</p>
+        <a href="index.html#waitlist" class="btn-primary">Join the Waitlist →</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="index.html" class="nav-logo"><div class="nav-logo-mark">SP</div><span class="nav-logo-text">Small Poles</span></a>
+                <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
+            </div>
+            <div style="display:flex;gap:64px">
+                <div class="footer-links-group"><h4>Platform</h4><a href="features.html">Features</a><a href="scoring.html">Scoring Rules</a><a href="how-it-works.html">How It Works</a><a href="market.html">Market</a></div>
+                <div class="footer-links-group"><h4>Company</h4><a href="#">About</a><a href="#">Blog</a><a href="#">Contact</a><a href="#">Partnerships</a></div>
+                <div class="footer-links-group"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>&copy; 2026 Small Poles. All rights reserved.</span><span>Built in Accra 🇬🇭</span></div>
+    </div>
+</footer>
+
+<script>
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

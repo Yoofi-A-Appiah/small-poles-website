@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoring Rules — Small Poles</title>
+    <meta name="description" content="Complete fantasy scoring rules for Small Poles GPL fantasy football. Points for goals, assists, clean sheets, and more.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pitch: #006436; --pitch-light: #00803f; --pitch-glow: #00ff7f;
+            --carbon: #0a0a0a; --carbon-light: #111111;
+            --surface: #161616; --surface-raised: #1c1c1c;
+            --border: #222222; --border-light: #2a2a2a;
+            --text-primary: #f0f0f0; --text-secondary: #888888; --text-muted: #555555;
+            --accent-gold: #c8a84e; --accent-red: #e04040; --accent-blue: #3b82f6;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); background: var(--carbon); color: var(--text-primary); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+        body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10,10,10,0.8); border-bottom: 1px solid var(--border); }
+        nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
+        .nav-logo-mark { width: 28px; height: 28px; background: var(--pitch); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: white; }
+        .nav-logo-text { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+        .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
+        .nav-cta { background: var(--pitch) !important; color: white !important; padding: 8px 18px; border-radius: 6px; font-weight: 600 !important; }
+        .mobile-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--text-primary); }
+        .mobile-toggle span { display: block; width: 18px; height: 2px; background: var(--text-primary); margin: 4px 0; border-radius: 2px; }
+
+        .page-hero { padding: 160px 0 80px; position: relative; border-bottom: 1px solid var(--border); }
+        .page-hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 40% 0%, rgba(0,100,54,0.12) 0%, transparent 60%); }
+        .page-hero .container { position: relative; z-index: 1; }
+        .page-hero h1 { font-family: var(--font-display); font-size: clamp(40px, 4.5vw, 56px); font-weight: 700; letter-spacing: -2px; line-height: 1.08; margin-top: 12px; margin-bottom: 20px; }
+        .page-hero h1 .accent { color: var(--pitch-glow); }
+        .page-hero-sub { font-size: 17px; line-height: 1.7; color: var(--text-secondary); max-width: 560px; }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 32px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+        .breadcrumb .sep { color: var(--text-muted); }
+        .breadcrumb .current { color: var(--pitch-glow); }
+
+        section { padding: 100px 0; }
+        .alt-bg { background: var(--carbon-light); border-top: 1px solid var(--border); }
+
+        /* ── Score Table (full) ── */
+        .score-table {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 48px;
+        }
+        .score-table-title {
+            padding: 16px 20px;
+            background: var(--surface-raised);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .score-table-title .tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+        .score-table-title .tag.green { background: rgba(0,100,54,0.15); color: var(--pitch-glow); }
+        .score-table-title .tag.red { background: rgba(224,64,64,0.1); color: var(--accent-red); }
+        .score-table-title .tag.gold { background: rgba(200,168,78,0.1); color: var(--accent-gold); }
+
+        .st-head {
+            display: grid;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .st-head.cols-5, .st-row.cols-5 { grid-template-columns: 2fr repeat(4, 1fr); }
+        .st-head.cols-2, .st-row.cols-2 { grid-template-columns: 2fr 1fr; }
+        .st-head span:not(:first-child), .st-row span:not(:first-child) { text-align: center; }
+
+        .st-row {
+            display: grid;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            transition: background 0.2s;
+            align-items: center;
+        }
+        .st-row:last-child { border-bottom: none; }
+        .st-row:hover { background: var(--surface); }
+        .st-row .val {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+        .st-row .val.pos { color: var(--pitch-glow); }
+        .st-row .val.neg { color: var(--accent-red); }
+        .st-row .val.gold { color: var(--accent-gold); }
+        .st-row .val.muted { color: var(--text-muted); }
+
+        /* ── Example Calculations ── */
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .example-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .example-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .example-card-header h4 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .example-card-header .pos-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(0,100,54,0.1);
+            border: 1px solid rgba(0,100,54,0.2);
+            color: var(--pitch-glow);
+        }
+        .example-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 20px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+        .example-line:last-of-type { border-bottom: none; }
+        .example-line .action { color: var(--text-secondary); }
+        .example-line .pts {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+        .example-line .pts.pos { color: var(--pitch-glow); }
+        .example-line .pts.neg { color: var(--accent-red); }
+        .example-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--surface-raised);
+            font-weight: 600;
+        }
+        .example-total .pts {
+            font-family: var(--font-mono);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+        }
+
+        /* ── Strategy cards ── */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .strategy-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 24px;
+        }
+        .strategy-card-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+        .strategy-card h4 {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .strategy-card p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* ── Pricing section ── */
+        .pricing-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        .pricing-info h3 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .pricing-info > p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+        .pricing-factor {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .pricing-factor:last-child { border-bottom: none; }
+        .pricing-factor-weight {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+            background: rgba(0,100,54,0.1);
+            border: 1px solid rgba(0,100,54,0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .pricing-factor h4 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+        .pricing-factor p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+        /* Mock price chart */
+        .mock-chart {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .mock-chart-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-raised);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mock-chart-header h4 {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .mock-chart-body { padding: 24px 20px; }
+        .chart-svg { width: 100%; }
+
+        .page-cta { border-top: 1px solid var(--border); padding: 80px 0; text-align: center; position: relative; }
+        .page-cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(0,100,54,0.1) 0%, transparent 70%); }
+        .page-cta .container { position: relative; z-index: 1; }
+        .page-cta h2 { font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 700; letter-spacing: -1.5px; margin-bottom: 16px; }
+        .page-cta p { font-size: 15px; color: var(--text-secondary); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--pitch); color: white; padding: 14px 28px; border-radius: 8px; font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 30px rgba(0,100,54,0.3); }
+        .btn-primary:hover { background: var(--pitch-light); transform: translateY(-1px); }
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; }
+        .footer-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 48px; }
+        .footer-brand p { font-size: 13px; color: var(--text-muted); margin-top: 12px; max-width: 280px; line-height: 1.6; }
+        .footer-links-group h4 { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .footer-links-group a { display: block; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 4px 0; transition: color 0.2s; }
+        .footer-links-group a:hover { color: var(--text-primary); }
+        .footer-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @media (max-width: 1024px) {
+            .example-grid { grid-template-columns: 1fr; }
+            .strategy-grid { grid-template-columns: 1fr; }
+            .pricing-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: block; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--carbon); border-bottom: 1px solid var(--border); padding: 20px 24px; gap: 16px; }
+            .st-head.cols-5, .st-row.cols-5 { grid-template-columns: 1.5fr repeat(4, 1fr); font-size: 11px; }
+            .st-row { padding: 10px 14px; }
+            .footer-top { flex-direction: column; gap: 36px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-logo"><div class="nav-logo-mark">SP</div><span class="nav-logo-text">Small Poles</span></a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="scoring.html" class="active">Scoring</a></li>
+            <li><a href="market.html">Market</a></li>
+            <li><a href="index.html#waitlist" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<section class="page-hero">
+    <div class="page-hero-bg"></div>
+    <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Scoring</span></div>
+        <span class="label">Point System</span>
+        <h1>Every action<br><span class="accent">earns or costs</span>.</h1>
+        <p class="page-hero-sub">Goals, assists, clean sheets, cards — here's exactly how real GPL performances translate into fantasy points. No guesswork, full transparency.</p>
+    </div>
+</section>
+
+<!-- Main Scoring Tables -->
+<section>
+    <div class="container">
+        <!-- Positive Actions -->
+        <div class="score-table reveal">
+            <div class="score-table-title">
+                Points Earned
+                <span class="tag green">Positive</span>
+            </div>
+            <div class="st-head cols-5">
+                <span>Action</span><span>GK</span><span>DEF</span><span>MID</span><span>ATT</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Goal scored</span>
+                <span class="val pos">+6</span><span class="val pos">+6</span><span class="val pos">+5</span><span class="val pos">+6</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Assist</span>
+                <span class="val pos">+3</span><span class="val pos">+3</span><span class="val pos">+3</span><span class="val pos">+3</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Clean sheet</span>
+                <span class="val pos">+4</span><span class="val pos">+4</span><span class="val pos">+1</span><span class="val muted">—</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Saves (per 3)</span>
+                <span class="val pos">+1</span><span class="val muted">—</span><span class="val muted">—</span><span class="val muted">—</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Playing 60+ minutes</span>
+                <span class="val pos">+2</span><span class="val pos">+2</span><span class="val pos">+2</span><span class="val pos">+2</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Playing 1–59 minutes</span>
+                <span class="val pos">+1</span><span class="val pos">+1</span><span class="val pos">+1</span><span class="val pos">+1</span>
+            </div>
+        </div>
+
+        <!-- Negative Actions -->
+        <div class="score-table reveal">
+            <div class="score-table-title">
+                Points Deducted
+                <span class="tag red">Negative</span>
+            </div>
+            <div class="st-head cols-5">
+                <span>Action</span><span>GK</span><span>DEF</span><span>MID</span><span>ATT</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Yellow card</span>
+                <span class="val neg">−1</span><span class="val neg">−1</span><span class="val neg">−1</span><span class="val neg">−1</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Red card</span>
+                <span class="val neg">−3</span><span class="val neg">−3</span><span class="val neg">−3</span><span class="val neg">−3</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Own goal</span>
+                <span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Penalty missed</span>
+                <span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span>
+            </div>
+            <div class="st-row cols-5">
+                <span>Goals conceded (per 2)</span>
+                <span class="val neg">−1</span><span class="val neg">−1</span><span class="val muted">—</span><span class="val muted">—</span>
+            </div>
+        </div>
+
+        <!-- Bonuses -->
+        <div class="score-table reveal">
+            <div class="score-table-title">
+                Bonuses & Multipliers
+                <span class="tag gold">Special</span>
+            </div>
+            <div class="st-head cols-2">
+                <span>Mechanic</span><span>Effect</span>
+            </div>
+            <div class="st-row cols-2">
+                <span>Captain bonus</span>
+                <span class="val gold">×2 all points</span>
+            </div>
+            <div class="st-row cols-2">
+                <span>Bench substitution</span>
+                <span class="val" style="color:var(--text-secondary)">Full points if starter didn't play</span>
+            </div>
+            <div class="st-row cols-2">
+                <span>Paid transfer</span>
+                <span class="val neg">−4 per transfer</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Example Calculations -->
+<section class="alt-bg">
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Worked Examples</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">See the math in action.</h2>
+            <p style="font-size:15px;color:var(--text-secondary);margin-top:12px;max-width:520px;line-height:1.7">Four real scenarios showing how match performance converts to fantasy points.</p>
+        </div>
+        <div class="example-grid reveal">
+            <!-- Example 1: Captain MID with big haul -->
+            <div class="example-card">
+                <div class="example-card-header">
+                    <h4>M. Kudus (Captain)</h4>
+                    <span class="pos-badge">MID</span>
+                </div>
+                <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+                <div class="example-line"><span class="action">1 Goal (MID)</span><span class="pts pos">+5</span></div>
+                <div class="example-line"><span class="action">1 Assist</span><span class="pts pos">+3</span></div>
+                <div class="example-line"><span class="action">Clean sheet (MID)</span><span class="pts pos">+1</span></div>
+                <div class="example-line"><span class="action">Subtotal</span><span class="pts" style="color:var(--text-secondary)">11</span></div>
+                <div class="example-line"><span class="action">Captain ×2</span><span class="pts pos">×2</span></div>
+                <div class="example-total"><span>Final Points</span><span class="pts">22</span></div>
+            </div>
+
+            <!-- Example 2: GK clean sheet -->
+            <div class="example-card">
+                <div class="example-card-header">
+                    <h4>D. Abalora</h4>
+                    <span class="pos-badge">GK</span>
+                </div>
+                <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+                <div class="example-line"><span class="action">Clean sheet (GK)</span><span class="pts pos">+4</span></div>
+                <div class="example-line"><span class="action">5 Saves (1 bonus)</span><span class="pts pos">+1</span></div>
+                <div class="example-total"><span>Final Points</span><span class="pts">7</span></div>
+            </div>
+
+            <!-- Example 3: ATT with yellow -->
+            <div class="example-card">
+                <div class="example-card-header">
+                    <h4>K. Baako</h4>
+                    <span class="pos-badge">ATT</span>
+                </div>
+                <div class="example-line"><span class="action">Played 78 minutes</span><span class="pts pos">+2</span></div>
+                <div class="example-line"><span class="action">2 Goals (ATT)</span><span class="pts pos">+12</span></div>
+                <div class="example-line"><span class="action">Yellow card</span><span class="pts neg">−1</span></div>
+                <div class="example-total"><span>Final Points</span><span class="pts">13</span></div>
+            </div>
+
+            <!-- Example 4: DEF own goal nightmare -->
+            <div class="example-card">
+                <div class="example-card-header">
+                    <h4>A. Mensah</h4>
+                    <span class="pos-badge">DEF</span>
+                </div>
+                <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+                <div class="example-line"><span class="action">Own goal</span><span class="pts neg">−2</span></div>
+                <div class="example-line"><span class="action">2 Goals conceded</span><span class="pts neg">−1</span></div>
+                <div class="example-line"><span class="action">Yellow card</span><span class="pts neg">−1</span></div>
+                <div class="example-total"><span>Final Points</span><span class="pts" style="color:var(--accent-red)">-2</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Strategy Tips -->
+<section>
+    <div class="container">
+        <div style="margin-bottom:48px" class="reveal">
+            <span class="label">Strategy Intel</span>
+            <h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Scoring tactics<br>that separate winners.</h2>
+        </div>
+        <div class="strategy-grid reveal">
+            <div class="strategy-card">
+                <div class="strategy-card-icon">👑</div>
+                <h4>Captain premium fixtures</h4>
+                <p>Your captain choice is worth roughly 30% of your gameweek score. Target players with easy fixtures and recent form — not just big names.</p>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-card-icon">🛡️</div>
+                <h4>Don't ignore defenders</h4>
+                <p>A clean sheet (4 pts) plus appearance (2 pts) gives DEF/GK a solid floor of 6 points. Teams with strong defensive records are goldmines.</p>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-card-icon">🔄</div>
+                <h4>Bank free transfers</h4>
+                <p>If you don't need to transfer, consider saving. Two free transfers next gameweek gives you more flexibility without the -4 point hit.</p>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-card-icon">📊</div>
+                <h4>Form over reputation</h4>
+                <p>A ₵5M midfielder on a 5-match scoring streak will outscore a ₵9M star in poor form. Watch the last 3–5 gameweek scores closely.</p>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-card-icon">📅</div>
+                <h4>Plan fixture swings</h4>
+                <p>Look 2–3 gameweeks ahead. Transfer in players facing easy opponents before their price rises from increased demand.</p>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-card-icon">💡</div>
+                <h4>Differential captaincy</h4>
+                <p>If you're chasing a league rival, captain a player they don't own. The ×2 multiplier on a unique pick creates massive rank swings.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dynamic Pricing -->
+<section class="alt-bg">
+    <div class="container">
+        <div class="pricing-layout reveal">
+            <div class="pricing-info">
+                <span class="label">Dynamic Pricing</span>
+                <h3 style="margin-top:12px">Prices move with<br>the market.</h3>
+                <p>Player prices update weekly after each gameweek is completed. The algorithm considers multiple factors to ensure prices reflect both real-world performance and fantasy demand. Maximum weekly change is capped at ±20%.</p>
+                <div>
+                    <div class="pricing-factor">
+                        <span class="pricing-factor-weight">40%</span>
+                        <div><h4>Fantasy Points Earned</h4><p>Recent gameweek performance directly impacts price movement.</p></div>
+                    </div>
+                    <div class="pricing-factor">
+                        <span class="pricing-factor-weight">25%</span>
+                        <div><h4>Selection Demand</h4><p>More managers buying a player drives the price up — selling drives it down.</p></div>
+                    </div>
+                    <div class="pricing-factor">
+                        <span class="pricing-factor-weight">25%</span>
+                        <div><h4>Recent Form</h4><p>Weighted average of the last 3 gameweeks smooths out single-match outliers.</p></div>
+                    </div>
+                    <div class="pricing-factor">
+                        <span class="pricing-factor-weight">10%</span>
+                        <div><h4>Availability Status</h4><p>Injuries and suspensions trigger price drops regardless of other factors.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mock-chart">
+                <div class="mock-chart-header">
+                    <h4>Price History — M. Kudus</h4>
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent-gold)">₵8.5M</span>
+                </div>
+                <div class="mock-chart-body">
+                    <svg class="chart-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Grid lines -->
+                        <line x1="0" y1="40" x2="400" y2="40" stroke="#222" stroke-width="0.5"/>
+                        <line x1="0" y1="80" x2="400" y2="80" stroke="#222" stroke-width="0.5"/>
+                        <line x1="0" y1="120" x2="400" y2="120" stroke="#222" stroke-width="0.5"/>
+                        <line x1="0" y1="160" x2="400" y2="160" stroke="#222" stroke-width="0.5"/>
+                        <!-- Y-axis labels -->
+                        <text x="0" y="38" fill="#555" font-family="JetBrains Mono" font-size="9">₵9.0M</text>
+                        <text x="0" y="78" fill="#555" font-family="JetBrains Mono" font-size="9">₵8.5M</text>
+                        <text x="0" y="118" fill="#555" font-family="JetBrains Mono" font-size="9">₵8.0M</text>
+                        <text x="0" y="158" fill="#555" font-family="JetBrains Mono" font-size="9">₵7.5M</text>
+                        <!-- Price line -->
+                        <polyline points="40,140 73,130 106,120 140,115 173,100 206,90 240,95 273,85 306,75 340,80 373,78" fill="none" stroke="#00ff7f" stroke-width="2" stroke-linejoin="round"/>
+                        <!-- Area fill -->
+                        <polygon points="40,140 73,130 106,120 140,115 173,100 206,90 240,95 273,85 306,75 340,80 373,78 373,180 40,180" fill="url(#areaGrad)" opacity="0.3"/>
+                        <defs>
+                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#00ff7f" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="#00ff7f" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- X-axis labels -->
+                        <text x="40" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW1</text>
+                        <text x="140" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW4</text>
+                        <text x="240" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW7</text>
+                        <text x="340" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW10</text>
+                        <!-- Current price dot -->
+                        <circle cx="373" cy="78" r="4" fill="#00ff7f"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="page-cta">
+    <div class="page-cta-bg"></div>
+    <div class="container reveal">
+        <h2>Know the rules.<br>Exploit the edges.</h2>
+        <p>Join the waitlist and start strategizing before the first ball is kicked.</p>
+        <a href="index.html#waitlist" class="btn-primary">Join the Waitlist →</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="index.html" class="nav-logo"><div class="nav-logo-mark">SP</div><span class="nav-logo-text">Small Poles</span></a>
+                <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
+            </div>
+            <div style="display:flex;gap:64px">
+                <div class="footer-links-group"><h4>Platform</h4><a href="features.html">Features</a><a href="scoring.html">Scoring Rules</a><a href="how-it-works.html">How It Works</a><a href="market.html">Market</a></div>
+                <div class="footer-links-group"><h4>Company</h4><a href="#">About</a><a href="#">Blog</a><a href="#">Contact</a><a href="#">Partnerships</a></div>
+                <div class="footer-links-group"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>&copy; 2026 Small Poles. All rights reserved.</span><span>Built in Accra 🇬🇭</span></div>
+    </div>
+</footer>
+
+<script>
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

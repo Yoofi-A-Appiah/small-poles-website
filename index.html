@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Small Poles — GPL Fantasy Intelligence</title>
+    <meta name="description" content="The first fantasy football platform built exclusively for the Ghana Premier League. Scout. Build. Dominate.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pitch: #006436;
+            --pitch-light: #00803f;
+            --pitch-glow: #00ff7f;
+            --carbon: #0a0a0a;
+            --carbon-light: #111111;
+            --surface: #161616;
+            --surface-raised: #1c1c1c;
+            --border: #222222;
+            --border-light: #2a2a2a;
+            --text-primary: #f0f0f0;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --accent-gold: #c8a84e;
+            --accent-red: #e04040;
+            --accent-blue: #3b82f6;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--carbon);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Utility ── */
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .mono { font-family: var(--font-mono); }
+        .label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+        /* ── Grain overlay ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(10,10,10,0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .nav-logo-mark {
+            width: 28px;
+            height: 28px;
+            background: var(--pitch);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 13px;
+            color: white;
+        }
+        .nav-logo-text {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: -0.3px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-cta {
+            background: var(--pitch) !important;
+            color: white !important;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 600 !important;
+            transition: background 0.2s !important;
+        }
+        .nav-cta:hover { background: var(--pitch-light) !important; }
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--pitch-glow);
+        }
+        .nav-status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--pitch-glow);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .mobile-toggle span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 60px;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,100,54,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0,100,54,0.08) 0%, transparent 50%);
+        }
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+        }
+        .hero .container {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        .hero-content { max-width: 580px; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 16px 6px 8px;
+            margin-bottom: 32px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            animation: fadeUp 0.6s ease-out both;
+        }
+        .hero-badge-dot {
+            width: 20px;
+            height: 20px;
+            background: var(--pitch);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(42px, 5vw, 64px);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.6s 0.1s ease-out both;
+        }
+        .hero h1 .accent { color: var(--pitch-glow); }
+        .hero-sub {
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            max-width: 460px;
+            margin-bottom: 40px;
+            animation: fadeUp 0.6s 0.2s ease-out both;
+        }
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            animation: fadeUp 0.6s 0.3s ease-out both;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--pitch);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 30px rgba(0,100,54,0.3);
+        }
+        .btn-primary:hover {
+            background: var(--pitch-light);
+            box-shadow: 0 0 40px rgba(0,100,54,0.4);
+            transform: translateY(-1px);
+        }
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-weight: 500;
+            font-size: 15px;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .btn-ghost:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 56px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            animation: fadeUp 0.6s 0.4s ease-out both;
+        }
+        .hero-stat-value {
+            font-family: var(--font-mono);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        .hero-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ── Hero Visual (Tactics Card) ── */
+        .hero-visual {
+            position: relative;
+            animation: fadeUp 0.8s 0.2s ease-out both;
+        }
+        .tactics-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+        }
+        .tactics-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tactics-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .tactics-header-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--pitch);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tactics-header h3 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .tactics-header span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .tactics-formation-badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--surface-raised);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: var(--accent-gold);
+        }
+        .tactics-pitch {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3.2;
+            background:
+                linear-gradient(180deg,
+                    rgba(0,100,54,0.12) 0%,
+                    rgba(0,100,54,0.06) 25%,
+                    rgba(0,100,54,0.12) 25%,
+                    rgba(0,100,54,0.06) 50%,
+                    rgba(0,100,54,0.12) 50%,
+                    rgba(0,100,54,0.06) 75%,
+                    rgba(0,100,54,0.12) 75%,
+                    rgba(0,100,54,0.06) 100%
+                );
+            border-bottom: 1px solid var(--border);
+        }
+        .pitch-line {
+            position: absolute;
+            background: rgba(255,255,255,0.06);
+        }
+        .pitch-line.horizontal {
+            height: 1px;
+            left: 10%;
+            right: 10%;
+        }
+        .pitch-line.center { top: 50%; }
+        .pitch-circle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .player-dot {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            animation: playerFadeIn 0.4s ease-out both;
+        }
+        .player-dot-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--surface-raised);
+            border: 2px solid var(--pitch);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+        .player-dot.captain .player-dot-circle {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 12px rgba(200,168,78,0.3);
+        }
+        .player-dot-name {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .player-dot-pts {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+        }
+        @keyframes playerFadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .tactics-footer {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+        }
+        .tactics-stat {
+            padding: 14px 16px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+        }
+        .tactics-stat:last-child { border-right: none; }
+        .tactics-stat-value {
+            font-family: var(--font-mono);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .tactics-stat-value.green { color: var(--pitch-glow); }
+        .tactics-stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Section shared ── */
+        section { padding: 120px 0; }
+        .section-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 64px;
+        }
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 3.5vw, 44px);
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+        }
+        .section-header p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            max-width: 360px;
+            text-align: right;
+            line-height: 1.6;
+        }
+
+        /* ── Features ── */
+        .features { border-top: 1px solid var(--border); }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .feature-card {
+            background: var(--surface);
+            padding: 40px 32px;
+            transition: background 0.3s;
+            position: relative;
+        }
+        .feature-card:hover { background: var(--surface-raised); }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--pitch);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover::before { transform: scaleX(1); }
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(0,100,54,0.1);
+            border: 1px solid rgba(0,100,54,0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 20px;
+        }
+        .feature-card h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+        .feature-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--pitch-glow);
+            background: rgba(0,255,127,0.06);
+            border: 1px solid rgba(0,255,127,0.12);
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-top: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── How it works ── */
+        .how-it-works { border-top: 1px solid var(--border); background: var(--carbon-light); }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            counter-reset: step;
+        }
+        .step {
+            padding: 40px 28px;
+            border-right: 1px solid var(--border);
+            counter-increment: step;
+            position: relative;
+        }
+        .step:last-child { border-right: none; }
+        .step-number {
+            font-family: var(--font-mono);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--border-light);
+            line-height: 1;
+            margin-bottom: 24px;
+        }
+        .step h3 {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .step p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+        .step-connector {
+            position: absolute;
+            right: -12px;
+            top: 50px;
+            width: 24px;
+            height: 24px;
+            background: var(--carbon-light);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            color: var(--pitch);
+            font-size: 12px;
+        }
+
+        /* ── Scoring Preview ── */
+        .scoring { border-top: 1px solid var(--border); }
+        .scoring-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        .scoring-table {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .scoring-table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: 14px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .scoring-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .scoring-row:last-child { border-bottom: none; }
+        .scoring-row:hover { background: var(--surface); }
+        .scoring-row .points {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+        .scoring-row .points.positive { color: var(--pitch-glow); }
+        .scoring-row .points.negative { color: var(--accent-red); }
+
+        .scoring-info h3 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .scoring-info p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        .scoring-highlights {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .scoring-highlight {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .scoring-highlight-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(0,100,54,0.1);
+            border: 1px solid rgba(0,100,54,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+        .scoring-highlight h4 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .scoring-highlight p {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* ── Market opportunity ── */
+        .market { border-top: 1px solid var(--border); background: var(--carbon-light); }
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .market-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .market-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(transparent, rgba(0,100,54,0.04));
+            pointer-events: none;
+        }
+        .market-card .label { margin-bottom: 20px; display: block; }
+        .market-card h3 {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            letter-spacing: -0.3px;
+        }
+        .market-stat-large {
+            font-family: var(--font-mono);
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--pitch-glow);
+            margin-bottom: 8px;
+        }
+        .market-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        .market-card li {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .market-card li:last-child { border-bottom: none; }
+        .market-card li::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--pitch);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── CTA Section ── */
+        .cta-section {
+            border-top: 1px solid var(--border);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(0,100,54,0.12) 0%, transparent 70%);
+        }
+        .cta-section .container { position: relative; z-index: 1; }
+        .cta-section h2 {
+            font-family: var(--font-display);
+            font-size: clamp(36px, 4vw, 52px);
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+        }
+        .cta-section p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+        .cta-form {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 440px;
+            margin: 0 auto 20px;
+        }
+        .cta-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .cta-input::placeholder { color: var(--text-muted); }
+        .cta-input:focus { border-color: var(--pitch); }
+        .cta-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 0 32px;
+        }
+        .footer-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 48px;
+        }
+        .footer-brand p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 12px;
+            max-width: 280px;
+            line-height: 1.6;
+        }
+        .footer-links-group h4 {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .footer-links-group a {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 4px 0;
+            transition: color 0.2s;
+        }
+        .footer-links-group a:hover { color: var(--text-primary); }
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .footer-bottom a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .footer-bottom a:hover { color: var(--text-secondary); }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .hero .container { grid-template-columns: 1fr; gap: 48px; }
+            .hero-visual { max-width: 560px; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .step:nth-child(2) { border-right: none; }
+            .step-connector:nth-child(2) { display: none; }
+            .scoring-layout { grid-template-columns: 1fr; }
+            .market-grid { grid-template-columns: 1fr; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .section-header p { text-align: left; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: block; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background: var(--carbon);
+                border-bottom: 1px solid var(--border);
+                padding: 20px 24px;
+                gap: 16px;
+            }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps-grid { grid-template-columns: 1fr; }
+            .step { border-right: none; border-bottom: 1px solid var(--border); }
+            .step:last-child { border-bottom: none; }
+            .step-connector { display: none; }
+            .hero-stats { flex-wrap: wrap; gap: 24px; }
+            .hero-actions { flex-direction: column; align-items: stretch; }
+            .btn-primary, .btn-ghost { justify-content: center; }
+            .cta-form { flex-direction: column; }
+            .footer-top { flex-direction: column; gap: 36px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+            .tactics-footer { grid-template-columns: repeat(2, 1fr); }
+            .tactics-stat:nth-child(2) { border-right: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+    <div class="container">
+        <a href="#" class="nav-logo">
+            <div class="nav-logo-mark">SP</div>
+            <span class="nav-logo-text">Small Poles</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><span class="nav-status"><span class="nav-status-dot"></span> Building MVP</span></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="scoring.html">Scoring</a></li>
+            <li><a href="market.html">Market</a></li>
+            <li><a href="#waitlist" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="hero-badge-dot">⚽</span>
+                The first GPL-exclusive fantasy platform
+            </div>
+            <h1>Your <span class="accent">GPL intel</span>,<br>one tactical edge.</h1>
+            <p class="hero-sub">Scout players, build squads, and compete with friends — all powered by real Ghana Premier League data. Fantasy football, finally built for the league you love.</p>
+            <div class="hero-actions">
+                <a href="#waitlist" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Join the Waitlist
+                </a>
+                <a href="#features" class="btn-ghost">See How It Works</a>
+            </div>
+            <div class="hero-stats">
+                <div>
+                    <div class="hero-stat-value">18</div>
+                    <div class="hero-stat-label">GPL Clubs</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">500+</div>
+                    <div class="hero-stat-label">Players Tracked</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">34</div>
+                    <div class="hero-stat-label">Gameweeks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tactics board visual -->
+        <div class="hero-visual">
+            <div class="tactics-card">
+                <div class="tactics-header">
+                    <div class="tactics-header-left">
+                        <div class="tactics-header-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+                        </div>
+                        <div>
+                            <h3>Mighty Warriors FC</h3>
+                            <span style="color: var(--text-muted); font-size: 12px;">GW 12 · GHS 85.2M / 100M</span>
+                        </div>
+                    </div>
+                    <div class="tactics-formation-badge">4 – 3 – 3</div>
+                </div>
+                <div class="tactics-pitch">
+                    <div class="pitch-line horizontal center"></div>
+                    <div class="pitch-circle"></div>
+
+                    <!-- GK -->
+                    <div class="player-dot" style="left:50%;top:88%;animation-delay:0.1s">
+                        <div class="player-dot-circle">1</div>
+                        <div class="player-dot-name">Abalora</div>
+                    </div>
+                    <!-- DEF -->
+                    <div class="player-dot" style="left:15%;top:70%;animation-delay:0.15s">
+                        <div class="player-dot-circle">3</div>
+                        <div class="player-dot-name">Mensah</div>
+                    </div>
+                    <div class="player-dot" style="left:38%;top:72%;animation-delay:0.2s">
+                        <div class="player-dot-circle">5</div>
+                        <div class="player-dot-name">Opoku</div>
+                    </div>
+                    <div class="player-dot" style="left:62%;top:72%;animation-delay:0.25s">
+                        <div class="player-dot-circle">4</div>
+                        <div class="player-dot-name">Baffour</div>
+                    </div>
+                    <div class="player-dot" style="left:85%;top:70%;animation-delay:0.3s">
+                        <div class="player-dot-circle">2</div>
+                        <div class="player-dot-name">Tetteh</div>
+                    </div>
+                    <!-- MID -->
+                    <div class="player-dot" style="left:25%;top:48%;animation-delay:0.35s">
+                        <div class="player-dot-circle">8</div>
+                        <div class="player-dot-name">Quaye</div>
+                    </div>
+                    <div class="player-dot captain" style="left:50%;top:45%;animation-delay:0.4s">
+                        <div class="player-dot-circle">10</div>
+                        <div class="player-dot-name">Kudus ★</div>
+                    </div>
+                    <div class="player-dot" style="left:75%;top:48%;animation-delay:0.45s">
+                        <div class="player-dot-circle">6</div>
+                        <div class="player-dot-name">Owusu</div>
+                    </div>
+                    <!-- ATT -->
+                    <div class="player-dot" style="left:20%;top:22%;animation-delay:0.5s">
+                        <div class="player-dot-circle">11</div>
+                        <div class="player-dot-name">Agyemang</div>
+                    </div>
+                    <div class="player-dot" style="left:50%;top:18%;animation-delay:0.55s">
+                        <div class="player-dot-circle">9</div>
+                        <div class="player-dot-name">Baako</div>
+                        <div class="player-dot-pts">+12 pts</div>
+                    </div>
+                    <div class="player-dot" style="left:80%;top:22%;animation-delay:0.6s">
+                        <div class="player-dot-circle">7</div>
+                        <div class="player-dot-name">Salifu</div>
+                    </div>
+                </div>
+                <div class="tactics-footer">
+                    <div class="tactics-stat">
+                        <div class="tactics-stat-value green">67</div>
+                        <div class="tactics-stat-label">GW Points</div>
+                    </div>
+                    <div class="tactics-stat">
+                        <div class="tactics-stat-value">389</div>
+                        <div class="tactics-stat-label">Total Points</div>
+                    </div>
+                    <div class="tactics-stat">
+                        <div class="tactics-stat-value">#247</div>
+                        <div class="tactics-stat-label">Global Rank</div>
+                    </div>
+                    <div class="tactics-stat">
+                        <div class="tactics-stat-value">2</div>
+                        <div class="tactics-stat-label">Free Transfers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <span class="label">Core Modules</span>
+                <h2 style="margin-top:12px">Built for GPL<br>intelligence.</h2>
+            </div>
+            <p>Six integrated modules designed for scouts, analysts, and fantasy managers who demand precision.</p>
+        </div>
+        <div class="features-grid reveal">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Tactics Board</h3>
+                <p>Manage your starting XI, set formations, and track real-time performance metrics across every gameweek of the GPL season.</p>
+                <span class="feature-tag">Core System</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Scout Room</h3>
+                <p>Browse, filter, and analyze every GPL player. Compare stats, form curves, and price trends to find undervalued assets before the market moves.</p>
+                <span class="feature-tag">Player Analysis</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏗️</div>
+                <h3>Squad Builder</h3>
+                <p>Construct your 15-player squad within the GHS 100M budget. Smart validation ensures legal formations and position requirements.</p>
+                <span class="feature-tag">Team Management</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📰</div>
+                <h3>Intel Feed</h3>
+                <p>Categorized updates on injuries, suspensions, transfers, and fixture changes. Get actionable intelligence filtered to your squad.</p>
+                <span class="feature-tag">News & Alerts</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Player Dossier</h3>
+                <p>Deep statistical profiles for every GPL asset. Goals, assists, clean sheets, form trends, price history, and upcoming fixture difficulty.</p>
+                <span class="feature-tag">Data Engine</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Leagues & Rankings</h3>
+                <p>Create private leagues with friends, compete on the global leaderboard, and track your percentile ranking across the entire platform.</p>
+                <span class="feature-tag">Social Competition</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works" id="how-it-works">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <span class="label">Getting Started</span>
+                <h2 style="margin-top:12px">From zero to<br>gameweek hero.</h2>
+            </div>
+        </div>
+        <div class="steps-grid reveal">
+            <div class="step">
+                <div class="step-number">01</div>
+                <h3>Create Account</h3>
+                <p>Sign up with your email or phone number. Pick your favorite GPL club and set your display name.</p>
+                <div class="step-connector">→</div>
+            </div>
+            <div class="step">
+                <div class="step-number">02</div>
+                <h3>Build Your Squad</h3>
+                <p>Select 15 real GPL players within your GHS 100M budget. Set your formation, choose your captain.</p>
+                <div class="step-connector">→</div>
+            </div>
+            <div class="step">
+                <div class="step-number">03</div>
+                <h3>Score Points</h3>
+                <p>Your players earn fantasy points based on real GPL match performance — goals, assists, clean sheets, and more.</p>
+                <div class="step-connector">→</div>
+            </div>
+            <div class="step">
+                <div class="step-number">04</div>
+                <h3>Compete & Win</h3>
+                <p>Climb the global rankings, challenge friends in private leagues, and make strategic transfers each gameweek.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Scoring -->
+<section class="scoring" id="scoring">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <span class="label">Point System</span>
+                <h2 style="margin-top:12px">Every action<br>counts.</h2>
+            </div>
+        </div>
+        <div class="scoring-layout reveal">
+            <div class="scoring-table">
+                <div class="scoring-table-header">
+                    <span>Action</span>
+                    <span style="text-align:right">Points</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Goal scored (ATT / MID)</span>
+                    <span class="points positive" style="text-align:right">+6 / +5</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Goal scored (DEF / GK)</span>
+                    <span class="points positive" style="text-align:right">+6</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Assist</span>
+                    <span class="points positive" style="text-align:right">+3</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Clean sheet (DEF / GK)</span>
+                    <span class="points positive" style="text-align:right">+4</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Clean sheet (MID)</span>
+                    <span class="points positive" style="text-align:right">+1</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Yellow card</span>
+                    <span class="points negative" style="text-align:right">−1</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Red card</span>
+                    <span class="points negative" style="text-align:right">−3</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Own goal</span>
+                    <span class="points negative" style="text-align:right">−2</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Penalty missed</span>
+                    <span class="points negative" style="text-align:right">−2</span>
+                </div>
+                <div class="scoring-row">
+                    <span>Captain bonus</span>
+                    <span class="points positive" style="text-align:right">×2</span>
+                </div>
+            </div>
+            <div class="scoring-info">
+                <h3>Strategic depth baked into every matchday.</h3>
+                <p>Points are calculated automatically from real GPL match data within hours of the final whistle. Captain selection, bench order, and transfer timing all create meaningful strategic decisions.</p>
+                <div class="scoring-highlights">
+                    <div class="scoring-highlight">
+                        <div class="scoring-highlight-icon">👑</div>
+                        <div>
+                            <h4>Captain Bonus</h4>
+                            <p>Your captain earns double points. Pick wisely based on form and fixture difficulty.</p>
+                        </div>
+                    </div>
+                    <div class="scoring-highlight">
+                        <div class="scoring-highlight-icon">🔄</div>
+                        <div>
+                            <h4>Free Transfers</h4>
+                            <p>2 free transfers per gameweek. Additional transfers cost 4 points each.</p>
+                        </div>
+                    </div>
+                    <div class="scoring-highlight">
+                        <div class="scoring-highlight-icon">📈</div>
+                        <div>
+                            <h4>Dynamic Pricing</h4>
+                            <p>Player prices change weekly based on performance and selection demand.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Market -->
+<section class="market" id="market">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <span class="label">The Opportunity</span>
+                <h2 style="margin-top:12px">Ghana's fantasy<br>gap, closed.</h2>
+            </div>
+            <p>A massive, underserved market of passionate GPL fans with no dedicated fantasy platform — until now.</p>
+        </div>
+        <div class="market-grid reveal">
+            <div class="market-card">
+                <span class="label">Target Audience</span>
+                <h3>18–35, urban Ghana</h3>
+                <ul>
+                    <li>Active on social media, follow GPL regularly</li>
+                    <li>Smartphone owners with growing data access</li>
+                    <li>Middle class with disposable income for entertainment</li>
+                    <li>Accra, Kumasi, Takoradi, Tema as primary markets</li>
+                </ul>
+            </div>
+            <div class="market-card">
+                <span class="label">Market Gap</span>
+                <div class="market-stat-large">~0</div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">GPL-specific fantasy platforms exist today</p>
+                <ul>
+                    <li>FPL and LaLiga Fantasy focused on European leagues</li>
+                    <li>No localized player analysis for GPL</li>
+                    <li>Growing fantasy sports popularity across Africa</li>
+                </ul>
+            </div>
+            <div class="market-card">
+                <span class="label">Extended Reach</span>
+                <h3>Ghanaian Diaspora</h3>
+                <ul>
+                    <li>Ages 25–45 maintaining GPL connection</li>
+                    <li>Higher disposable income potential</li>
+                    <li>Social competition bridges distance to home</li>
+                    <li>Gateway to broader African league coverage</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="waitlist">
+    <div class="cta-bg"></div>
+    <div class="container reveal">
+        <span class="label" style="display:block;margin-bottom:20px">Early Access</span>
+        <h2>Get in before<br>kickoff.</h2>
+        <p>We're building Small Poles for the GPL community. Join the waitlist to be first on the pitch when we launch.</p>
+        <form class="cta-form" onsubmit="handleWaitlist(event)">
+            <input type="email" class="cta-input" placeholder="your@email.com" required aria-label="Email address">
+            <button type="submit" class="btn-primary">Join Waitlist</button>
+        </form>
+        <p class="cta-note">No spam. Just launch updates and early access.</p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="#" class="nav-logo">
+                    <div class="nav-logo-mark">SP</div>
+                    <span class="nav-logo-text">Small Poles</span>
+                </a>
+                <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
+            </div>
+            <div style="display:flex;gap:64px">
+                <div class="footer-links-group">
+                    <h4>Platform</h4>
+                    <a href="features.html">Features</a>
+                    <a href="scoring.html">Scoring Rules</a>
+                    <a href="how-it-works.html">How It Works</a>
+                    <a href="market.html">Market</a>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Blog</a>
+                    <a href="#">Contact</a>
+                    <a href="#">Partnerships</a>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Legal</h4>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 Small Poles. All rights reserved.</span>
+            <span>Built in Accra 🇬🇭</span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => observer.observe(el));
+
+    // Waitlist form handler (placeholder — swap with real backend later)
+    function handleWaitlist(e) {
+        e.preventDefault();
+        const input = e.target.querySelector('input');
+        const email = input.value;
+        const btn = e.target.querySelector('button');
+        btn.textContent = 'Added ✓';
+        btn.style.background = '#00803f';
+        input.value = '';
+        setTimeout(() => {
+            btn.textContent = 'Join Waitlist';
+            btn.style.background = '';
+        }, 3000);
+    }
+</script>
+</body>
+</html>
