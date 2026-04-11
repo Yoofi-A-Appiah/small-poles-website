@@ -1,1033 +1,942 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Features — Small Poles</title>
-    <meta name="description" content="Six integrated modules for GPL fantasy intelligence. Tactics Board, Scout Room, Squad Builder, Intel Feed, Player Dossier, and Leagues.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --pitch: #006436; --pitch-light: #00803f; --pitch-glow: #00ff7f;
-            --carbon: #0a0a0a; --carbon-light: #111111;
-            --surface: #161616; --surface-raised: #1c1c1c;
-            --border: #222222; --border-light: #2a2a2a;
-            --text-primary: #f0f0f0; --text-secondary: #888888; --text-muted: #555555;
-            --accent-gold: #c8a84e; --accent-red: #e04040; --accent-blue: #3b82f6;
-            --font-display: 'Space Grotesk', sans-serif;
-            --font-body: 'DM Sans', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-        html { scroll-behavior: smooth; }
-        body { font-family: var(--font-body); background: var(--carbon); color: var(--text-primary); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-        body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; }
-        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
-        .label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-
-        /* ── Nav ── */
-        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10,10,10,0.8); border-bottom: 1px solid var(--border); }
-        nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
-        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
-        .nav-logo-mark { width: 28px; height: 28px; background: var(--pitch); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: white; }
-        .nav-logo-text { font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: -0.3px; }
-        .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
-        .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
-        .nav-cta { background: var(--pitch) !important; color: white !important; padding: 8px 18px; border-radius: 6px; font-weight: 600 !important; transition: background 0.2s !important; }
-        .nav-cta:hover { background: var(--pitch-light) !important; }
-        .mobile-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--text-primary); }
-        .mobile-toggle span { display: block; width: 18px; height: 2px; background: var(--text-primary); margin: 4px 0; border-radius: 2px; }
-
-        /* ── Page Hero ── */
-        .page-hero {
-            padding: 160px 0 80px;
-            position: relative;
-            border-bottom: 1px solid var(--border);
-        }
-        .page-hero-bg {
-            position: absolute; inset: 0;
-            background: radial-gradient(ellipse 70% 50% at 30% 0%, rgba(0,100,54,0.12) 0%, transparent 60%);
-        }
-        .page-hero .container { position: relative; z-index: 1; }
-        .page-hero h1 {
-            font-family: var(--font-display);
-            font-size: clamp(40px, 4.5vw, 56px);
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1.08;
-            margin-top: 12px;
-            margin-bottom: 20px;
-        }
-        .page-hero h1 .accent { color: var(--pitch-glow); }
-        .page-hero-sub {
-            font-size: 17px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-            max-width: 560px;
-        }
-        .breadcrumb {
-            display: flex; align-items: center; gap: 8px;
-            font-family: var(--font-mono); font-size: 11px;
-            margin-bottom: 32px;
-        }
-        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
-        .breadcrumb a:hover { color: var(--text-secondary); }
-        .breadcrumb .sep { color: var(--text-muted); }
-        .breadcrumb .current { color: var(--pitch-glow); }
-
-        /* ── Sections ── */
-        section { padding: 100px 0; }
-        .section-label-bar {
-            display: flex; align-items: center; gap: 16px;
-            margin-bottom: 48px; padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .section-label-bar .num {
-            font-family: var(--font-mono); font-size: 12px; font-weight: 700;
-            color: var(--pitch); background: rgba(0,100,54,0.1);
-            border: 1px solid rgba(0,100,54,0.2); border-radius: 4px;
-            padding: 2px 8px;
-        }
-        .section-label-bar h2 {
-            font-family: var(--font-display); font-size: 14px; font-weight: 600;
-            letter-spacing: -0.2px;
-        }
-        .alt-bg { background: var(--carbon-light); border-top: 1px solid var(--border); }
-
-        /* ── Feature Deep Dive ── */
-        .feature-deep {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: start;
-        }
-        .feature-deep.reversed { direction: rtl; }
-        .feature-deep.reversed > * { direction: ltr; }
-        .feature-deep-content h3 {
-            font-family: var(--font-display);
-            font-size: 28px; font-weight: 700;
-            letter-spacing: -1px; margin-bottom: 16px;
-        }
-        .feature-deep-content > p {
-            font-size: 15px; line-height: 1.7;
-            color: var(--text-secondary); margin-bottom: 32px;
-        }
-        .feature-detail-list {
-            display: flex; flex-direction: column; gap: 14px;
-        }
-        .feature-detail-item {
-            display: flex; align-items: flex-start; gap: 14px;
-            padding: 14px 16px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            transition: border-color 0.2s;
-        }
-        .feature-detail-item:hover { border-color: var(--border-light); }
-        .feature-detail-check {
-            width: 20px; height: 20px; border-radius: 50%;
-            background: rgba(0,100,54,0.15); border: 1px solid rgba(0,100,54,0.3);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-            font-size: 10px; color: var(--pitch-glow);
-        }
-        .feature-detail-item h4 {
-            font-family: var(--font-display); font-size: 13px; font-weight: 600;
-            margin-bottom: 3px;
-        }
-        .feature-detail-item p {
-            font-size: 12px; line-height: 1.5; color: var(--text-muted);
-        }
-
-        /* Feature Visual Mockup */
-        .feature-visual {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .feature-visual-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface-raised);
-        }
-        .feature-visual-header h4 {
-            font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px;
-        }
-        .fv-dots { display: flex; gap: 5px; }
-        .fv-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-light); }
-        .fv-dots span:first-child { background: var(--accent-red); }
-        .fv-dots span:nth-child(2) { background: var(--accent-gold); }
-        .fv-dots span:last-child { background: var(--pitch); }
-        .feature-visual-body { padding: 20px; }
-
-        /* Mock table rows */
-        .mock-row {
-            display: grid;
-            grid-template-columns: 40px 1fr 80px 80px 60px;
-            gap: 12px; align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-        }
-        .mock-row:last-child { border-bottom: none; }
-        .mock-row-head {
-            font-family: var(--font-mono); font-size: 9px; font-weight: 600;
-            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px;
-        }
-        .mock-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: var(--border); display: flex;
-            align-items: center; justify-content: center;
-            font-family: var(--font-mono); font-size: 10px;
-            font-weight: 700; color: var(--text-secondary);
-        }
-        .mock-name { font-weight: 500; }
-        .mock-name small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
-        .mock-price { font-family: var(--font-mono); font-size: 11px; color: var(--accent-gold); }
-        .mock-pts { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--pitch-glow); }
-        .mock-pos {
-            font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-            background: rgba(0,100,54,0.1); border: 1px solid rgba(0,100,54,0.2);
-            padding: 2px 6px; border-radius: 3px; color: var(--pitch-glow);
-            text-align: center; width: fit-content;
-        }
-
-        /* Mock pitch */
-        .mock-pitch {
-            aspect-ratio: 16/10;
-            background: linear-gradient(180deg,
-                rgba(0,100,54,0.1) 0%, rgba(0,100,54,0.05) 25%,
-                rgba(0,100,54,0.1) 25%, rgba(0,100,54,0.05) 50%,
-                rgba(0,100,54,0.1) 50%, rgba(0,100,54,0.05) 75%,
-                rgba(0,100,54,0.1) 75%, rgba(0,100,54,0.05) 100%);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            position: relative;
-        }
-        .mock-pitch-dot {
-            position: absolute; width: 28px; height: 28px;
-            border-radius: 50%; background: var(--surface);
-            border: 2px solid var(--pitch);
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-            transform: translate(-50%, -50%);
-        }
-        .mock-pitch-dot.gold { border-color: var(--accent-gold); }
-
-        /* Mock notification list */
-        .mock-notif {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px; border-bottom: 1px solid var(--border);
-        }
-        .mock-notif:last-child { border-bottom: none; }
-        .mock-notif-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; flex-shrink: 0;
-        }
-        .mock-notif-icon.red { background: rgba(224,64,64,0.1); border: 1px solid rgba(224,64,64,0.15); }
-        .mock-notif-icon.gold { background: rgba(200,168,78,0.1); border: 1px solid rgba(200,168,78,0.15); }
-        .mock-notif-icon.blue { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.15); }
-        .mock-notif-icon.green { background: rgba(0,100,54,0.1); border: 1px solid rgba(0,100,54,0.2); }
-        .mock-notif-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-        .mock-notif-text strong { color: var(--text-primary); font-weight: 600; }
-        .mock-notif-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
-
-        /* Mock leaderboard */
-        .mock-lb-row {
-            display: grid;
-            grid-template-columns: 30px 1fr 80px;
-            gap: 12px; align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-        }
-        .mock-lb-row:last-child { border-bottom: none; }
-        .mock-lb-rank {
-            font-family: var(--font-mono); font-weight: 700;
-            color: var(--text-muted); font-size: 13px;
-        }
-        .mock-lb-rank.top { color: var(--accent-gold); }
-
-        /* Mock stat bars */
-        .mock-stat-bar-group { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-        .mock-stat-bar-label {
-            display: flex; justify-content: space-between;
-            font-size: 11px; margin-bottom: 4px;
-        }
-        .mock-stat-bar-label span:last-child { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
-        .mock-stat-bar-track {
-            height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
-        }
-        .mock-stat-bar-fill {
-            height: 100%; border-radius: 3px; background: var(--pitch);
-        }
-
-        /* ── MVP Status ── */
-        .mvp-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-        .mvp-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 32px 28px;
-        }
-        .mvp-card h3 {
-            font-family: var(--font-display); font-size: 18px;
-            font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px;
-        }
-        .mvp-card > p {
-            font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6;
-        }
-        .mvp-checklist {
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .mvp-check {
-            display: flex; align-items: center; gap: 10px;
-            font-size: 13px; color: var(--text-secondary);
-        }
-        .mvp-check-icon {
-            width: 18px; height: 18px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 9px; flex-shrink: 0;
-        }
-        .mvp-check-icon.done { background: rgba(0,100,54,0.15); color: var(--pitch-glow); border: 1px solid rgba(0,100,54,0.3); }
-        .mvp-check-icon.planned { background: var(--border); color: var(--text-muted); border: 1px solid var(--border-light); }
-        .mvp-check.done-text { color: var(--text-primary); }
-
-        /* ── Data strategy ── */
-        .data-flow {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
-            border: 1px solid var(--border); border-radius: 12px;
-            overflow: hidden; background: var(--border);
-        }
-        .data-flow-step {
-            background: var(--surface); padding: 32px 24px;
-            text-align: center;
-        }
-        .data-flow-step-num {
-            font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-            color: var(--pitch); background: rgba(0,100,54,0.1);
-            border: 1px solid rgba(0,100,54,0.2);
-            padding: 2px 8px; border-radius: 4px;
-            display: inline-block; margin-bottom: 14px;
-        }
-        .data-flow-step h4 {
-            font-family: var(--font-display); font-size: 15px; font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .data-flow-step p {
-            font-size: 12px; line-height: 1.6; color: var(--text-muted);
-        }
-        .data-flow-step .mono-val {
-            font-family: var(--font-mono); font-size: 24px; font-weight: 700;
-            color: var(--pitch-glow); display: block; margin-top: 12px;
-        }
-
-        /* ── CTA ── */
-        .page-cta {
-            border-top: 1px solid var(--border);
-            padding: 80px 0;
-            text-align: center;
-            position: relative;
-        }
-        .page-cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(0,100,54,0.1) 0%, transparent 70%); }
-        .page-cta .container { position: relative; z-index: 1; }
-        .page-cta h2 {
-            font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px);
-            font-weight: 700; letter-spacing: -1.5px; margin-bottom: 16px;
-        }
-        .page-cta p { font-size: 15px; color: var(--text-secondary); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
-        .btn-primary {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: var(--pitch); color: white; padding: 14px 28px;
-            border-radius: 8px; font-family: var(--font-display);
-            font-weight: 600; font-size: 15px; text-decoration: none;
-            border: none; cursor: pointer; transition: all 0.2s;
-            box-shadow: 0 0 30px rgba(0,100,54,0.3);
-        }
-        .btn-primary:hover { background: var(--pitch-light); transform: translateY(-1px); }
-
-        /* ── Footer ── */
-        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; }
-        .footer-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 48px; }
-        .footer-brand p { font-size: 13px; color: var(--text-muted); margin-top: 12px; max-width: 280px; line-height: 1.6; }
-        .footer-links-group h4 { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-        .footer-links-group a { display: block; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 4px 0; transition: color 0.2s; }
-        .footer-links-group a:hover { color: var(--text-primary); }
-        .footer-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
-
-        /* ── Animations ── */
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
-
-        /* ── Responsive ── */
-        @media (max-width: 1024px) {
-            .feature-deep, .feature-deep.reversed { grid-template-columns: 1fr; direction: ltr; }
-            .mvp-grid { grid-template-columns: 1fr; }
-            .data-flow { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .mobile-toggle { display: block; }
-            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--carbon); border-bottom: 1px solid var(--border); padding: 20px 24px; gap: 16px; }
-            .footer-top { flex-direction: column; gap: 36px; }
-            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
-        }
-    </style>
-</head>
-<body>
-
-<nav>
-    <div class="container">
-        <a href="index.html" class="nav-logo">
-            <div class="nav-logo-mark">SP</div>
-            <span class="nav-logo-text">Small Poles</span>
+    <meta
+      name="description"
+      content="Six integrated modules for GPL fantasy intelligence. Tactics Board, Scout Room, Squad Builder, Intel Feed, Player Dossier, and Leagues."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav>
+      <div class="container">
+        <a href="#" class="nav-logo">
+          <div class="nav-logo-mark">
+            <img
+              src="assets/smallpolesappicon.png"
+              alt="Small Poles Logo"
+              style="width: 64px; height: 64px; border-radius: 16px"
+            />
+          </div>
+          <span class="nav-logo-text">Small Poles</span>
         </a>
         <ul class="nav-links" id="navLinks">
-            <li><a href="features.html" class="active">Features</a></li>
-            <li><a href="how-it-works.html">How It Works</a></li>
-            <li><a href="scoring.html">Scoring</a></li>
-            <li><a href="market.html">Market</a></li>
-            <li><a href="index.html#waitlist" class="nav-cta">Join Waitlist</a></li>
+          <li class="nav-list"><a href="/">Home</a></li>
+          <span class="nav-status"
+            ><span class="nav-status-dot"></span> Features</span
+          >
+          <li class="nav-list"><a href="how-it-works.html">How It Works</a></li>
+          <li class="nav-list"><a href="scoring.html">Scoring</a></li>
+          <li><a href="index.html#waitlist" class="nav-cta">Join Waitlist</a></li>
         </ul>
-        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu">
-            <span></span><span></span><span></span>
+        <button
+          class="mobile-toggle"
+          onclick="document.getElementById('navLinks').classList.toggle('open')"
+          aria-label="Toggle menu"
+        >
+          <span></span><span></span><span></span>
         </button>
-    </div>
-</nav>
+      </div>
+    </nav>
 
-<!-- Page Hero -->
-<section class="page-hero">
-    <div class="page-hero-bg"></div>
-    <div class="container">
+    <!-- Page Hero -->
+    <section class="page-hero">
+      <div class="page-hero-bg"></div>
+      <div class="container">
         <div class="breadcrumb">
-            <a href="index.html">Home</a>
-            <span class="sep">/</span>
-            <span class="current">Features</span>
+          <a href="/">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Features</span>
         </div>
         <span class="label">Platform Modules</span>
-        <h1>Six tools.<br>One <span class="accent">tactical edge</span>.</h1>
-        <p class="page-hero-sub">Every module in Small Poles is designed to turn raw GPL data into actionable fantasy intelligence — from scouting undervalued players to managing your squad under pressure.</p>
-    </div>
-</section>
+        <h1>Six tools.<br />One <span class="accent">tactical edge</span>.</h1>
+        <p class="page-hero-sub">
+          Every module in Small Poles is designed to turn raw GPL data into
+          actionable fantasy intelligence — from scouting undervalued players to
+          managing your squad under pressure.
+        </p>
+      </div>
+    </section>
 
-<!-- Feature 1: Tactics Board -->
-<section id="tactics-board">
-    <div class="container">
+    <!-- Feature 1: Tactics Board -->
+    <section id="tactics-board">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">01</span>
-            <h2>Tactics Board</h2>
+          <span class="num">01</span>
+          <h2>Tactics Board</h2>
         </div>
         <div class="feature-deep reveal">
-            <div class="feature-deep-content">
-                <h3>Your command center for matchday.</h3>
-                <p>The Tactics Board is where strategy meets execution. View your starting XI in formation, track gameweek performance in real time, and make last-minute captain changes before the deadline locks.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Formation Management</h4>
-                            <p>Switch between 4-4-2 and 4-3-3 formations. Smart validation ensures legal squad composition.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Captain Selection</h4>
-                            <p>Designate any starting XI player as captain for double points. Change until the deadline.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Gameweek Scores</h4>
-                            <p>Full points breakdown per player — goals, assists, clean sheets, cards, and captain bonus.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Bench & Substitution Logic</h4>
-                            <p>Bench players earn points automatically when starters don't play. Order matters.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>Your command center for matchday.</h3>
+            <p>
+              The Tactics Board is where strategy meets execution. View your
+              starting XI in formation, track gameweek performance in real time,
+              and make last-minute captain changes before the deadline locks.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Formation Management</h4>
+                  <p>
+                    Switch between 4-4-2 and 4-3-3 formations. Smart validation
+                    ensures legal squad composition.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Captain Selection</h4>
+                  <p>
+                    Designate any starting XI player as captain for double
+                    points. Change until the deadline.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Gameweek Scores</h4>
+                  <p>
+                    Full points breakdown per player — goals, assists, clean
+                    sheets, cards, and captain bonus.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Bench & Substitution Logic</h4>
+                  <p>
+                    Bench players earn points automatically when starters don't
+                    play. Order matters.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Tactics Board — GW 12</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body">
-                    <div class="mock-pitch">
-                        <div class="mock-pitch-dot" style="left:50%;top:88%">1</div>
-                        <div class="mock-pitch-dot" style="left:15%;top:68%">3</div>
-                        <div class="mock-pitch-dot" style="left:38%;top:70%">5</div>
-                        <div class="mock-pitch-dot" style="left:62%;top:70%">4</div>
-                        <div class="mock-pitch-dot" style="left:85%;top:68%">2</div>
-                        <div class="mock-pitch-dot" style="left:25%;top:44%">8</div>
-                        <div class="mock-pitch-dot gold" style="left:50%;top:42%">C</div>
-                        <div class="mock-pitch-dot" style="left:75%;top:44%">6</div>
-                        <div class="mock-pitch-dot" style="left:20%;top:20%">11</div>
-                        <div class="mock-pitch-dot" style="left:50%;top:16%">9</div>
-                        <div class="mock-pitch-dot" style="left:80%;top:20%">7</div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Tactics Board — GW 12</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body">
+              <div class="mock-pitch">
+                <div class="mock-pitch-dot" style="left: 50%; top: 88%">1</div>
+                <div class="mock-pitch-dot" style="left: 15%; top: 68%">3</div>
+                <div class="mock-pitch-dot" style="left: 38%; top: 70%">5</div>
+                <div class="mock-pitch-dot" style="left: 62%; top: 70%">4</div>
+                <div class="mock-pitch-dot" style="left: 85%; top: 68%">2</div>
+                <div class="mock-pitch-dot" style="left: 25%; top: 44%">8</div>
+                <div class="mock-pitch-dot gold" style="left: 50%; top: 42%">
+                  C
+                </div>
+                <div class="mock-pitch-dot" style="left: 75%; top: 44%">6</div>
+                <div class="mock-pitch-dot" style="left: 20%; top: 20%">11</div>
+                <div class="mock-pitch-dot" style="left: 50%; top: 16%">9</div>
+                <div class="mock-pitch-dot" style="left: 80%; top: 20%">7</div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- Feature 2: Scout Room -->
-<section class="alt-bg" id="scout-room">
-    <div class="container">
+    <!-- Feature 2: Scout Room -->
+    <section class="alt-bg" id="scout-room">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">02</span>
-            <h2>Scout Room</h2>
+          <span class="num">02</span>
+          <h2>Scout Room</h2>
         </div>
         <div class="feature-deep reversed reveal">
-            <div class="feature-deep-content">
-                <h3>Find value before the market does.</h3>
-                <p>Browse the entire GPL player pool with powerful filters. Sort by position, team, price range, form, and availability. The Scout Room surfaces the data you need to make smart transfer decisions.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Multi-Filter Search</h4>
-                            <p>Filter by position, GPL team, price range, availability status, and player name — simultaneously.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Form Tracker</h4>
-                            <p>Last 5 gameweek scores at a glance. Spot rising performers and avoid declining assets.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Selection Percentage</h4>
-                            <p>See what percentage of all managers own each player. Identify differentials and template picks.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Paginated Results</h4>
-                            <p>500+ players organized in clean, scannable pages. 50 per page with instant navigation.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>Find value before the market does.</h3>
+            <p>
+              Browse the entire GPL player pool with powerful filters. Sort by
+              position, team, price range, form, and availability. The Scout
+              Room surfaces the data you need to make smart transfer decisions.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Multi-Filter Search</h4>
+                  <p>
+                    Filter by position, GPL team, price range, availability
+                    status, and player name — simultaneously.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Form Tracker</h4>
+                  <p>
+                    Last 5 gameweek scores at a glance. Spot rising performers
+                    and avoid declining assets.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Selection Percentage</h4>
+                  <p>
+                    See what percentage of all managers own each player.
+                    Identify differentials and template picks.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Paginated Results</h4>
+                  <p>
+                    500+ players organized in clean, scannable pages. 50 per
+                    page with instant navigation.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Scout Room — Midfielders</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body" style="padding:0">
-                    <div class="mock-row mock-row-head">
-                        <span></span><span>Player</span><span>Price</span><span>Pts</span><span>Pos</span>
-                    </div>
-                    <div class="mock-row">
-                        <div class="mock-avatar">MK</div>
-                        <div class="mock-name">M. Kudus<small>Hearts of Oak</small></div>
-                        <div class="mock-price">₵8.5M</div>
-                        <div class="mock-pts">45</div>
-                        <div class="mock-pos">MID</div>
-                    </div>
-                    <div class="mock-row">
-                        <div class="mock-avatar">RS</div>
-                        <div class="mock-name">R. Salifu<small>Asante Kotoko</small></div>
-                        <div class="mock-price">₵7.8M</div>
-                        <div class="mock-pts">41</div>
-                        <div class="mock-pos">MID</div>
-                    </div>
-                    <div class="mock-row">
-                        <div class="mock-avatar">EO</div>
-                        <div class="mock-name">E. Owusu<small>Medeama SC</small></div>
-                        <div class="mock-price">₵6.2M</div>
-                        <div class="mock-pts">36</div>
-                        <div class="mock-pos">MID</div>
-                    </div>
-                    <div class="mock-row">
-                        <div class="mock-avatar">AQ</div>
-                        <div class="mock-name">A. Quaye<small>Great Olympics</small></div>
-                        <div class="mock-price">₵5.5M</div>
-                        <div class="mock-pts">33</div>
-                        <div class="mock-pos">MID</div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Scout Room — Midfielders</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body" style="padding: 0">
+              <div class="mock-row mock-row-head">
+                <span></span><span>Player</span><span>Price</span
+                ><span>Pts</span><span>Pos</span>
+              </div>
+              <div class="mock-row">
+                <div class="mock-avatar">MK</div>
+                <div class="mock-name">H. Gyau<small>Hearts of Oak</small></div>
+                <div class="mock-price">₵8.5M</div>
+                <div class="mock-pts">45</div>
+                <div class="mock-pos">MID</div>
+              </div>
+              <div class="mock-row">
+                <div class="mock-avatar">RS</div>
+                <div class="mock-name">
+                  R. Salifu<small>Asante Kotoko</small>
+                </div>
+                <div class="mock-price">₵7.8M</div>
+                <div class="mock-pts">41</div>
+                <div class="mock-pos">MID</div>
+              </div>
+              <div class="mock-row">
+                <div class="mock-avatar">EO</div>
+                <div class="mock-name">E. Owusu<small>Medeama SC</small></div>
+                <div class="mock-price">₵6.2M</div>
+                <div class="mock-pts">36</div>
+                <div class="mock-pos">MID</div>
+              </div>
+              <div class="mock-row">
+                <div class="mock-avatar">AQ</div>
+                <div class="mock-name">
+                  A. Quaye<small>Great Olympics</small>
+                </div>
+                <div class="mock-price">₵5.5M</div>
+                <div class="mock-pts">33</div>
+                <div class="mock-pos">MID</div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- Feature 3: Squad Builder -->
-<section id="squad-builder">
-    <div class="container">
+    <!-- Feature 3: Squad Builder -->
+    <section id="squad-builder">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">03</span>
-            <h2>Squad Builder</h2>
+          <span class="num">03</span>
+          <h2>Squad Builder</h2>
         </div>
         <div class="feature-deep reveal">
-            <div class="feature-deep-content">
-                <h3>15 players. GHS 100M. Your rules.</h3>
-                <p>Build your dream GPL squad within budget constraints. The Squad Builder enforces all composition rules — 2 GK, 5 DEF, 5 MID, 3 ATT — and tracks your remaining budget in real time as you pick.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Budget Enforcement</h4>
-                            <p>GHS 100M total budget. Live remaining balance as you add and remove players.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Position Validation</h4>
-                            <p>Exactly 2 GK, 5 DEF, 5 MID, 3 ATT. System prevents illegal compositions.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Starting XI + Bench</h4>
-                            <p>11 starters and 4 bench players. Bench order determines auto-substitution priority.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Unique Team Name</h4>
-                            <p>Brand your squad with a unique team name that appears on leaderboards and in leagues.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>15 players. GHS 100M. Your rules.</h3>
+            <p>
+              Build your dream GPL squad within budget constraints. The Squad
+              Builder enforces all composition rules — 2 GK, 5 DEF, 5 MID, 3 ATT
+              — and tracks your remaining budget in real time as you pick.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Budget Enforcement</h4>
+                  <p>
+                    GHS 100M total budget. Live remaining balance as you add and
+                    remove players.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Position Validation</h4>
+                  <p>
+                    Exactly 2 GK, 5 DEF, 5 MID, 3 ATT. System prevents illegal
+                    compositions.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Starting XI + Bench</h4>
+                  <p>
+                    11 starters and 4 bench players. Bench order determines
+                    auto-substitution priority.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Unique Team Name</h4>
+                  <p>
+                    Brand your squad with a unique team name that appears on
+                    leaderboards and in leagues.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Squad Builder — Budget</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body">
-                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px">
-                        <div>
-                            <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--pitch-glow)">₵15.2M</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Remaining Budget</div>
-                        </div>
-                        <div style="text-align:right">
-                            <div style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">₵84.8M / ₵100M</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Spent</div>
-                        </div>
-                    </div>
-                    <div class="mock-stat-bar-track" style="height:8px;margin-bottom:24px">
-                        <div class="mock-stat-bar-fill" style="width:84.8%"></div>
-                    </div>
-                    <div class="mock-stat-bar-group">
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">GK (2/2)</span><span>₵10.2M</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:100%"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">DEF (5/5)</span><span>₵28.5M</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:100%"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">MID (4/5)</span><span>₵26.8M</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:80%;background:var(--accent-gold)"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">ATT (3/3)</span><span>₵19.3M</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:100%"></div></div>
-                        </div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Squad Builder — Budget</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: baseline;
+                  margin-bottom: 20px;
+                "
+              >
+                <div>
+                  <div
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--pitch-glow);
+                    "
+                  >
+                    ₵15.2M
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--text-muted);
+                      margin-top: 2px;
+                    "
+                  >
+                    Remaining Budget
+                  </div>
+                </div>
+                <div style="text-align: right">
+                  <div
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 14px;
+                      color: var(--text-secondary);
+                    "
+                  >
+                    ₵84.8M / ₵100M
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--text-muted);
+                      margin-top: 2px;
+                    "
+                  >
+                    Spent
+                  </div>
+                </div>
+              </div>
+              <div
+                class="mock-stat-bar-track"
+                style="height: 8px; margin-bottom: 24px"
+              >
+                <div class="mock-stat-bar-fill" style="width: 84.8%"></div>
+              </div>
+              <div class="mock-stat-bar-group">
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">GK (2/2)</span
+                    ><span>₵10.2M</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 100%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">DEF (5/5)</span
+                    ><span>₵28.5M</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 100%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">MID (4/5)</span
+                    ><span>₵26.8M</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div
+                      class="mock-stat-bar-fill"
+                      style="width: 80%; background: var(--accent-gold)"
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">ATT (3/3)</span
+                    ><span>₵19.3M</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 100%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- Feature 4: Intel Feed -->
-<section class="alt-bg" id="intel-feed">
-    <div class="container">
+    <!-- Feature 4: Intel Feed -->
+    <section class="alt-bg" id="intel-feed">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">04</span>
-            <h2>Intel Feed</h2>
+          <span class="num">04</span>
+          <h2>Intel Feed</h2>
         </div>
         <div class="feature-deep reversed reveal">
-            <div class="feature-deep-content">
-                <h3>Actionable intelligence, categorized.</h3>
-                <p>Injuries, suspensions, fixture changes, and transfer rumors — all filtered by relevance to your squad. The Intel Feed ensures you never miss a critical update before the transfer deadline.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Injury & Suspension Alerts</h4>
-                            <p>Real-time updates on player status with expected return dates and severity levels.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>My Squad Filter</h4>
-                            <p>Toggle to see only updates affecting players in your current squad.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Deadline Reminders</h4>
-                            <p>Email notifications 24 hours and 1 hour before the transfer deadline closes.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Match Results Feed</h4>
-                            <p>Completed scores with goal scorers, assist providers, and fantasy-relevant events.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>Actionable intelligence, categorized.</h3>
+            <p>
+              Injuries, suspensions, fixture changes, and transfer rumors — all
+              filtered by relevance to your squad. The Intel Feed ensures you
+              never miss a critical update before the transfer deadline.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Injury & Suspension Alerts</h4>
+                  <p>
+                    Real-time updates on player status with expected return
+                    dates and severity levels.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>My Squad Filter</h4>
+                  <p>
+                    Toggle to see only updates affecting players in your current
+                    squad.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Deadline Reminders</h4>
+                  <p>
+                    Email notifications 24 hours and 1 hour before the transfer
+                    deadline closes.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Match Results Feed</h4>
+                  <p>
+                    Completed scores with goal scorers, assist providers, and
+                    fantasy-relevant events.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Intel Feed — Recent</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body" style="padding:0">
-                    <div class="mock-notif">
-                        <div class="mock-notif-icon red">🏥</div>
-                        <div class="mock-notif-text"><strong>M. Kudus</strong> — Hamstring injury during training. Expected return: 2 weeks.</div>
-                        <div class="mock-notif-time">2h ago</div>
-                    </div>
-                    <div class="mock-notif">
-                        <div class="mock-notif-icon gold">⚠️</div>
-                        <div class="mock-notif-text"><strong>Transfer deadline</strong> for GW 13 closes in 24 hours.</div>
-                        <div class="mock-notif-time">5h ago</div>
-                    </div>
-                    <div class="mock-notif">
-                        <div class="mock-notif-icon green">⚽</div>
-                        <div class="mock-notif-text"><strong>Hearts of Oak 2–1 Kotoko</strong> — Baako ⚽23', Agyemang ⚽67'</div>
-                        <div class="mock-notif-time">1d ago</div>
-                    </div>
-                    <div class="mock-notif">
-                        <div class="mock-notif-icon blue">📊</div>
-                        <div class="mock-notif-text"><strong>Price changes:</strong> Salifu ↑₵0.2M, Mensah ↓₵0.1M after GW 12.</div>
-                        <div class="mock-notif-time">2d ago</div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Intel Feed — Recent</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body" style="padding: 0">
+              <div class="mock-notif">
+                <div class="mock-notif-icon red">🏥</div>
+                <div class="mock-notif-text">
+                  <strong>B. Asare</strong> — Hamstring injury during training.
+                  Expected return: 2 weeks.
+                </div>
+                <div class="mock-notif-time">2h ago</div>
+              </div>
+              <div class="mock-notif">
+                <div class="mock-notif-icon gold">⚠️</div>
+                <div class="mock-notif-text">
+                  <strong>Transfer deadline</strong> for GW 13 closes in 24
+                  hours.
+                </div>
+                <div class="mock-notif-time">5h ago</div>
+              </div>
+              <div class="mock-notif">
+                <div class="mock-notif-icon green">⚽</div>
+                <div class="mock-notif-text">
+                  <strong>Hearts of Oak 2–1 Kotoko</strong> — Baako ⚽23',
+                  Agyemang ⚽67'
+                </div>
+                <div class="mock-notif-time">1d ago</div>
+              </div>
+              <div class="mock-notif">
+                <div class="mock-notif-icon blue">
+                  <img
+                    src="/assets/bar-chart.png"
+                    alt="Stats"
+                    style="width: 16px; height: 16px"
+                  />
+                </div>
+                <div class="mock-notif-text">
+                  <strong>Price changes:</strong> Salifu ↑₵0.2M, Mensah ↓₵0.1M
+                  after GW 12.
+                </div>
+                <div class="mock-notif-time">2d ago</div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- Feature 5: Player Dossier -->
-<section id="player-dossier">
-    <div class="container">
+    <!-- Feature 5: Player Dossier -->
+    <section id="player-dossier">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">05</span>
-            <h2>Player Dossier</h2>
+          <span class="num">05</span>
+          <h2>Player Dossier</h2>
         </div>
         <div class="feature-deep reveal">
-            <div class="feature-deep-content">
-                <h3>Deep-dive statistical profiles.</h3>
-                <p>Every GPL player gets a comprehensive dossier — season stats, price history, form trajectory, upcoming fixture difficulty, and ownership data. Everything you need to evaluate an asset in one view.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Season Statistics</h4>
-                            <p>Goals, assists, clean sheets, cards, saves — full performance breakdown by gameweek.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Price History</h4>
-                            <p>Track how a player's fantasy price has moved over the season. Maintained for transparency.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Fixture Difficulty Rating</h4>
-                            <p>Upcoming opponents rated 1–5 difficulty. Plan your transfers around favorable fixtures.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Availability Status</h4>
-                            <p>Available, injured, suspended, or transferred — plus expected return dates when applicable.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>Deep-dive statistical profiles.</h3>
+            <p>
+              Every GPL player gets a comprehensive dossier — season stats,
+              price history, form trajectory, upcoming fixture difficulty, and
+              ownership data. Everything you need to evaluate an asset in one
+              view.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Season Statistics</h4>
+                  <p>
+                    Goals, assists, clean sheets, cards, saves — full
+                    performance breakdown by gameweek.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Price History</h4>
+                  <p>
+                    Track how a player's fantasy price has moved over the
+                    season. Maintained for transparency.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Fixture Difficulty Rating</h4>
+                  <p>
+                    Upcoming opponents rated 1–5 difficulty. Plan your transfers
+                    around favorable fixtures.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Availability Status</h4>
+                  <p>
+                    Available, injured, suspended, or transferred — plus
+                    expected return dates when applicable.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Player Dossier — M. Kudus</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body">
-                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-                        <div class="mock-avatar" style="width:44px;height:44px;font-size:14px">MK</div>
-                        <div>
-                            <div style="font-weight:600;font-size:15px">Mohammed Kudus</div>
-                            <div style="font-size:11px;color:var(--text-muted)">MID · Hearts of Oak · #10</div>
-                        </div>
-                        <div style="margin-left:auto;text-align:right">
-                            <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--pitch-glow)">45 pts</div>
-                            <div style="font-size:10px;color:var(--text-muted)">Season Total</div>
-                        </div>
-                    </div>
-                    <div class="mock-stat-bar-group">
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">Goals</span><span>5</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:62%"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">Assists</span><span>3</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:38%"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">Clean Sheets</span><span>4</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:50%"></div></div>
-                        </div>
-                        <div>
-                            <div class="mock-stat-bar-label"><span style="color:var(--text-secondary)">Ownership</span><span>23.5%</span></div>
-                            <div class="mock-stat-bar-track"><div class="mock-stat-bar-fill" style="width:23.5%;background:var(--accent-gold)"></div></div>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:20px">
-                        <div style="font-family:var(--font-mono);font-size:10px;padding:4px 8px;background:rgba(0,100,54,0.1);border:1px solid rgba(0,100,54,0.2);border-radius:4px;color:var(--pitch-glow)">Form: 2 8 1 6 12</div>
-                        <div style="font-family:var(--font-mono);font-size:10px;padding:4px 8px;background:rgba(200,168,78,0.1);border:1px solid rgba(200,168,78,0.15);border-radius:4px;color:var(--accent-gold)">₵8.5M</div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Player Dossier — B. Asare</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 14px;
+                  margin-bottom: 20px;
+                  padding-bottom: 16px;
+                  border-bottom: 1px solid var(--border);
+                "
+              >
+                <div
+                  class="mock-avatar"
+                  style="width: 44px; height: 44px; font-size: 14px"
+                >
+                  BA
+                </div>
+                <div>
+                  <div style="font-weight: 600; font-size: 15px">
+                    Benjamin Asare
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-muted)">
+                    GK · Hearts of Oak · #16
+                  </div>
+                </div>
+                <div style="margin-left: auto; text-align: right">
+                  <div
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 18px;
+                      font-weight: 700;
+                      color: var(--pitch-glow);
+                    "
+                  >
+                    45 pts
+                  </div>
+                  <div style="font-size: 10px; color: var(--text-muted)">
+                    Season Total
+                  </div>
+                </div>
+              </div>
+              <div class="mock-stat-bar-group">
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">Goals</span
+                    ><span>5</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 62%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">Assists</span
+                    ><span>3</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 38%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)"
+                      >Clean Sheets</span
+                    ><span>4</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div class="mock-stat-bar-fill" style="width: 50%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="mock-stat-bar-label">
+                    <span style="color: var(--text-secondary)">Ownership</span
+                    ><span>23.5%</span>
+                  </div>
+                  <div class="mock-stat-bar-track">
+                    <div
+                      class="mock-stat-bar-fill"
+                      style="width: 23.5%; background: var(--accent-gold)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 20px">
+                <div
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: 10px;
+                    padding: 4px 8px;
+                    background: rgba(0, 100, 54, 0.1);
+                    border: 1px solid rgba(0, 100, 54, 0.2);
+                    border-radius: 4px;
+                    color: var(--pitch-glow);
+                  "
+                >
+                  Form: 2 8 1 6 12
+                </div>
+                <div
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: 10px;
+                    padding: 4px 8px;
+                    background: rgba(200, 168, 78, 0.1);
+                    border: 1px solid rgba(200, 168, 78, 0.15);
+                    border-radius: 4px;
+                    color: var(--accent-gold);
+                  "
+                >
+                  ₵8.5M
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- Feature 6: Leagues -->
-<section class="alt-bg" id="leagues">
-    <div class="container">
+    <!-- Feature 6: Leagues -->
+    <section class="alt-bg" id="leagues">
+      <div class="container">
         <div class="section-label-bar reveal">
-            <span class="num">06</span>
-            <h2>Leagues & Rankings</h2>
+          <span class="num">06</span>
+          <h2>Leagues & Rankings</h2>
         </div>
         <div class="feature-deep reversed reveal">
-            <div class="feature-deep-content">
-                <h3>Compete with everyone. Brag to friends.</h3>
-                <p>Create private leagues with custom names and invite friends via unique join codes. Track your position on the global leaderboard. Social competition is the engine that keeps managers coming back every gameweek.</p>
-                <div class="feature-detail-list">
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Private Leagues</h4>
-                            <p>Create invite-only leagues for up to 20 members. Share an 8-character join code with friends.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Global Rankings</h4>
-                            <p>Rank against all platform users with percentile information and points-to-leader gap.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>Multi-League Membership</h4>
-                            <p>Join as many leagues as you want. Separate standings for each competition.</p>
-                        </div>
-                    </div>
-                    <div class="feature-detail-item">
-                        <div class="feature-detail-check">✓</div>
-                        <div>
-                            <h4>League Admin Controls</h4>
-                            <p>Manage membership, update descriptions, and maintain the competitive integrity of your league.</p>
-                        </div>
-                    </div>
+          <div class="feature-deep-content">
+            <h3>Compete with everyone. Brag to friends.</h3>
+            <p>
+              Create private leagues with custom names and invite friends via
+              unique join codes. Track your position on the global leaderboard.
+              Social competition is the engine that keeps managers coming back
+              every gameweek.
+            </p>
+            <div class="feature-detail-list">
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Private Leagues</h4>
+                  <p>
+                    Create invite-only leagues for up to 20 members. Share an
+                    8-character join code with friends.
+                  </p>
                 </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Global Rankings</h4>
+                  <p>
+                    Rank against all platform users with percentile information
+                    and points-to-leader gap.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>Multi-League Membership</h4>
+                  <p>
+                    Join as many leagues as you want. Separate standings for
+                    each competition.
+                  </p>
+                </div>
+              </div>
+              <div class="feature-detail-item">
+                <div class="feature-detail-check">✓</div>
+                <div>
+                  <h4>League Admin Controls</h4>
+                  <p>
+                    Manage membership, update descriptions, and maintain the
+                    competitive integrity of your league.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="feature-visual">
-                <div class="feature-visual-header">
-                    <h4>Friends League — Standings</h4>
-                    <div class="fv-dots"><span></span><span></span><span></span></div>
-                </div>
-                <div class="feature-visual-body" style="padding:0">
-                    <div class="mock-lb-row mock-row-head" style="display:grid;grid-template-columns:30px 1fr 80px;gap:12px;padding:10px 12px;font-family:var(--font-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)">
-                        <span>#</span><span>Manager</span><span style="text-align:right">Points</span>
-                    </div>
-                    <div class="mock-lb-row">
-                        <div class="mock-lb-rank top">1</div>
-                        <div class="mock-name">Champion Squad<small>Jane Doe</small></div>
-                        <div class="mock-pts" style="text-align:right">345</div>
-                    </div>
-                    <div class="mock-lb-row">
-                        <div class="mock-lb-rank">2</div>
-                        <div class="mock-name">Mighty Warriors<small>You</small></div>
-                        <div class="mock-pts" style="text-align:right">312</div>
-                    </div>
-                    <div class="mock-lb-row">
-                        <div class="mock-lb-rank">3</div>
-                        <div class="mock-name">Accra Lions FC<small>Kofi Mensah</small></div>
-                        <div style="text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">298</div>
-                    </div>
-                    <div class="mock-lb-row">
-                        <div class="mock-lb-rank">4</div>
-                        <div class="mock-name">GPL Kingpins<small>Ama Asare</small></div>
-                        <div style="text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">275</div>
-                    </div>
-                    <div class="mock-lb-row">
-                        <div class="mock-lb-rank">5</div>
-                        <div class="mock-name">Star Strikers<small>Yaw Boateng</small></div>
-                        <div style="text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">261</div>
-                    </div>
-                </div>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-header">
+              <h4>Friends League — Standings</h4>
+              <div class="fv-dots"><span></span><span></span><span></span></div>
             </div>
+            <div class="feature-visual-body" style="padding: 0">
+              <div
+                class="mock-lb-row mock-row-head"
+                style="
+                  display: grid;
+                  grid-template-columns: 30px 1fr 80px;
+                  gap: 12px;
+                  padding: 10px 12px;
+                  font-family: var(--font-mono);
+                  font-size: 9px;
+                  color: var(--text-muted);
+                  text-transform: uppercase;
+                  letter-spacing: 0.8px;
+                  border-bottom: 1px solid var(--border);
+                "
+              >
+                <span>#</span><span>Manager</span
+                ><span style="text-align: right">Points</span>
+              </div>
+              <div class="mock-lb-row">
+                <div class="mock-lb-rank top">1</div>
+                <div class="mock-name">
+                  Champion Squad<small>Jane Doe</small>
+                </div>
+                <div class="mock-pts" style="text-align: right">345</div>
+              </div>
+              <div class="mock-lb-row">
+                <div class="mock-lb-rank">2</div>
+                <div class="mock-name">Mighty Warriors<small>You</small></div>
+                <div class="mock-pts" style="text-align: right">312</div>
+              </div>
+              <div class="mock-lb-row">
+                <div class="mock-lb-rank">3</div>
+                <div class="mock-name">
+                  Accra Lions FC<small>Kofi Mensah</small>
+                </div>
+                <div
+                  style="
+                    text-align: right;
+                    font-family: var(--font-mono);
+                    font-size: 11px;
+                    color: var(--text-secondary);
+                  "
+                >
+                  298
+                </div>
+              </div>
+              <div class="mock-lb-row">
+                <div class="mock-lb-rank">4</div>
+                <div class="mock-name">
+                  GPL Kingpins<small>Ama Asare</small>
+                </div>
+                <div
+                  style="
+                    text-align: right;
+                    font-family: var(--font-mono);
+                    font-size: 11px;
+                    color: var(--text-secondary);
+                  "
+                >
+                  275
+                </div>
+              </div>
+              <div class="mock-lb-row">
+                <div class="mock-lb-rank">5</div>
+                <div class="mock-name">
+                  Star Strikers<small>Yaw Boateng</small>
+                </div>
+                <div
+                  style="
+                    text-align: right;
+                    font-family: var(--font-mono);
+                    font-size: 11px;
+                    color: var(--text-secondary);
+                  "
+                >
+                  261
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- MVP Status -->
-<section id="mvp-status">
-    <div class="container">
-        <div class="section-label-bar reveal">
-            <span class="num">MVP</span>
-            <h2>What ships at launch</h2>
-        </div>
-        <div class="mvp-grid reveal">
-            <div class="mvp-card">
-                <h3>MVP Scope — Confirmed</h3>
-                <p>These features are locked in for the first release and currently under development.</p>
-                <div class="mvp-checklist">
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Basic player browsing with filters</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Team creation with GHS 100M budget</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Manual match result entry (admin)</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Weekly score calculations</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Basic league functionality</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Transfer system with free/paid logic</div>
-                    <div class="mvp-check done-text"><div class="mvp-check-icon done">✓</div> Captain bonus system</div>
-                </div>
-            </div>
-            <div class="mvp-card">
-                <h3>Post-MVP — Planned</h3>
-                <p>Coming in subsequent releases based on beta feedback and platform growth.</p>
-                <div class="mvp-checklist">
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Live match score updates</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Push notifications (mobile)</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Advanced analytics & charts</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Public league discovery</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> iOS & Android native apps</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Head-to-head league format</div>
-                    <div class="mvp-check"><div class="mvp-check-icon planned">→</div> Wildcard & bench boost chips</div>
-                </div>
-            </div>
-        </div>
-
-        <div style="margin-top:48px" class="reveal">
-            <div class="section-label-bar">
-                <span class="num">DATA</span>
-                <h2>Data Strategy — MVP</h2>
-            </div>
-            <div class="data-flow">
-                <div class="data-flow-step">
-                    <div class="data-flow-step-num">01</div>
-                    <h4>Initial Load</h4>
-                    <p>One-time API call to seed all GPL teams and player data into the database.</p>
-                    <span class="mono-val">1×</span>
-                </div>
-                <div class="data-flow-step">
-                    <div class="data-flow-step-num">02</div>
-                    <h4>Match Updates</h4>
-                    <p>Results via scraper with API verification. Player updates twice weekly.</p>
-                    <span class="mono-val">~400/mo</span>
-                </div>
-                <div class="data-flow-step">
-                    <div class="data-flow-step-num">03</div>
-                    <h4>Caching Layer</h4>
-                    <p>Redis cache for player lists, team details, and gameweek data. No live match updates at MVP.</p>
-                    <span class="mono-val">80%+ hit</span>
-                </div>
-            </div>
-            <div style="margin-top:20px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:12px">
-                <div style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--pitch);background:rgba(0,100,54,0.1);border:1px solid rgba(0,100,54,0.2);padding:3px 8px;border-radius:4px;white-space:nowrap">FREE TIER</div>
-                <div style="font-size:13px;color:var(--text-secondary)">MVP data strategy fits within the Sofascore API free tier — ~400 calls/month targeting 50–100 beta testers.</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Page CTA -->
-<section class="page-cta">
-    <div class="page-cta-bg"></div>
-    <div class="container reveal">
+    <!-- Page CTA -->
+    <section class="page-cta">
+      <div class="page-cta-bg"></div>
+      <div class="container reveal">
         <h2>Ready to scout the GPL?</h2>
-        <p>Join the waitlist and be among the first 100 beta testers when we launch.</p>
-        <a href="index.html#waitlist" class="btn-primary">Join the Waitlist →</a>
-    </div>
-</section>
+        <p>
+          Join the waitlist and be among the first 100 beta testers when we
+          launch.
+        </p>
+        <a href="/#waitlist" class="btn-primary">Join the Waitlist →</a>
+      </div>
+    </section>
 
-<!-- Footer -->
-<footer>
-    <div class="container">
+    <!-- Footer -->
+    <footer>
+      <div class="container">
         <div class="footer-top">
-            <div class="footer-brand">
-                <a href="index.html" class="nav-logo">
-                    <div class="nav-logo-mark">SP</div>
-                    <span class="nav-logo-text">Small Poles</span>
-                </a>
-                <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
+          <div class="footer-brand">
+            <a href="/" class="nav-logo">
+              <div class="nav-logo-mark">
+                <img
+                  src="assets/smallpolesappicon.png"
+                  alt="Small Poles Logo"
+                  style="width: 64px; height: 64px; border-radius: 16px"
+                />
+              </div>
+              <span class="nav-logo-text">Small Poles</span>
+            </a>
+            <p>
+              The first fantasy football platform built exclusively for the
+              Ghana Premier League.
+            </p>
+          </div>
+          <div style="display: flex; gap: 64px">
+            <div class="footer-links-group">
+              <h4>Platform</h4>
+              <a href="features.html">Features</a>
+              <a href="scoring.html">Scoring Rules</a>
+              <a href="how-it-works.html">How It Works</a>
+              <a href="market.html">Market</a>
             </div>
-            <div style="display:flex;gap:64px">
-                <div class="footer-links-group">
-                    <h4>Platform</h4>
-                    <a href="features.html">Features</a>
-                    <a href="scoring.html">Scoring Rules</a>
-                    <a href="how-it-works.html">How It Works</a>
-                    <a href="market.html">Market</a>
-                </div>
-                <div class="footer-links-group">
-                    <h4>Company</h4>
-                    <a href="#">About</a>
-                    <a href="#">Blog</a>
-                    <a href="#">Contact</a>
-                    <a href="#">Partnerships</a>
-                </div>
-                <div class="footer-links-group">
-                    <h4>Legal</h4>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Cookie Policy</a>
-                </div>
+            <div class="footer-links-group">
+              <h4>Company</h4>
+              <a href="#">About</a>
+              <a href="#">Blog</a>
+              <a href="#">Contact</a>
+              <a href="#">Partnerships</a>
             </div>
+            <div class="footer-links-group">
+              <h4>Legal</h4>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms of Service</a>
+              <a href="#">Cookie Policy</a>
+            </div>
+          </div>
         </div>
         <div class="footer-bottom">
-            <span>&copy; 2026 Small Poles. All rights reserved.</span>
-            <span>Built in Accra 🇬🇭</span>
+          <span>&copy; 2026 Small Poles. All rights reserved.</span>
+          <span>Built in Accra 🇬🇭</span>
         </div>
-    </div>
-</footer>
+      </div>
+    </footer>
 
-<script>
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-    reveals.forEach(el => observer.observe(el));
-</script>
-</body>
+    <script>
+      const reveals = document.querySelectorAll(".reveal");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+      );
+      reveals.forEach((el) => observer.observe(el));
+    </script>
+  </body>
 </html>
