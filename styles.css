@@ -345,7 +345,7 @@ section {
 
 /* ── Page Hero (inner pages) ── */
 .page-hero {
-  padding: 160px 0 80px;
+  padding: 80px 0 80px;
   position: relative;
   border-bottom: 1px solid var(--border);
 }
@@ -479,7 +479,7 @@ section {
   display: flex;
   align-items: center;
   position: relative;
-  padding-top: 60px;
+  padding-top: 80px;
   overflow: hidden;
 }
 
