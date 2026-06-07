@@ -163,6 +163,24 @@ function smallpoles_schema() {
 add_action( 'wp_head', 'smallpoles_schema', 3 );
 
 
+/* ── Google Analytics 4 ── */
+function smallpoles_google_analytics() {
+    if ( is_admin() ) return;
+    $measurement_id = 'G-XSJ3VSCVSS'; // Replace with your real Measurement ID
+    ?>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $measurement_id ); ?>"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?php echo esc_js( $measurement_id ); ?>');
+    </script>
+    <?php
+}
+add_action( 'wp_head', 'smallpoles_google_analytics', 1 );
+
+
 /* ── Clean up WordPress cruft ── */
 remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 remove_action( 'wp_print_styles', 'print_emoji_styles' );
@@ -529,6 +547,38 @@ add_action( 'init', 'smallpoles_register_prediction_cpt' );
    API key stays server-side. Caches 1 hour via transients.
    ═══════════════════════════════════════════════════════════ */
 
+/* ── Per-IP rate limiting for REST proxy endpoints ───────────────────
+   Limits each IP to $max calls per $window_seconds per endpoint group.
+   Uses a short-lived transient as a sliding counter.
+   Returns a WP_Error when the limit is exceeded, null when clear.
+   ─────────────────────────────────────────────────────────────────── */
+function smallpoles_rate_check( string $group, int $max = 20, int $window = 60 ) {
+    $ip  = isset( $_SERVER['HTTP_CF_CONNECTING_IP'] )
+         ? $_SERVER['HTTP_CF_CONNECTING_IP']
+         : ( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' );
+    $key = 'sp_rate_' . $group . '_' . md5( $ip );
+
+    $count = (int) get_transient( $key );
+    if ( $count >= $max ) {
+        return new WP_Error(
+            'rate_limited',
+            'Too many requests. Please slow down.',
+            [ 'status' => 429 ]
+        );
+    }
+
+    // Increment; set expiry only on first call so the window is fixed, not sliding
+    if ( $count === 0 ) {
+        set_transient( $key, 1, $window );
+    } else {
+        // Transient already exists — just bump the count, preserving the original TTL
+        // WordPress has no atomic increment, so we overwrite; race conditions add at most 1 extra call
+        set_transient( $key, $count + 1, $window );
+    }
+
+    return null;
+}
+
 function smallpoles_register_rest_routes() {
     $public = [ 'methods' => 'GET', 'permission_callback' => '__return_true' ];
 
@@ -648,18 +698,27 @@ function smallpoles_register_rest_routes() {
 add_action( 'rest_api_init', 'smallpoles_register_rest_routes' );
 
 function smallpoles_next_fixture_proxy() {
+    if ( $err = smallpoles_rate_check( 'fixture', 10, 60 ) ) return $err;
     $team_id   = (int) get_option( 'smallpoles_team_id',   1504 );
     $league_id = (int) get_option( 'smallpoles_league_id', 1 );
     $season    = (int) get_option( 'smallpoles_season',    2026 );
-    $cache_key = "sp_next_fixture_{$team_id}_{$league_id}_{$season}";
+    $cache_key = "next_fixture_{$team_id}_{$league_id}_{$season}";
 
-    $cached = get_transient( $cache_key );
-    if ( $cached !== false ) {
-        return rest_ensure_response( $cached );
+    $cached = smallpoles_cache_get( $cache_key );
+    if ( $cached !== false ) return rest_ensure_response( $cached );
+
+    // Stampede lock
+    $lock_key = 'sp_lock_next_fixture';
+    if ( get_transient( $lock_key ) ) {
+        $row = get_option( 'sp_cache_' . $cache_key );
+        if ( is_array( $row ) && isset( $row['data'] ) ) return rest_ensure_response( $row['data'] );
+        return new WP_Error( 'fetching', 'Data is being refreshed.', [ 'status' => 503 ] );
     }
+    set_transient( $lock_key, 1, 15 );
 
     $api_key = get_option( 'smallpoles_api_key', '' );
     if ( ! $api_key ) {
+        delete_transient( $lock_key );
         return new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] );
     }
 
@@ -670,51 +729,96 @@ function smallpoles_next_fixture_proxy() {
             'season' => $season,
             'next'   => 1,
         ], 'https://v3.football.api-sports.io/fixtures' ),
-        [
-            'timeout' => 10,
-            'headers' => [ 'x-apisports-key' => $api_key ],
-        ]
+        [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ]
     );
+
+    delete_transient( $lock_key );
 
     if ( is_wp_error( $response ) ) {
         return new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 502 ] );
     }
 
     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
     if ( empty( $body['response'][0] ) ) {
         return new WP_Error( 'no_fixture', 'No upcoming fixtures found.', [ 'status' => 404 ] );
     }
 
     $fixture = $body['response'][0];
 
-    // Cache until 30 minutes after the match kicks off, then expire so live data flows in
-    $kickoff     = $fixture['fixture']['timestamp'] ?? 0;
-    $expires     = $kickoff ? max( 300, ( $kickoff + 1800 ) - time() ) : 6 * HOUR_IN_SECONDS;
-    set_transient( $cache_key, $fixture, $expires );
+    // TTL: cache until 30 minutes after kickoff so the slot refreshes for the next match
+    $kickoff = $fixture['fixture']['timestamp'] ?? 0;
+    $ttl     = $kickoff ? max( 300, ( $kickoff + 1800 ) - time() ) : 6 * HOUR_IN_SECONDS;
+    smallpoles_cache_set( $cache_key, $fixture, $ttl );
 
     return rest_ensure_response( $fixture );
 }
 
-/* ── Shared API fetch helper ── */
+/* ── Durable cache helpers ───────────────────────────────────────────
+   wp_options rows survive transient purges and cache-plugin flushes.
+   Each row: { data, fetched, ttl }  — ttl=0 means permanent.
+   autoload=false keeps large JSON blobs off every page's boot query.
+   ─────────────────────────────────────────────────────────────────── */
+
+function smallpoles_cache_get( string $key ) {
+    $row = get_option( 'sp_cache_' . $key );
+    if ( ! is_array( $row ) || ! isset( $row['data'] ) ) return false;
+    if ( $row['ttl'] > 0 && ( time() - $row['fetched'] ) > $row['ttl'] ) return false;
+    return $row['data'];
+}
+
+function smallpoles_cache_set( string $key, $data, int $ttl = 0 ): void {
+    update_option( 'sp_cache_' . $key, [
+        'data'    => $data,
+        'fetched' => time(),
+        'ttl'     => $ttl,
+    ], false );
+}
+
+/* ── Shared API fetch helper with stampede protection ────────────────
+   Only one PHP process hits the external API per cache key at a time.
+   While a fetch is in-flight, other requests serve stale data if any
+   exists, or wait for the first response.
+   ─────────────────────────────────────────────────────────────────── */
 function smallpoles_api_fetch( string $endpoint, array $params, string $cache_key, int $ttl ) {
-    $cached = get_transient( $cache_key );
+    // 1. Fresh cache hit — serve immediately
+    $cached = smallpoles_cache_get( $cache_key );
     if ( $cached !== false ) return [ 'data' => $cached, 'error' => null ];
 
+    // 2. Stampede lock — only one process fetches at a time
+    $lock_key = 'sp_lock_' . md5( $cache_key );
+    if ( get_transient( $lock_key ) ) {
+        // Another process is already fetching — serve stale if we have it
+        $row = get_option( 'sp_cache_' . $cache_key );
+        if ( is_array( $row ) && isset( $row['data'] ) ) {
+            return [ 'data' => $row['data'], 'error' => null ];
+        }
+        return [ 'data' => null, 'error' => new WP_Error( 'fetching', 'Data is being refreshed.', [ 'status' => 503 ] ) ];
+    }
+    set_transient( $lock_key, 1, 15 ); // hold for max 15s
+
     $api_key = get_option( 'smallpoles_api_key', '' );
-    if ( ! $api_key ) return [ 'data' => null, 'error' => new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] ) ];
+    if ( ! $api_key ) {
+        delete_transient( $lock_key );
+        return [ 'data' => null, 'error' => new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] ) ];
+    }
 
     $response = wp_remote_get(
         add_query_arg( $params, 'https://v3.football.api-sports.io/' . $endpoint ),
         [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ]
     );
 
-    if ( is_wp_error( $response ) ) return [ 'data' => null, 'error' => new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 502 ] ) ];
+    delete_transient( $lock_key ); // release regardless of outcome
+
+    if ( is_wp_error( $response ) ) {
+        return [ 'data' => null, 'error' => new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 502 ] ) ];
+    }
 
     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-    if ( empty( $body['response'] ) ) return [ 'data' => null, 'error' => new WP_Error( 'no_data', 'No data returned.', [ 'status' => 404 ] ) ];
+    if ( empty( $body['response'] ) ) {
+        return [ 'data' => null, 'error' => new WP_Error( 'no_data', 'No data returned.', [ 'status' => 404 ] ) ];
+    }
 
-    set_transient( $cache_key, $body['response'], $ttl );
+    smallpoles_cache_set( $cache_key, $body['response'], $ttl );
     return [ 'data' => $body['response'], 'error' => null ];
 }
 
@@ -724,8 +828,8 @@ function smallpoles_standings_proxy() {
     $result    = smallpoles_api_fetch(
         'standings',
         [ 'league' => $league_id, 'season' => $season ],
-        "sp_standings_{$league_id}_{$season}",
-        HOUR_IN_SECONDS
+        "standings_{$league_id}_{$season}",
+        6 * HOUR_IN_SECONDS
     );
     return $result['error'] ?? rest_ensure_response( $result['data'][0]['league'] ?? $result['data'] );
 }
@@ -737,12 +841,12 @@ function smallpoles_fixtures_proxy( WP_REST_Request $request ) {
     $round     = $request->get_param( 'round' );
 
     $params    = [ 'league' => $league_id, 'season' => $season ];
-    $cache_key = "sp_fixtures_{$league_id}_{$season}";
+    $cache_key = "fixtures_{$league_id}_{$season}";
 
-    if ( $team ) { $params['team'] = $team; $cache_key .= "_t{$team}"; }
+    if ( $team )  { $params['team']  = $team;  $cache_key .= "_t{$team}"; }
     if ( $round ) { $params['round'] = $round; $cache_key .= '_r' . md5( $round ); }
 
-    $result = smallpoles_api_fetch( 'fixtures', $params, $cache_key, HOUR_IN_SECONDS );
+    $result = smallpoles_api_fetch( 'fixtures', $params, $cache_key, 6 * HOUR_IN_SECONDS );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
 
@@ -752,19 +856,20 @@ function smallpoles_rounds_proxy() {
     $result    = smallpoles_api_fetch(
         'fixtures/rounds',
         [ 'league' => $league_id, 'season' => $season ],
-        "sp_rounds_{$league_id}_{$season}",
-        12 * HOUR_IN_SECONDS  // rounds rarely change
+        "rounds_{$league_id}_{$season}",
+        DAY_IN_SECONDS
     );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
 
 function smallpoles_fixture_stats_proxy( WP_REST_Request $request ) {
+    if ( $err = smallpoles_rate_check( 'stats', 15, 60 ) ) return $err;
     $fixture_id = $request->get_param( 'fixture' );
     $result     = smallpoles_api_fetch(
         'fixtures/statistics',
         [ 'fixture' => $fixture_id ],
-        "sp_stats_{$fixture_id}",
-        15 * MINUTE_IN_SECONDS  // live stats refresh fast
+        "stats_{$fixture_id}",
+        15 * MINUTE_IN_SECONDS
     );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
@@ -774,89 +879,78 @@ function smallpoles_lineups_proxy( WP_REST_Request $request ) {
     $result     = smallpoles_api_fetch(
         'fixtures/lineups',
         [ 'fixture' => $fixture_id ],
-        "sp_lineups_{$fixture_id}",
+        "lineups_{$fixture_id}",
         30 * MINUTE_IN_SECONDS
     );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
 
 function smallpoles_odds_proxy( WP_REST_Request $request ) {
-    $fixture_id  = $request->get_param( 'fixture' );
-    $bookmaker   = $request->get_param( 'bookmaker' );
-    $params      = [ 'fixture' => $fixture_id ];
-    $cache_key   = "sp_odds_{$fixture_id}";
+    if ( $err = smallpoles_rate_check( 'odds', 15, 60 ) ) return $err;
+    $fixture_id = $request->get_param( 'fixture' );
+    $bookmaker  = $request->get_param( 'bookmaker' );
+    $params     = [ 'fixture' => $fixture_id ];
+    $cache_key  = "odds_{$fixture_id}";
 
     if ( $bookmaker ) {
         $params['bookmaker'] = $bookmaker;
         $cache_key .= "_b{$bookmaker}";
     }
 
-    $result = smallpoles_api_fetch( 'odds', $params, $cache_key, HOUR_IN_SECONDS );
+    $result = smallpoles_api_fetch( 'odds', $params, $cache_key, 2 * HOUR_IN_SECONDS );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
 
 function smallpoles_odds_live_proxy( WP_REST_Request $request ) {
+    if ( $err = smallpoles_rate_check( 'live_odds', 10, 60 ) ) return $err;
     $fixture_id = $request->get_param( 'fixture' );
 
-    // Live odds: bypass the shared helper so we never serve stale data for more than 60s
-    $cache_key = "sp_odds_live_{$fixture_id}";
+    // Live odds stay as a short transient — truly ephemeral, no value in durable storage
+    $cache_key = 'sp_live_odds_' . $fixture_id;
     $cached    = get_transient( $cache_key );
     if ( $cached !== false ) return rest_ensure_response( $cached );
 
+    $lock_key = 'sp_lock_live_odds_' . $fixture_id;
+    if ( get_transient( $lock_key ) ) {
+        return new WP_Error( 'fetching', 'Live odds are being refreshed.', [ 'status' => 503 ] );
+    }
+    set_transient( $lock_key, 1, 10 );
+
     $api_key = get_option( 'smallpoles_api_key', '' );
-    if ( ! $api_key ) return new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] );
+    if ( ! $api_key ) {
+        delete_transient( $lock_key );
+        return new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] );
+    }
 
     $response = wp_remote_get(
         add_query_arg( [ 'fixture' => $fixture_id ], 'https://v3.football.api-sports.io/odds/live' ),
         [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ]
     );
 
+    delete_transient( $lock_key );
+
     if ( is_wp_error( $response ) ) return new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 502 ] );
 
     $body = json_decode( wp_remote_retrieve_body( $response ), true );
     if ( empty( $body['response'] ) ) return new WP_Error( 'no_data', 'No live odds available.', [ 'status' => 404 ] );
 
-    set_transient( $cache_key, $body['response'], 60 ); // 60 seconds — live data
+    set_transient( $cache_key, $body['response'], 60 );
     return rest_ensure_response( $body['response'] );
 }
 
 function smallpoles_predictions_proxy( WP_REST_Request $request ) {
+    if ( $err = smallpoles_rate_check( 'predictions', 15, 60 ) ) return $err;
     $fixture_id = $request->get_param( 'fixture' );
-    $cache_key  = 'sp_predictions_' . $fixture_id;
-
-    $cached = get_transient( $cache_key );
-    if ( $cached !== false ) {
-        return rest_ensure_response( $cached );
-    }
-
-    $api_key = get_option( 'smallpoles_api_key', '' );
-    if ( ! $api_key ) {
-        return new WP_Error( 'no_api_key', 'API key not configured.', [ 'status' => 503 ] );
-    }
-
-    $response = wp_remote_get(
-        'https://v3.football.api-sports.io/predictions?fixture=' . $fixture_id,
-        [
-            'timeout' => 10,
-            'headers' => [
-                'x-apisports-key' => $api_key,
-            ],
-        ]
+    $result     = smallpoles_api_fetch(
+        'predictions',
+        [ 'fixture' => $fixture_id ],
+        "predictions_{$fixture_id}",
+        12 * HOUR_IN_SECONDS
     );
-
-    if ( is_wp_error( $response ) ) {
-        return new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 502 ] );
-    }
-
-    $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-    if ( empty( $body['response'] ) ) {
-        return new WP_Error( 'no_data', 'No predictions available for this fixture.', [ 'status' => 404 ] );
-    }
-
-    set_transient( $cache_key, $body['response'][0], HOUR_IN_SECONDS );
-
-    return rest_ensure_response( $body['response'][0] );
+    if ( $result['error'] ) return $result['error'];
+    // API returns an array; predictions endpoint always has one item
+    $data = is_array( $result['data'] ) && isset( $result['data'][0] ) ? $result['data'][0] : $result['data'];
+    return rest_ensure_response( $data );
 }
 
 

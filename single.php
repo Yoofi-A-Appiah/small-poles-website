@@ -38,7 +38,7 @@
 
     <!-- Featured image -->
     <?php if ( has_post_thumbnail() ) : ?>
-    <div style="padding:40px 24px 0;max-width:1080px;margin:0 auto">
+    <div class="container" style="padding-top:40px">
       <?php the_post_thumbnail( 'news-featured', [ 'class' => 'article-featured-image' ] ); ?>
     </div>
     <?php endif; ?>

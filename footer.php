@@ -28,7 +28,8 @@
             <div class="footer-links-group">
               <h4>Company</h4>
               <a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">About</a>
-              <a href="mailto:appiahyoofi@gmail.com">Partnerships</a>
+              <a href="mailto:info@smallpoles.online">Partnerships</a>
+              <a href="https://paystack.shop/pay/smallpoles" target="_blank" rel="noopener">Support Us</a>
               <a href="<?php echo esc_url( home_url( '/privacy/' ) ); ?>">Privacy Policy</a>
               <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>">Terms of Service</a>
             </div>

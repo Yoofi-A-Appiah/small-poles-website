@@ -1,0 +1,18 @@
+# Small Poles
+
+> The first fantasy football platform built for the Ghana Premier League (GPL). Pick real GPL players, predict results, and compete with friends every gameweek.
+
+Small Poles is a Ghanaian fantasy football product focused exclusively on the Ghana Premier League. It is currently in beta and targets Ghanaian football fans.
+
+## Pages
+
+- [Home](https://smallpoles.online/): Landing page with product overview, features, and waitlist signup
+- [News](https://smallpoles.online/news/): GPL and fantasy football news articles
+- [News Articles](https://smallpoles.online/news/): Individual post pages covering GPL news, match previews, and platform updates
+
+## About
+
+- Product: GPL Fantasy Football web app
+- Stage: Beta / waitlist
+- Audience: Ghanaian football fans
+- League: Ghana Premier League (GPL)

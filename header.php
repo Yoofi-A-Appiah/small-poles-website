@@ -10,15 +10,6 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
-<!-- Announcement Bar -->
-<div class="announcement-bar" id="annBar">
-  <span class="ann-dot"></span>
-  <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-    ⚽ World Cup 2026 is live — Ghana's stars on the global stage. Read our group stage analysis →
-  </a>
-  <button class="ann-dismiss" aria-label="Dismiss">&times;</button>
-</div>
-
 <!-- Navigation -->
 <nav>
   <div class="container">
@@ -65,3 +56,12 @@
   </div>
 </nav>
 <div class="nav-overlay" id="navOverlay"></div>
+
+<!-- Announcement Bar -->
+<div class="announcement-bar" id="annBar">
+  <span class="ann-dot"></span>
+  <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
+    ⚽ World Cup 2026 is live — Ghana's stars on the global stage. Read our group stage analysis →
+  </a>
+  <button class="ann-dismiss" aria-label="Dismiss">&times;</button>
+</div>

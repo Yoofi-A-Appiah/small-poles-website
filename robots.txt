@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /wp-admin/
+Disallow: /wp-login.php
+Disallow: /wp-includes/
+Disallow: /xmlrpc.php
 
-Sitemap: https://smallpole.com/sitemap.xml
+Sitemap: https://smallpoles.online/sitemap.xml

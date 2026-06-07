@@ -1,8 +1,8 @@
 /*
 Theme Name: Small Poles
-Theme URI: https://smallpole.com
+Theme URI: https://smallpoles.online
 Author: Small Poles
-Author URI: https://smallpole.com
+Author URI: https://smallpole.online
 Description: GPL Fantasy Intelligence — the first fantasy football platform built exclusively for the Ghana Premier League. Custom WordPress theme with dark tactical aesthetic.
 Version: 1.0.0
 Requires at least: 6.0
@@ -387,9 +387,13 @@ section {
 
 /* ── Page Hero (inner pages) ── */
 .page-hero {
-  padding: 80px 0 80px;
+  padding: 120px 0 80px;
   position: relative;
   border-bottom: 1px solid var(--border);
+}
+
+.ann-dismissed .page-hero {
+  padding-top: 80px;
 }
 
 .page-hero-bg {
@@ -521,8 +525,12 @@ section {
   display: flex;
   align-items: center;
   position: relative;
-  padding-top: 80px;
+  padding-top: 120px;
   overflow: hidden;
+}
+
+.ann-dismissed .hero {
+  padding-top: 80px;
 }
 
 .hero-bg {
@@ -3140,8 +3148,11 @@ section {
 
 /* ── Announcement Bar ── */
 .announcement-bar {
-  position: relative;
-  z-index: 200;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  z-index: 90;
   background: var(--pitch);
   padding: 10px 24px;
   display: flex;
@@ -3509,7 +3520,6 @@ body.announcement-hidden .announcement-bar {
 .article-hero .container {
   position: relative;
   z-index: 1;
-  max-width: 800px;
 }
 
 .article-hero h1 {
@@ -3579,9 +3589,8 @@ body.announcement-hidden .announcement-bar {
   display: grid;
   grid-template-columns: 1fr 280px;
   gap: 64px;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 64px 24px;
+  padding-top: 64px;
+  padding-bottom: 64px;
 }
 
 /* Article body typography */
@@ -3932,6 +3941,10 @@ body.announcement-hidden .announcement-bar {
     grid-template-columns: 1fr;
   }
 
+  .article-hero {
+    padding-top: 40px;
+  }
+
   .article-hero h1 {
     letter-spacing: -1px;
   }
@@ -4274,7 +4287,7 @@ nav {
   background: linear-gradient(135deg, #005c32 0%, #007a40 100%);
   box-shadow: 0 0 24px rgba(0, 232, 108, 0.22), 0 4px 16px rgba(0, 0, 0, 0.35);
   border-radius: 10px;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
 }
 .btn-primary:hover {
@@ -4309,7 +4322,7 @@ nav {
   mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
 }
 .hero h1 {
-  font-family: "Russo One", "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(46px, 5.5vw, 72px);
   letter-spacing: -1.5px;
   line-height: 1.02;
@@ -4438,7 +4451,7 @@ nav {
     radial-gradient(ellipse 40% 60% at 50% 50%, rgba(0, 232, 108, 0.04) 0%, transparent 70%);
 }
 .cta-section h2 {
-  font-family: "Russo One", "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(36px, 4.2vw, 56px);
   font-weight: 400;
   letter-spacing: -1px;
@@ -4447,7 +4460,7 @@ nav {
 
 /* ── Page CTA (inner pages) ── */
 .page-cta h2 {
-  font-family: "Russo One", "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: -1px;
 }
@@ -4461,7 +4474,7 @@ nav {
 
 /* ── Page hero ── */
 .page-hero h1 {
-  font-family: "Russo One", "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: -1.5px;
 }
@@ -4538,6 +4551,23 @@ footer {
   background: var(--surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+}
+
+/* Two-column intel grid (fixture widget + standings panel) */
+.sp-intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.sp-intel-grid .sp-widget {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .sp-intel-grid { grid-template-columns: 1fr; }
 }
 
 /* Base widget card */
@@ -4681,10 +4711,15 @@ footer {
   transition: width 0.9s ease;
 }
 
+.sp-pred-bar-draw {
+  height: 100%;
+  background: rgba(255,255,255,0.18);
+  transition: width 0.9s ease;
+}
+
 .sp-pred-bar-away {
   height: 100%;
-  background: #444;
-  margin-left: auto;
+  background: #c06030;
   border-radius: 0 3px 3px 0;
   transition: width 0.9s ease;
 }
@@ -4699,6 +4734,10 @@ footer {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.sp-pred-bar-labels span strong {
+  color: var(--text-secondary);
 }
 
 /* Comparison rows (Form / Attack / Defence) */
@@ -4790,6 +4829,9 @@ footer {
 
 /* Advice / winner label */
 .sp-advice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: 12px;
   color: var(--text-secondary);
   background: rgba(0,255,127,0.04);
@@ -4800,6 +4842,233 @@ footer {
 }
 
 .sp-advice strong { color: var(--pitch-glow); }
+
+.sp-advice-comment {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sp-advice-text {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* H2H recent results */
+.sp-h2h {
+  margin-bottom: 20px;
+}
+
+.sp-h2h-label {
+  display: block;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.sp-h2h-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.sp-h2h-row:last-child { border-bottom: none; }
+
+.sp-h2h-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sp-h2h-team {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-h2h-team--win { color: var(--pitch-glow); font-weight: 600; }
+
+.sp-h2h-score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* No predictions state */
+.sp-no-predictions {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+/* No fixture scheduled (home widget empty state) */
+.sp-no-fixture {
+  text-align: center;
+  padding: 32px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.sp-no-fixture strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.sp-no-fixture span {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Standings panel */
+.sp-standings-panel {
+  background: var(--carbon-light);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 20px 20px 16px;
+}
+.sp-standings-panel.sp-loading {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sp-standings-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.sp-standings-round {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pitch-glow);
+  margin-bottom: 14px;
+}
+.sp-st-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sp-st-table thead th {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0 4px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+.sp-st-table thead th:nth-child(2) { text-align: left; }
+.sp-st-table tbody td {
+  font-size: 12px;
+  padding: 7px 4px;
+  text-align: right;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  white-space: nowrap;
+}
+.sp-st-table tbody td:nth-child(2) { text-align: left; }
+.sp-st-rank-cell {
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  width: 16px;
+}
+.sp-st-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.sp-st-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.sp-st-row--ghana td {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+/* Rounds carousel */
+.sp-rounds-carousel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  outline: none;
+}
+.sp-rounds-arrow {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.18s, color 0.18s;
+}
+.sp-rounds-arrow:hover {
+  background: rgba(255,255,255,0.14);
+  color: var(--text-primary);
+}
+.sp-rounds-viewport {
+  flex: 1;
+  overflow: hidden;
+}
+.sp-rounds-track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.sp-rounds-track::-webkit-scrollbar { display: none; }
+.sp-round-pill {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: default;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+.sp-round-pill--active {
+  background: rgba(74,222,128,0.12);
+  color: var(--pitch-glow);
+  border-color: var(--pitch-glow);
+  font-weight: 600;
+}
 
 /* Error state */
 .sp-error {

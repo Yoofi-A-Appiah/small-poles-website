@@ -11,7 +11,7 @@ Alternative: **DigitalOcean** $6/mo droplet with Nginx if you want full server c
 ## 2. Install WordPress
 
 Via Hostinger: hPanel → Websites → Auto-Installer → WordPress  
-Domain: `smallpole.com` (point DNS A record to your server IP)
+Domain: `smallpoles.online` (point DNS A record to your server IP)
 
 ---
 
@@ -92,7 +92,7 @@ Plugins → Add New → search → Install → Activate
 
 This gives you:
 - Meta title/description per post
-- XML sitemap auto-generated at `smallpole.com/sitemap_index.xml`
+- XML sitemap auto-generated at `smallpoles.online/sitemap_index.xml`
 - Structured data for articles (Google News eligible)
 
 ---
