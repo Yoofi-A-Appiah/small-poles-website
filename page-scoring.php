@@ -1,0 +1,150 @@
+<?php get_header(); ?>
+
+    <section class="page-hero">
+      <div class="page-hero-bg"></div>
+      <div class="container">
+        <div class="breadcrumb"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span class="sep">/</span><span class="current">Scoring</span></div>
+        <span class="label">Point System</span>
+        <h1>Every action<br /><span class="accent">earns or costs</span>.</h1>
+        <p class="page-hero-sub">Goals, assists, clean sheets, cards — here's exactly how real GPL performances translate into fantasy points. No guesswork, full transparency.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="score-table reveal">
+          <div class="score-table-title">Points Earned <span class="tag green">Positive</span></div>
+          <div class="st-head cols-5"><span>Action</span><span>GK</span><span>DEF</span><span>MID</span><span>ATT</span></div>
+          <div class="st-row cols-5"><span>Goal scored</span><span class="val pos">+6</span><span class="val pos">+6</span><span class="val pos">+5</span><span class="val pos">+6</span></div>
+          <div class="st-row cols-5"><span>Assist</span><span class="val pos">+3</span><span class="val pos">+3</span><span class="val pos">+3</span><span class="val pos">+3</span></div>
+          <div class="st-row cols-5"><span>Clean sheet</span><span class="val pos">+4</span><span class="val pos">+4</span><span class="val pos">+1</span><span class="val muted">—</span></div>
+          <div class="st-row cols-5"><span>Saves (per 3)</span><span class="val pos">+1</span><span class="val muted">—</span><span class="val muted">—</span><span class="val muted">—</span></div>
+          <div class="st-row cols-5"><span>Playing 60+ minutes</span><span class="val pos">+2</span><span class="val pos">+2</span><span class="val pos">+2</span><span class="val pos">+2</span></div>
+          <div class="st-row cols-5"><span>Playing 1–59 minutes</span><span class="val pos">+1</span><span class="val pos">+1</span><span class="val pos">+1</span><span class="val pos">+1</span></div>
+        </div>
+
+        <div class="score-table reveal">
+          <div class="score-table-title">Points Deducted <span class="tag red">Negative</span></div>
+          <div class="st-head cols-5"><span>Action</span><span>GK</span><span>DEF</span><span>MID</span><span>ATT</span></div>
+          <div class="st-row cols-5"><span>Yellow card</span><span class="val neg">−1</span><span class="val neg">−1</span><span class="val neg">−1</span><span class="val neg">−1</span></div>
+          <div class="st-row cols-5"><span>Red card</span><span class="val neg">−3</span><span class="val neg">−3</span><span class="val neg">−3</span><span class="val neg">−3</span></div>
+          <div class="st-row cols-5"><span>Own goal</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span></div>
+          <div class="st-row cols-5"><span>Penalty missed</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span><span class="val neg">−2</span></div>
+          <div class="st-row cols-5"><span>Goals conceded (per 2)</span><span class="val neg">−1</span><span class="val neg">−1</span><span class="val muted">—</span><span class="val muted">—</span></div>
+        </div>
+
+        <div class="score-table reveal">
+          <div class="score-table-title">Bonuses & Multipliers <span class="tag gold">Special</span></div>
+          <div class="st-head cols-2"><span>Mechanic</span><span>Effect</span></div>
+          <div class="st-row cols-2"><span>Captain bonus</span><span class="val gold">×2 all points</span></div>
+          <div class="st-row cols-2"><span>Bench substitution</span><span class="val" style="color:var(--text-secondary)">Full points if starter didn't play</span></div>
+          <div class="st-row cols-2"><span>Paid transfer</span><span class="val neg">−4 per transfer</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt-bg">
+      <div class="container">
+        <div style="margin-bottom:48px" class="reveal"><span class="label">Worked Examples</span><h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">See the math in action.</h2></div>
+        <div class="example-grid reveal">
+          <div class="example-card">
+            <div class="example-card-header"><h4>H. Gyau (Captain)</h4><span class="pos-badge">MID</span></div>
+            <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+            <div class="example-line"><span class="action">1 Goal (MID)</span><span class="pts pos">+5</span></div>
+            <div class="example-line"><span class="action">1 Assist</span><span class="pts pos">+3</span></div>
+            <div class="example-line"><span class="action">Clean sheet (MID)</span><span class="pts pos">+1</span></div>
+            <div class="example-line"><span class="action">Subtotal</span><span class="pts" style="color:var(--text-secondary)">11</span></div>
+            <div class="example-line"><span class="action">Captain ×2</span><span class="pts pos">×2</span></div>
+            <div class="example-total"><span>Final Points</span><span class="pts">22</span></div>
+          </div>
+          <div class="example-card">
+            <div class="example-card-header"><h4>D. Abalora</h4><span class="pos-badge">GK</span></div>
+            <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+            <div class="example-line"><span class="action">Clean sheet (GK)</span><span class="pts pos">+4</span></div>
+            <div class="example-line"><span class="action">5 Saves (1 bonus)</span><span class="pts pos">+1</span></div>
+            <div class="example-total"><span>Final Points</span><span class="pts">7</span></div>
+          </div>
+          <div class="example-card">
+            <div class="example-card-header"><h4>K. Baako</h4><span class="pos-badge">ATT</span></div>
+            <div class="example-line"><span class="action">Played 78 minutes</span><span class="pts pos">+2</span></div>
+            <div class="example-line"><span class="action">2 Goals (ATT)</span><span class="pts pos">+12</span></div>
+            <div class="example-line"><span class="action">Yellow card</span><span class="pts neg">−1</span></div>
+            <div class="example-total"><span>Final Points</span><span class="pts">13</span></div>
+          </div>
+          <div class="example-card">
+            <div class="example-card-header"><h4>A. Mensah</h4><span class="pos-badge">DEF</span></div>
+            <div class="example-line"><span class="action">Played 90 minutes</span><span class="pts pos">+2</span></div>
+            <div class="example-line"><span class="action">Own goal</span><span class="pts neg">−2</span></div>
+            <div class="example-line"><span class="action">2 Goals conceded</span><span class="pts neg">−1</span></div>
+            <div class="example-line"><span class="action">Yellow card</span><span class="pts neg">−1</span></div>
+            <div class="example-total"><span>Final Points</span><span class="pts" style="color:var(--accent-red)">-2</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div style="margin-bottom:48px" class="reveal"><span class="label">Strategy Intel</span><h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Scoring tactics<br />that separate winners.</h2></div>
+        <div class="strategy-grid reveal">
+          <div class="strategy-card"><div class="strategy-card-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/captain-band.png" alt="Captain" style="width:20px;height:20px" /></div><h4>Captain premium fixtures</h4><p>Your captain choice is worth roughly 30% of your gameweek score. Target players with easy fixtures and recent form.</p></div>
+          <div class="strategy-card"><div class="strategy-card-icon">🛡️</div><h4>Don't ignore defenders</h4><p>A clean sheet (4 pts) plus appearance (2 pts) gives DEF/GK a solid floor of 6 points. Teams with strong defensive records are goldmines.</p></div>
+          <div class="strategy-card"><div class="strategy-card-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/exchange.png" alt="Transfer" style="width:20px;height:20px" /></div><h4>Bank free transfers</h4><p>If you don't need to transfer, consider saving. Two free transfers next gameweek gives you more flexibility without the -4 point hit.</p></div>
+          <div class="strategy-card"><div class="strategy-card-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/bar-chart.png" alt="Form" style="width:20px;height:20px" /></div><h4>Form over reputation</h4><p>A ₵5M midfielder on a 5-match scoring streak will outscore a ₵9M star in poor form.</p></div>
+          <div class="strategy-card"><div class="strategy-card-icon">📅</div><h4>Plan fixture swings</h4><p>Look 2–3 gameweeks ahead. Transfer in players facing easy opponents before their price rises from increased demand.</p></div>
+          <div class="strategy-card"><div class="strategy-card-icon">💡</div><h4>Differential captaincy</h4><p>If you're chasing a league rival, captain a player they don't own. The ×2 multiplier on a unique pick creates massive rank swings.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt-bg">
+      <div class="container">
+        <div class="pricing-layout reveal">
+          <div class="pricing-info">
+            <span class="label">Dynamic Pricing</span>
+            <h3 style="margin-top:12px">Prices move with<br />the market.</h3>
+            <p>Player prices update weekly after each gameweek. The algorithm considers multiple factors to ensure prices reflect both real-world performance and fantasy demand. Maximum weekly change is capped at ±20%.</p>
+            <div>
+              <div class="pricing-factor"><span class="pricing-factor-weight">40%</span><div><h4>Fantasy Points Earned</h4><p>Recent gameweek performance directly impacts price movement.</p></div></div>
+              <div class="pricing-factor"><span class="pricing-factor-weight">25%</span><div><h4>Selection Demand</h4><p>More managers buying a player drives the price up — selling drives it down.</p></div></div>
+              <div class="pricing-factor"><span class="pricing-factor-weight">25%</span><div><h4>Recent Form</h4><p>Weighted average of the last 3 gameweeks smooths out single-match outliers.</p></div></div>
+              <div class="pricing-factor"><span class="pricing-factor-weight">10%</span><div><h4>Availability Status</h4><p>Injuries and suspensions trigger price drops regardless of other factors.</p></div></div>
+            </div>
+          </div>
+          <div class="mock-chart">
+            <div class="mock-chart-header"><h4>Price History — H. Gyau</h4><span style="font-family:var(--font-mono);font-size:11px;color:var(--accent-gold)">₵8.5M</span></div>
+            <div class="mock-chart-body">
+              <svg class="chart-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                <line x1="0" y1="40" x2="400" y2="40" stroke="#222" stroke-width="0.5" />
+                <line x1="0" y1="80" x2="400" y2="80" stroke="#222" stroke-width="0.5" />
+                <line x1="0" y1="120" x2="400" y2="120" stroke="#222" stroke-width="0.5" />
+                <line x1="0" y1="160" x2="400" y2="160" stroke="#222" stroke-width="0.5" />
+                <text x="0" y="38" fill="#555" font-family="JetBrains Mono" font-size="9">₵9.0M</text>
+                <text x="0" y="78" fill="#555" font-family="JetBrains Mono" font-size="9">₵8.5M</text>
+                <text x="0" y="118" fill="#555" font-family="JetBrains Mono" font-size="9">₵8.0M</text>
+                <text x="0" y="158" fill="#555" font-family="JetBrains Mono" font-size="9">₵7.5M</text>
+                <polyline points="40,140 73,130 106,120 140,115 173,100 206,90 240,95 273,85 306,75 340,80 373,78" fill="none" stroke="#00ff7f" stroke-width="2" stroke-linejoin="round" />
+                <polygon points="40,140 73,130 106,120 140,115 173,100 206,90 240,95 273,85 306,75 340,80 373,78 373,180 40,180" fill="url(#areaGrad)" opacity="0.3" />
+                <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00ff7f" stop-opacity="0.4" /><stop offset="100%" stop-color="#00ff7f" stop-opacity="0" /></linearGradient></defs>
+                <text x="40" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW1</text>
+                <text x="140" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW4</text>
+                <text x="240" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW7</text>
+                <text x="340" y="196" fill="#555" font-family="JetBrains Mono" font-size="8" text-anchor="middle">GW10</text>
+                <circle cx="373" cy="78" r="4" fill="#00ff7f" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-cta">
+      <div class="page-cta-bg"></div>
+      <div class="container reveal">
+        <h2>Know the rules.<br />Exploit the edges.</h2>
+        <p>Join the waitlist and start strategizing before the first ball is kicked.</p>
+        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join SmallPoles Beta →</a>
+      </div>
+    </section>
+
+<?php get_footer(); ?>
