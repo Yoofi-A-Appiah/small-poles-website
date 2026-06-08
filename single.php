@@ -65,6 +65,9 @@
           </div>
         </div>
 
+        <!-- Comments -->
+        <?php comments_template(); ?>
+
         <!-- Post navigation -->
         <div class="article-post-nav">
           <?php

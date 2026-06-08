@@ -22,7 +22,9 @@
     </a>
 
     <?php
-    $is_news_section = smallpoles_is_news_archive() || is_category() || ( is_single() && get_post_type() === 'post' );
+    $is_news_section  = smallpoles_is_news_archive() || is_category() || ( is_single() && get_post_type() === 'post' );
+    $current_game     = get_query_var( 'smallpoles_game' );
+    $is_games_section = ! empty( $current_game );
     ?>
     <ul class="nav-links" id="navLinks">
       <li>
@@ -36,14 +38,32 @@
         <a href="<?php echo esc_url( home_url( '/#features' ) ); ?>">Features</a>
       </li>
       <li>
-        <a href="<?php echo esc_url( home_url( '/#how-it-works' ) ); ?>">How It Works</a>
-      </li>
-      <li>
         <?php if ( $is_news_section ) : ?>
           <span class="nav-status"><span class="nav-status-dot"></span>News</span>
         <?php else : ?>
           <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">News</a>
         <?php endif; ?>
+      </li>
+      <li class="nav-has-dropdown">
+        <?php if ( $is_games_section ) : ?>
+          <span class="nav-status"><span class="nav-status-dot"></span>Games ▾</span>
+        <?php else : ?>
+          <a href="<?php echo esc_url( home_url( '/games/' ) ); ?>">Games ▾</a>
+        <?php endif; ?>
+        <ul class="nav-dropdown">
+          <?php if ( sp_game_is_visible( 'higher-lower' ) ) : ?>
+          <li><a href="<?php echo esc_url( home_url( '/games/higher-lower/' ) ); ?>">📊 Higher or Lower</a></li>
+          <?php endif; ?>
+          <?php if ( sp_game_is_visible( 'polele' ) ) : ?>
+          <li><a href="<?php echo esc_url( home_url( '/games/polele/' ) ); ?>">⚽ Polele</a></li>
+          <?php endif; ?>
+          <?php if ( sp_game_is_visible( 'bracket' ) ) : ?>
+          <li><a href="<?php echo esc_url( home_url( '/games/bracket/' ) ); ?>">🏆 Bracket Challenge</a></li>
+          <?php endif; ?>
+          <?php if ( sp_game_is_visible( 'squad' ) ) : ?>
+          <li><a href="<?php echo esc_url( home_url( '/games/squad/' ) ); ?>">👕 Squad Builder</a></li>
+          <?php endif; ?>
+        </ul>
       </li>
       <li>
         <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="nav-cta">Join Beta</a>
