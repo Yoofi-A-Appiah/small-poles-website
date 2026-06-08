@@ -35,6 +35,12 @@ if (navOverlay) {
   navOverlay.addEventListener('click', closeNav);
 }
 
+if (navLinks) {
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeNav);
+  });
+}
+
 // Announcement bar dismiss (persists across pages via localStorage)
 const annBar = document.querySelector('.announcement-bar');
 if (annBar) {
@@ -349,7 +355,7 @@ if (annBar) {
 
     container.innerHTML =
       '<div class="sp-standings-title">' + leagueName + '</div>'
-      + '<div class="sp-rounds-carousel" id="sp-groups-carousel" tabindex="0">'
+      + '<div class="sp-rounds-carousel" tabindex="0">'
       +   '<button class="sp-rounds-arrow sp-rounds-arrow--prev" aria-label="Previous group">&#8249;</button>'
       +   '<div class="sp-rounds-viewport"><div class="sp-rounds-track"></div></div>'
       +   '<button class="sp-rounds-arrow sp-rounds-arrow--next" aria-label="Next group">&#8250;</button>'
@@ -359,14 +365,14 @@ if (annBar) {
       +     '<th></th><th style="text-align:left">Team</th>'
       +     '<th title="Played">P</th><th title="Points">Pts</th><th title="Goal Difference">GD</th>'
       +   '</tr></thead>'
-      +   '<tbody id="sp-st-tbody">' + buildRows(groups[defaultIndex]) + '</tbody>'
+      +   '<tbody class="sp-st-tbody">' + buildRows(groups[defaultIndex]) + '</tbody>'
       + '</table>';
 
     container.classList.remove('sp-loading');
 
-    var tbody = document.getElementById('sp-st-tbody');
+    var tbody = container.querySelector('.sp-st-tbody');
     initGroupCarousel(
-      document.getElementById('sp-groups-carousel'),
+      container.querySelector('.sp-rounds-carousel'),
       groupNames,
       defaultIndex,
       function (i) { tbody.innerHTML = buildRows(groups[i]); }
@@ -376,9 +382,11 @@ if (annBar) {
   // Homepage: fixture + predictions/odds + standings in parallel
   var homeWidget     = document.getElementById('sp-home-fixture');
   var standingsPanel = document.getElementById('sp-home-standings');
+  var homeWidgetMob  = document.getElementById('sp-home-fixture-mob');
+  var standingsMob   = document.getElementById('sp-home-standings-mob');
 
-  if (homeWidget) {
-    var standingsP = standingsPanel
+  if (homeWidget || homeWidgetMob) {
+    var standingsP = (standingsPanel || standingsMob)
       ? apiFetch('standings').catch(function () { return null; })
       : Promise.resolve(null);
 
@@ -394,12 +402,18 @@ if (annBar) {
         ]);
       })
       .then(function (r) {
-        renderWidget(homeWidget, r[0], r[1], r[2]);
+        if (homeWidget)    renderWidget(homeWidget, r[0], r[1], r[2]);
+        if (homeWidgetMob) renderWidget(homeWidgetMob, r[0], r[1], r[2]);
         if (standingsPanel) renderStandings(standingsPanel, r[3], r[0]);
+        if (standingsMob)   renderStandings(standingsMob, r[3], r[0]);
       })
       .catch(function () {
-        showNoFixture(homeWidget);
-        if (standingsPanel) standingsP.then(function (d) { renderStandings(standingsPanel, d, null); });
+        if (homeWidget)    showNoFixture(homeWidget);
+        if (homeWidgetMob) showNoFixture(homeWidgetMob);
+        standingsP.then(function (d) {
+          if (standingsPanel) renderStandings(standingsPanel, d, null);
+          if (standingsMob)   renderStandings(standingsMob, d, null);
+        });
       });
   }
 

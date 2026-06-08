@@ -12,7 +12,7 @@
             </a>
             <p>The first fantasy football platform built exclusively for the Ghana Premier League.</p>
           </div>
-          <div style="display:flex;gap:64px">
+          <div class="footer-links">
             <div class="footer-links-group">
               <h4>Platform</h4>
               <a href="<?php echo esc_url( home_url( '/#features' ) ); ?>">Features</a>
@@ -20,7 +20,7 @@
               <a href="<?php echo esc_url( home_url( '/#why-small-poles' ) ); ?>">Why Small Poles</a>
             </div>
             <div class="footer-links-group">
-              <h4>Intel</h4>
+              <h4>News</h4>
               <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">News & Analysis</a>
               <a href="<?php echo esc_url( get_category_link( get_cat_ID( 'World Cup' ) ) ); ?>">World Cup 2026</a>
               <a href="<?php echo esc_url( get_category_link( get_cat_ID( 'GPL Analysis' ) ) ); ?>">GPL Analysis</a>

@@ -166,7 +166,7 @@
         if ( $related->have_posts() ) :
         ?>
         <div class="sidebar-widget">
-          <div class="sidebar-widget-header">Related Intel</div>
+          <div class="sidebar-widget-header">Related News</div>
           <div class="sidebar-widget-body">
             <?php while ( $related->have_posts() ) : $related->the_post(); ?>
             <a href="<?php the_permalink(); ?>" class="sidebar-related-post">

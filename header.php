@@ -59,9 +59,9 @@
 
 <!-- Announcement Bar -->
 <div class="announcement-bar" id="annBar">
-  <span class="ann-dot"></span>
   <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-    ⚽ World Cup 2026 is live — Ghana's stars on the global stage. Read our group stage analysis →
+    <span class="ann-text-desktop">⚽ World Cup 2026 is live. Read our analysis as Ghana's stars take the global stage →</span>
+    <span class="ann-text-mobile">⚽ World Cup 2026 is live. Read our analysis as Ghana's stars take the global stage →</span>
   </a>
   <button class="ann-dismiss" aria-label="Dismiss">&times;</button>
 </div>

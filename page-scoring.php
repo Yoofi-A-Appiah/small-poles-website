@@ -85,7 +85,7 @@
 
     <section>
       <div class="container">
-        <div style="margin-bottom:48px" class="reveal"><span class="label">Strategy Intel</span><h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Scoring tactics<br />that separate winners.</h2></div>
+        <div style="margin-bottom:48px" class="reveal"><span class="label">Strategy News</span><h2 style="font-family:var(--font-display);font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-1.2px;margin-top:12px">Scoring tactics<br />that separate winners.</h2></div>
         <div class="strategy-grid reveal">
           <div class="strategy-card"><div class="strategy-card-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/captain-band.png" alt="Captain" style="width:20px;height:20px" /></div><h4>Captain premium fixtures</h4><p>Your captain choice is worth roughly 30% of your gameweek score. Target players with easy fixtures and recent form.</p></div>
           <div class="strategy-card"><div class="strategy-card-icon">🛡️</div><h4>Don't ignore defenders</h4><p>A clean sheet (4 pts) plus appearance (2 pts) gives DEF/GK a solid floor of 6 points. Teams with strong defensive records are goldmines.</p></div>

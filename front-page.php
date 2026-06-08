@@ -6,16 +6,12 @@
       <div class="hero-grid"></div>
       <div class="container">
         <div class="hero-content">
-          <div class="hero-badge">
-            <span class="hero-badge-dot">⚽</span>
-            World Cup 2026 · Ghana in the arena
-          </div>
           <h1>
-            The Black Stars fly the flag.<br /><span class="accent">You build the squad.</span>
+            The Black Stars go fly the flag.<br /><span class="accent">You go build the squad.</span>
           </h1>
           <p class="hero-sub">
-            The first fantasy platform built for the GPL. Pick real players,
-            predict results, and compete with your people every gameweek.
+            This be the first fantasy platform built for the GPL. Pick real players,
+            predict results, and compete with your people every gameweek. <span class="hero-highlight">No be small agenda</span>
           </p>
           <div class="hero-actions">
             <a href="#waitlist" class="btn-primary">
@@ -24,7 +20,7 @@
               </svg>
               Join the Waitlist
             </a>
-            <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">World Cup Intel →</a>
+            <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">World Cup News →</a>
           </div>
           <div class="hero-stats">
             <div>
@@ -92,35 +88,35 @@
       <div class="container">
         <div class="why-header reveal">
           <span class="label">Why Small Poles</span>
-          <h2>Ghana football fans<br />deserve a real game.</h2>
+          <h2>Ghana football fans<br />dey deserve a real game.</h2>
         </div>
         <div class="why-list">
           <div class="why-item reveal">
             <div class="why-num">01</div>
             <div class="why-body">
               <h3>Ghana's league. Properly tracked.</h3>
-              <p>No stats platform covers the GPL the way it deserves. No form guides. No price history. No depth on the players your club actually plays every week. We built what should have existed years ago.</p>
+              <p>No stats platform dey cover the GPL the way it deserves. No form guides, no price history, no depth on the players your club dey actually play every week. Just plenty talk, no evidence. <span class="hero-highlight">We built what should have existed years ago.</span></p>
             </div>
           </div>
           <div class="why-item reveal">
             <div class="why-num">02</div>
             <div class="why-body">
               <h3>Every matchday is yours now.</h3>
-              <p>When your squad spans Kotoko, Hearts, Medeama, and Legon Cities — no fixture is a dead rubber. You have skin in the game regardless of who's playing. That's 34 weeks of reasons to care.</p>
+              <p>When your squad spans Kotoko, Hearts, Medeama, and Legon Cities, no fixture go fit bore you. You get skin in the game no matter who dey play. <span class="hero-highlight">That's 34 weeks of reasons to care.</span></p>
             </div>
           </div>
           <div class="why-item reveal">
             <div class="why-num">03</div>
             <div class="why-body">
               <h3>Points from what actually happens.</h3>
-              <p>No algorithm filler. Goals, assists, clean sheets, saves — the same things that count in any football conversation. Real performances from real GPL players, scored in real time.</p>
+              <p>No algorithm filler. Goals, assists, clean sheets, saves — the same things that count in any football conversation. <span class="hero-highlight">Real performances from real GPL players, scored in real time.</span></p>
             </div>
           </div>
           <div class="why-item reveal">
             <div class="why-num">04</div>
             <div class="why-body">
               <h3>Ghana football has always been tribal.</h3>
-              <p>Set up a private league with whoever thinks they read the GPL best. Play the full season. 34 gameweeks to prove it. There's always one person in the group who's been wrong about Medeama all year.</p>
+              <p>Set up a private league with whoever dey think say them get GPL knowledge pass. There's always one person in the group who's been wrong about Kotoko all year. <span class="hero-highlight">34 gameweeks to prove it.</span></p>
             </div>
           </div>
         </div>
@@ -178,25 +174,21 @@
             <div class="feature-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/clipboard.png" alt="Scout & Tactics" style="width:24px;height:24px" /></div>
             <h3>Scout & Tactics</h3>
             <p>Find the GPL players worth picking, then put them where they belong. Scout the entire league, set your formation, and name your captain before every matchday.</p>
-            <span class="feature-tag">Core System</span>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/bar-chart.png" alt="Player Dossier" style="width:24px;height:24px" /></div>
             <h3>Player Dossier</h3>
-            <p>Every player's full story — goals, assists, clean sheets, price moves, and upcoming fixtures. All in one place.</p>
-            <span class="feature-tag">Data Engine</span>
+            <p>Every player's full story. Goals, assists, clean sheets, price moves, and upcoming fixtures. All in one place.</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/newspaper.png" alt="Predictions" style="width:24px;height:24px" /></div>
             <h3>Predictions & Odds</h3>
             <p>Call the result before kickoff. See GPL fixture odds, make your match predictions, and earn bonus points when you read the game right.</p>
-            <span class="feature-tag">Match Intelligence</span>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/trophy.png" alt="Leagues" style="width:24px;height:24px" /></div>
             <h3>Leagues & Rankings</h3>
             <p>Set up a private league, bring in your people, and see who really knows the GPL. Plus a global board for when you want a bigger test.</p>
-            <span class="feature-tag">Social Competition</span>
           </div>
         </div>
       </div>
@@ -244,8 +236,8 @@
     </section>
     <?php endif; ?>
 
-    <!-- Next Match Widget -->
-    <section class="sp-fixture-section">
+    <!-- Next Match Widget — Desktop -->
+    <section class="sp-fixture-section sp-fixture-desktop">
       <div class="container">
         <div class="section-header reveal">
           <div>
@@ -274,6 +266,33 @@
       </div>
     </section>
 
+    <!-- Next Match Widget — Mobile -->
+    <section class="sp-fixture-section sp-fixture-mobile">
+      <div class="container">
+        <div class="section-header reveal">
+          <div>
+            <span class="label">Match Intelligence</span>
+            <h2 style="margin-top:12px">Black Stars'<br />next match.</h2>
+          </div>
+        </div>
+        <div id="sp-home-fixture-mob" class="sp-widget sp-loading" aria-live="polite">
+          <div class="sp-skeleton">
+            <div class="sp-sk sp-sk-teams"></div>
+            <div class="sp-sk sp-sk-bar"></div>
+            <div class="sp-sk sp-sk-odds"></div>
+          </div>
+        </div>
+        <div id="sp-home-standings-mob" class="sp-standings-panel sp-standings-mob sp-loading" aria-live="polite">
+          <div class="sp-skeleton">
+            <div class="sp-sk sp-sk-bar"></div>
+            <div class="sp-sk sp-sk-comps"></div>
+            <div class="sp-sk sp-sk-comps"></div>
+            <div class="sp-sk sp-sk-comps"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA / Waitlist -->
     <section class="cta-section" id="waitlist">
       <div class="cta-bg"></div>
@@ -281,8 +300,8 @@
         <span class="label" style="display:block;margin-bottom:20px">Early Access</span>
         <h2>Get in before<br />kickoff.</h2>
         <p>
-          We're building Small Poles for people who genuinely love the GPL.
-          Join the waitlist — be among the first on the pitch when we launch.
+          We dey build Small Poles for people who genuinely love the GPL.
+          Join the waitlist and get "first sele" on the pitch when we launch.
         </p>
         <iframe
           data-tally-src="https://tally.so/embed/ODJ4Np?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"

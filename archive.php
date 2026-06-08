@@ -25,7 +25,7 @@
             <?php if ( is_category() ) : ?>
               <?php single_cat_title(); ?>
             <?php else : ?>
-              GPL Intel.<br /><span class="accent">World Cup & Beyond.</span>
+              GPL News.<br /><span class="accent">World Cup & Beyond.</span>
             <?php endif; ?>
           </h1>
         </div>
