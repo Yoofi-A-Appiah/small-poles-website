@@ -313,23 +313,10 @@ add_action( 'template_redirect', function() {
     exit;
 } );
 
-/* ── Google Analytics 4 ── */
-function smallpoles_google_analytics() {
-    if ( is_admin() ) return;
-    $measurement_id = 'G-XSJ3VSCVSS'; // Replace with your real Measurement ID
-    ?>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $measurement_id ); ?>"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '<?php echo esc_js( $measurement_id ); ?>');
-    </script>
-    <?php
-}
-add_action( 'wp_head', 'smallpoles_google_analytics', 1 );
-
+add_filter( 'robots_txt', function( $output ) {
+    $output .= "\nSitemap: " . home_url( '/sitemap_index.xml' ) . "\n";
+    return $output;
+} );
 
 /* ── Clean up WordPress cruft ── */
 remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
