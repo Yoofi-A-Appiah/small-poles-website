@@ -88,6 +88,11 @@ html {
   50%       { transform: perspective(1200px) rotateY(-8deg) rotateX(3deg) translateY(-18px); }
 }
 
+@keyframes phoneFloatMobile {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
 .hero-visual .phone-mockup {
   animation: phoneFloat 3.6s ease-in-out infinite;
   animation-delay: 0.8s;
@@ -726,7 +731,7 @@ section {
 
 .phone-mockup {
   position: relative;
-  width: 272px;
+  width: 680px;
   transform: perspective(1200px) rotateY(-8deg) rotateX(3deg);
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   filter: drop-shadow(0 48px 80px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 40px rgba(0, 100, 54, 0.12));
@@ -736,68 +741,9 @@ section {
   transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
 }
 
-.phone-frame {
-  position: relative;
-  background: linear-gradient(160deg, #2a2a2a 0%, #141414 100%);
-  border-radius: 48px;
-  padding: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 0 1px #080808,
-    6px 12px 48px rgba(0, 0, 0, 0.9);
-}
-
-/* Power button — right side */
-.phone-frame::before {
-  content: '';
-  position: absolute;
-  right: -3px;
-  top: 130px;
-  width: 3px;
-  height: 66px;
-  background: linear-gradient(180deg, #333 0%, #1e1e1e 100%);
-  border-radius: 0 2px 2px 0;
-}
-
-/* Volume buttons — left side */
-.phone-frame::after {
-  content: '';
-  position: absolute;
-  left: -3px;
-  top: 100px;
-  width: 3px;
-  height: 38px;
-  background: linear-gradient(180deg, #333 0%, #1e1e1e 100%);
-  border-radius: 2px 0 0 2px;
-  box-shadow: 0 54px 0 #2a2a2a, 0 54px 0 #2a2a2a;
-}
-
-.phone-screen {
-  position: relative;
-  background: #000;
-  border-radius: 36px;
-  overflow: hidden;
-  aspect-ratio: 9 / 19.5;
-}
-
-.phone-dynamic-island {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 28px;
-  background: #000;
-  border-radius: 20px;
-  z-index: 10;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
 .phone-screenshot {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
 }
 
@@ -817,7 +763,10 @@ section {
 .phone-mockup::before {
   content: '';
   position: absolute;
-  inset: -50px;
+  top: -50px;
+  bottom: -50px;
+  left: 0;
+  right: 0;
   background: radial-gradient(ellipse at 50% 50%, rgba(0, 100, 54, 0.18) 0%, transparent 65%);
   filter: blur(36px);
   pointer-events: none;
@@ -836,7 +785,7 @@ section {
 /* ── Why Section Two-Column Layout ── */
 .why-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr minmax(300px, 600px);
   gap: 80px;
   align-items: center;
 }
@@ -852,7 +801,7 @@ section {
 }
 
 .why-visual .phone-mockup {
-  width: 240px;
+  width: 600px;
 }
 
 /* ── Squad Spotlight Section ── */
@@ -875,7 +824,7 @@ section {
 }
 
 .spotlight-visual .phone-mockup {
-  width: 272px;
+  width: 680px;
 }
 
 .spotlight-text {
@@ -961,7 +910,7 @@ section {
 }
 
 .league-showcase-visual .phone-mockup {
-  width: 260px;
+  width: 640px;
 }
 
 .tactics-card {
@@ -1613,17 +1562,21 @@ section {
   }
 
   .hero-visual {
-    max-width: 560px;
+    max-width: 100%;
     justify-content: center;
   }
 
   .phone-mockup {
     transform: none;
-    width: 240px;
+    width: min(600px, calc(100vw - 48px));
   }
 
   .phone-mockup--tilt-right {
     transform: none;
+  }
+
+  .hero-visual .phone-mockup {
+    animation-name: phoneFloatMobile;
   }
 
   .why-layout {
@@ -1632,7 +1585,7 @@ section {
   }
 
   .why-visual .phone-mockup {
-    width: 220px;
+    width: min(560px, calc(100vw - 48px));
   }
 
   .spotlight-layout {
@@ -1646,7 +1599,7 @@ section {
   }
 
   .spotlight-visual .phone-mockup {
-    width: 240px;
+    width: min(600px, calc(100vw - 48px));
   }
 
   .league-showcase {
@@ -1655,7 +1608,7 @@ section {
   }
 
   .league-showcase-visual .phone-mockup {
-    width: 220px;
+    width: min(560px, calc(100vw - 48px));
   }
 
   .features-grid {
@@ -1788,7 +1741,7 @@ section {
 
   .phone-mockup {
     transform: none;
-    width: 220px;
+    width: min(540px, calc(100vw - 48px));
   }
 
   .phone-mockup--tilt-right {

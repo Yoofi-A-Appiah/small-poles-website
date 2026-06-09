@@ -42,18 +42,13 @@
         <div class="hero-visual">
           <div class="parallax-phone">
             <div class="phone-mockup">
-              <div class="phone-frame">
-                <div class="phone-screen">
-                  <div class="phone-dynamic-island"></div>
-                  <img
-                    src="<?php echo get_template_directory_uri(); ?>/assets/mockup-home.webp"
-                    alt="Small Poles App — Home Screen"
-                    class="phone-screenshot"
-                    loading="eager"
-                    decoding="async"
-                  />
-                </div>
-              </div>
+              <img
+                src="<?php echo get_template_directory_uri(); ?>/assets/mockuphome.webp"
+                alt="Small Poles App — Home Screen"
+                class="phone-screenshot"
+                loading="eager"
+                decoding="async"
+              />
               <div class="phone-glow"></div>
             </div>
           </div>
@@ -110,18 +105,13 @@
           <div class="why-visual reveal">
             <div class="parallax-phone">
               <div class="phone-mockup phone-mockup--tilt-right">
-                <div class="phone-frame">
-                  <div class="phone-screen">
-                    <div class="phone-dynamic-island"></div>
-                    <img
-                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-scout.webp"
-                      alt="Small Poles Scout Room"
-                      class="phone-screenshot"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </div>
+                <img
+                  src="<?php echo get_template_directory_uri(); ?>/assets/mockupscout.webp"
+                  alt="Small Poles Scout Room"
+                  class="phone-screenshot"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div class="phone-glow"></div>
               </div>
             </div>
@@ -189,18 +179,13 @@
           <div class="spotlight-visual">
             <div class="parallax-phone">
               <div class="phone-mockup">
-                <div class="phone-frame">
-                  <div class="phone-screen">
-                    <div class="phone-dynamic-island"></div>
-                    <img
-                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-squad2.webp"
-                      alt="Small Poles — Squad Builder"
-                      class="phone-screenshot"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </div>
+                <img
+                  src="<?php echo get_template_directory_uri(); ?>/assets/mockupsquad.webp"
+                  alt="Small Poles — Squad Builder"
+                  class="phone-screenshot"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div class="phone-glow"></div>
               </div>
             </div>
@@ -261,18 +246,13 @@
           <div class="league-showcase-visual">
             <div class="parallax-phone">
               <div class="phone-mockup phone-mockup--tilt-right">
-                <div class="phone-frame">
-                  <div class="phone-screen">
-                    <div class="phone-dynamic-island"></div>
-                    <img
-                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-league.webp"
-                      alt="Small Poles — Leagues"
-                      class="phone-screenshot"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </div>
+                <img
+                  src="<?php echo get_template_directory_uri(); ?>/assets/mockupleague.webp"
+                  alt="Small Poles — Leagues"
+                  class="phone-screenshot"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div class="phone-glow"></div>
               </div>
             </div>
