@@ -88,7 +88,8 @@ function smallpoles_scripts() {
         wp_enqueue_script( 'sp-polele', get_template_directory_uri() . '/assets/js/polele.js', [], '1.0.0', true );
     }
     if ( $game === 'bracket' ) {
-        wp_enqueue_script( 'sp-bracket', get_template_directory_uri() . '/assets/js/bracket.js', [], '1.0.0', true );
+        wp_enqueue_script( 'html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', [], null, true );
+        wp_enqueue_script( 'sp-bracket', get_template_directory_uri() . '/assets/js/bracket.js', [ 'html2canvas' ], '2.0.0', true );
         wp_localize_script( 'sp-bracket', 'spBracket', [
             'restBase' => esc_url_raw( rest_url( 'smallpoles/v1/' ) ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
@@ -398,10 +399,72 @@ function smallpoles_settings_page() {
         <div id="sp-test-status" style="margin-bottom:8px;font-weight:600;color:#0073aa;display:none"></div>
         <pre id="sp-test-output" style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;max-height:500px;overflow:auto;font-size:12px;line-height:1.6;display:none;white-space:pre-wrap;word-break:break-all"></pre>
 
+        <hr />
+        <h2>WC 2026 Bracket Groups</h2>
+        <p style="color:#666;margin-bottom:12px">
+            Seed the World Cup 2026 group teams used by the Bracket Challenge.
+            Click <strong>Fetch from API</strong> to pull from api-football (requires league=1, season=2026 to be set above),
+            or paste JSON manually and click <strong>Save Groups</strong>.
+        </p>
+        <?php $existing = get_option('smallpoles_wc_groups_data'); ?>
+        <p style="color:<?php echo $existing ? '#46b450' : '#dc3232'; ?>">
+            <?php echo $existing ? '&#10003; Groups seeded (' . count($existing) . ' groups)' : '&#10007; Not seeded — using fallback or API'; ?>
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="button button-primary" id="sp-fetch-groups">Fetch from API</button>
+            <button class="button" id="sp-save-groups-json">Save JSON below</button>
+            <button class="button" id="sp-clear-groups" style="color:#dc3232">Clear Seeded Groups</button>
+        </div>
+        <textarea id="sp-groups-json" style="width:100%;max-width:800px;height:200px;font-family:monospace;font-size:12px"><?php echo $existing ? esc_textarea(json_encode($existing, JSON_PRETTY_PRINT)) : ''; ?></textarea>
+        <div id="sp-groups-status" style="margin-top:8px;font-weight:600;display:none"></div>
+
         <script>
         (function() {
             const base  = '<?php echo esc_js( $base ); ?>';
             const nonce = '<?php echo wp_create_nonce( 'wp_rest' ); ?>';
+
+            // WC Groups seeding
+            const groupsTextarea = document.getElementById('sp-groups-json');
+            const groupsStatus   = document.getElementById('sp-groups-status');
+
+            function showGroupStatus(msg, ok) {
+                groupsStatus.style.display = 'block';
+                groupsStatus.style.color   = ok ? '#46b450' : '#dc3232';
+                groupsStatus.textContent   = msg;
+            }
+
+            document.getElementById('sp-fetch-groups').addEventListener('click', async function() {
+                this.disabled = true; this.textContent = 'Fetching…';
+                try {
+                    const res  = await fetch(base + '/wc-groups', { headers: { 'X-WP-Nonce': nonce } });
+                    const data = await res.json();
+                    if (!res.ok) { showGroupStatus('API error: ' + (data.message || res.status), false); return; }
+                    groupsTextarea.value = JSON.stringify(data, null, 2);
+                    // Auto-save
+                    const saveRes  = await fetch(base + '/wc-seed-groups', { method:'POST', headers:{'Content-Type':'application/json','X-WP-Nonce':nonce}, body: JSON.stringify({groups:data}) });
+                    const saveData = await saveRes.json();
+                    showGroupStatus(saveRes.ok ? '✓ Fetched and saved (' + Object.keys(data).length + ' groups)' : '✗ Fetch OK but save failed', saveRes.ok);
+                } catch(e) { showGroupStatus('✗ ' + e.message, false); }
+                this.disabled = false; this.textContent = 'Fetch from API';
+            });
+
+            document.getElementById('sp-save-groups-json').addEventListener('click', async function() {
+                this.disabled = true;
+                try {
+                    const groups = JSON.parse(groupsTextarea.value);
+                    const res  = await fetch(base + '/wc-seed-groups', { method:'POST', headers:{'Content-Type':'application/json','X-WP-Nonce':nonce}, body: JSON.stringify({groups}) });
+                    const data = await res.json();
+                    showGroupStatus(res.ok ? '✓ Saved (' + Object.keys(groups).length + ' groups)' : '✗ ' + (data.message||res.status), res.ok);
+                } catch(e) { showGroupStatus('✗ ' + e.message, false); }
+                this.disabled = false;
+            });
+
+            document.getElementById('sp-clear-groups').addEventListener('click', async function() {
+                if (!confirm('Clear seeded groups? The bracket will fall back to API or hardcoded data.')) return;
+                const res = await fetch(base + '/wc-seed-groups', { method:'POST', headers:{'Content-Type':'application/json','X-WP-Nonce':nonce}, body: JSON.stringify({groups:{}}) });
+                showGroupStatus(res.ok ? '✓ Cleared' : '✗ Failed', res.ok);
+                groupsTextarea.value = '';
+            });
             const fixtureInput = document.getElementById('sp_fixture_test');
             const status = document.getElementById('sp-test-status');
             const output = document.getElementById('sp-test-output');
@@ -588,6 +651,16 @@ function smallpoles_register_rest_routes() {
 
     register_rest_route( 'smallpoles/v1', '/next-fixture', $public + [
         'callback' => 'smallpoles_next_fixture_proxy',
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/wc-groups', $public + [
+        'callback' => 'smallpoles_wc_groups_proxy',
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/wc-seed-groups', [
+        'methods'             => 'POST',
+        'permission_callback' => fn() => current_user_can( 'manage_options' ),
+        'callback'            => 'smallpoles_wc_seed_groups',
     ] );
 
     register_rest_route( 'smallpoles/v1', '/standings', $public + [
@@ -825,6 +898,54 @@ function smallpoles_standings_proxy() {
         6 * HOUR_IN_SECONDS
     );
     return $result['error'] ?? rest_ensure_response( $result['data'][0]['league'] ?? $result['data'] );
+}
+
+/* ── WC 2026 Groups — serve seeded data or parse from standings API ── */
+function smallpoles_wc_groups_proxy() {
+    // Prefer manually seeded data (permanent)
+    $seeded = get_option( 'smallpoles_wc_groups_data' );
+    if ( $seeded ) return rest_ensure_response( $seeded );
+
+    // Try API standings for league 1 / season 2026
+    $result = smallpoles_api_fetch( 'standings', [ 'league' => 1, 'season' => 2026 ], 'wc_groups_2026', 12 * HOUR_IN_SECONDS );
+    if ( $result['error'] ) return $result['error'];
+
+    $raw = $result['data'][0]['league']['standings'] ?? [];
+    $groups = [];
+    foreach ( $raw as $group_arr ) {
+        if ( empty( $group_arr ) ) continue;
+        $g_label = $group_arr[0]['group'] ?? '';
+        // Extract letter: "Group A" → "A". Skip derived tables like "Ranking of Third Placed Teams".
+        $letter = strtoupper( preg_replace( '/[^A-Z]/i', '', str_replace( 'Group ', '', $g_label ) ) );
+        if ( strlen( $letter ) !== 1 ) continue;
+        $teams = array_map( fn( $row ) => [
+            'name' => $row['team']['name'],
+            'logo' => $row['team']['logo'] ?? '',
+        ], $group_arr );
+        $groups[ $letter ] = $teams;
+    }
+    ksort( $groups );
+    return rest_ensure_response( $groups );
+}
+
+function smallpoles_wc_seed_groups( WP_REST_Request $request ) {
+    $body = $request->get_json_params();
+    $groups = $body['groups'] ?? null;
+    if ( ! is_array( $groups ) ) {
+        return new WP_Error( 'bad_data', 'Expected { groups: { A: [...], B: [...] } }', [ 'status' => 400 ] );
+    }
+    // Sanitize: keep only name + logo per team
+    $clean = [];
+    foreach ( $groups as $letter => $teams ) {
+        $letter = strtoupper( sanitize_text_field( $letter ) );
+        $clean[ $letter ] = array_map( fn( $t ) => [
+            'name' => sanitize_text_field( $t['name'] ?? '' ),
+            'logo' => esc_url_raw( $t['logo'] ?? '' ),
+        ], (array) $teams );
+    }
+    ksort( $clean );
+    update_option( 'smallpoles_wc_groups_data', $clean, false );
+    return rest_ensure_response( [ 'ok' => true, 'groups' => $clean ] );
 }
 
 function smallpoles_fixtures_proxy( WP_REST_Request $request ) {

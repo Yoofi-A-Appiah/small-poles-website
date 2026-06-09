@@ -100,6 +100,12 @@
                 </div>
               </div>
             </div>
+            <div class="reveal" style="margin-top:40px">
+              <a href="#waitlist" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                Join the Waitlist
+              </a>
+            </div>
           </div>
           <div class="why-visual reveal">
             <div class="parallax-phone">
@@ -158,6 +164,12 @@
             <p>Climb the rankings, challenge your people in private leagues, and keep your squad sharp with transfers each gameweek.</p>
           </div>
         </div>
+        <div class="reveal" style="text-align:center;margin-top:48px">
+          <a href="#waitlist" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            Start Building Your Squad
+          </a>
+        </div>
       </div>
     </section>
 
@@ -165,6 +177,15 @@
     <section class="squad-spotlight">
       <div class="container">
         <div class="spotlight-layout reveal">
+          <div class="spotlight-text">
+            <span class="label">Squad Builder</span>
+            <h2>15 players.<br /><span class="accent">Your formation.</span></h2>
+            <p>Pick from every GPL club within a GHS 100M budget. Place your men on the pitch, set your captain, and manage transfers each gameweek. Your squad, your wahala.</p>
+            <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              Join the Waitlist
+            </a>
+          </div>
           <div class="spotlight-visual">
             <div class="parallax-phone">
               <div class="phone-mockup">
@@ -183,15 +204,6 @@
                 <div class="phone-glow"></div>
               </div>
             </div>
-          </div>
-          <div class="spotlight-text">
-            <span class="label">Squad Builder</span>
-            <h2>15 players.<br /><span class="accent">Your formation.</span></h2>
-            <p>Build your squad from every GPL club within a GHS 100M budget. Place your men on the pitch, set your captain, and manage your transfers each gameweek. Every decision counts.</p>
-            <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-              Join the Waitlist
-            </a>
           </div>
         </div>
       </div>
@@ -234,13 +246,17 @@
           <div class="league-showcase-text">
             <span class="label">Leagues & Rankings</span>
             <h2>Compete with<br /><span class="accent">your people.</span></h2>
-            <p>Set up a private league for your crew, join the global standings, and see exactly where you rank every gameweek. Top percentile shown, no hiding from the table.</p>
+            <p>Set up a private league for your crew, join the global standings, and see exactly where you rank every gameweek.</p>
             <ul class="league-showcase-bullets">
               <li>Global leaderboard with real-time rankings</li>
               <li>Private leagues — create or join with a code</li>
               <li>Gameweek points + season total tracked</li>
               <li>Your rank moves visible after every GW</li>
             </ul>
+            <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              Join Your League
+            </a>
           </div>
           <div class="league-showcase-visual">
             <div class="parallax-phone">
@@ -334,6 +350,9 @@
             </div>
           </div>
         </div>
+        <div class="reveal" style="text-align:center;margin-top:40px">
+          <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">Read the World Cup Intel →</a>
+        </div>
       </div>
     </section>
 
@@ -360,6 +379,9 @@
             <div class="sp-sk sp-sk-comps"></div>
             <div class="sp-sk sp-sk-comps"></div>
           </div>
+        </div>
+        <div class="reveal" style="text-align:center;margin-top:40px">
+          <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">Read the World Cup Intel →</a>
         </div>
       </div>
     </section>
