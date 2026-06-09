@@ -83,7 +83,7 @@ function smallpoles_scripts() {
         'nonce'    => wp_create_nonce( 'wp_rest' ),
     ] );
 
-    $game = get_query_var( 'smallpoles_game' );
+    $game = sp_current_game();
     if ( $game === 'polele' ) {
         wp_enqueue_script( 'sp-polele', get_template_directory_uri() . '/assets/js/polele.js', [], '1.0.0', true );
     }
@@ -132,186 +132,42 @@ function smallpoles_scripts() {
 }
 add_action( 'wp_enqueue_scripts', 'smallpoles_scripts' );
 
-/* ── SEO: meta description, Open Graph, Twitter Card, canonical ── */
-function smallpoles_seo_meta() {
-    $og_image = get_template_directory_uri() . '/assets/og.webp';
 
-    $game = get_query_var( 'smallpoles_game' );
+/* ── SEO: WebApplication JSON-LD for game pages (Yoast handles everything else) ── */
+function smallpoles_schema() {
+    $game = sp_current_game();
+    if ( ! $game ) return;
 
-    $game_meta = [
-        'hub' => [
-            'title' => 'World Cup 2026 Games — Small Poles',
-            'desc'  => 'Free World Cup 2026 mini-games. Guess the player, pick your bracket, build your dream squad, and play Higher or Lower with real player stats.',
-            'url'   => home_url( '/games/' ),
-        ],
-        'higher-lower' => [
-            'title' => 'Higher or Lower — World Cup Player Stats | Small Poles',
-            'desc'  => 'Does this World Cup player have more or fewer goals, caps, or years than the other? One stat, two players — keep your streak alive.',
-            'url'   => home_url( '/games/higher-lower/' ),
-        ],
-        'polele' => [
-            'title' => 'Polele — Guess the World Cup Player | Small Poles',
-            'desc'  => 'Guess today\'s mystery World Cup 2026 player in 6 attempts. Colour-coded clues reveal their nation, club, position, age, and league after every guess.',
-            'url'   => home_url( '/games/polele/' ),
-        ],
-        'bracket' => [
-            'title' => 'World Cup 2026 Bracket Challenge | Small Poles',
-            'desc'  => 'Pick every winner from the 2026 World Cup Group Stage to the Final. Share your bracket and see how many you called right.',
-            'url'   => home_url( '/games/bracket/' ),
-        ],
-        'squad' => [
-            'title' => 'World Cup 2026 Squad Builder | Small Poles',
-            'desc'  => 'Build your ultimate World Cup XI. Choose from 10 nations, pick a formation, and stay within budget. Share your dream squad.',
-            'url'   => home_url( '/games/squad/' ),
-        ],
+    $names = [
+        'hub'          => 'Free World Cup 2026 Games',
+        'higher-lower' => 'Higher or Lower — World Cup 2026 Player Stats Game',
+        'polele'       => 'Polele — Daily World Cup 2026 Player Guessing Game',
+        'bracket'      => 'World Cup 2026 Bracket Challenge',
+        'squad'        => 'World Cup 2026 Squad Builder',
+    ];
+    $descs = [
+        'hub'          => 'Free World Cup 2026 mini-games: Higher or Lower, Polele, Bracket Challenge, and Squad Builder.',
+        'higher-lower' => 'Guess whether a World Cup player has more or fewer goals, caps, or age than another. Keep your streak alive.',
+        'polele'       => 'Daily World Cup player guessing game. 6 attempts, colour-coded clues after every wrong guess.',
+        'bracket'      => 'Pick every winner of the 2026 World Cup from Group Stage to Final. Share your bracket.',
+        'squad'        => 'Build and share your ultimate World Cup XI. Pick a formation, stay within budget.',
     ];
 
-    if ( $game && isset( $game_meta[ $game ] ) ) {
-        $title       = $game_meta[ $game ]['title'];
-        $description = $game_meta[ $game ]['desc'];
-        $url         = $game_meta[ $game ]['url'];
-    } elseif ( is_front_page() ) {
-        $title       = 'Small Poles — GPL Fantasy Football';
-        $description = 'The first fantasy football platform built for the Ghana Premier League. Pick real GPL players, predict results, and compete with your people every gameweek.';
-        $url         = home_url( '/' );
-    } elseif ( is_single() ) {
-        $title       = get_the_title() . ' — Small Poles';
-        $description = wp_strip_all_tags( get_the_excerpt() );
-        $url         = get_permalink();
-        if ( has_post_thumbnail() ) {
-            $og_image = get_the_post_thumbnail_url( null, 'large' );
-        }
-    } else {
-        $title       = 'Small Poles — GPL Fantasy Football';
-        $description = 'GPL Fantasy Football for Ghanaian fans.';
-        $url         = home_url( add_query_arg( [] ) );
-    }
-    ?>
-<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
-<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
-<meta property="og:type" content="website" />
-<meta property="og:site_name" content="Small Poles" />
-<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
-<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
-<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
-<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
-<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
-    <?php
-}
-add_action( 'wp_head', 'smallpoles_seo_meta', 2 );
-
-/* ── SEO: JSON-LD structured data ── */
-function smallpoles_schema() {
-    $game = get_query_var( 'smallpoles_game' );
-
-    if ( $game ) {
-        $game_names = [
-            'hub'          => 'World Cup 2026 Games',
-            'higher-lower' => 'Higher or Lower — World Cup Player Stats',
-            'polele'       => 'Polele — Guess the World Cup Player',
-            'bracket'      => 'World Cup 2026 Bracket Challenge',
-            'squad'        => 'World Cup 2026 Squad Builder',
-        ];
-        $game_descs = [
-            'hub'          => 'Free World Cup 2026 mini-games including Higher or Lower, Polele, Bracket Challenge, and Squad Builder.',
-            'higher-lower' => 'Guess whether a World Cup player has more or fewer goals, caps, or age than another player. Keep your streak alive.',
-            'polele'       => 'Daily World Cup player guessing game. Colour-coded clues after every wrong guess.',
-            'bracket'      => 'Pick every winner of the 2026 World Cup from Group Stage to Final.',
-            'squad'        => 'Build and share your ultimate World Cup XI with a budget and formation.',
-        ];
-        $schema = [
-            '@context'    => 'https://schema.org',
-            '@type'       => 'WebApplication',
-            'name'        => $game_names[ $game ] ?? 'Small Poles Game',
-            'description' => $game_descs[ $game ] ?? '',
-            'url'         => home_url( '/games/' . ( $game === 'hub' ? '' : $game . '/' ) ),
-            'applicationCategory' => 'Game',
-            'operatingSystem'     => 'Web',
-            'offers'              => [ '@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'USD' ],
-        ];
-        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
-        return;
-    }
-
-    if ( is_front_page() ) {
-        $schema = [
-            '@context'    => 'https://schema.org',
-            '@type'       => 'WebSite',
-            'name'        => 'Small Poles',
-            'description' => 'The first fantasy football platform built for the Ghana Premier League.',
-            'url'         => home_url( '/' ),
-        ];
-    } elseif ( is_single() ) {
-        $schema = [
-            '@context'      => 'https://schema.org',
-            '@type'         => 'Article',
-            'headline'      => get_the_title(),
-            'datePublished' => get_the_date( 'c' ),
-            'dateModified'  => get_the_modified_date( 'c' ),
-            'url'           => get_permalink(),
-            'author'        => [ '@type' => 'Organization', 'name' => 'Small Poles' ],
-            'publisher'     => [
-                '@type' => 'Organization',
-                'name'  => 'Small Poles',
-                'logo'  => [
-                    '@type' => 'ImageObject',
-                    'url'   => get_template_directory_uri() . '/assets/smallpolesappicon.png',
-                ],
-            ],
-        ];
-        if ( has_post_thumbnail() ) {
-            $schema['image'] = get_the_post_thumbnail_url( null, 'large' );
-        }
-    } else {
-        return;
-    }
+    $schema = [
+        '@context'            => 'https://schema.org',
+        '@type'               => 'WebApplication',
+        'name'                => $names[ $game ],
+        'description'         => $descs[ $game ],
+        'url'                 => home_url( '/games/' . ( $game === 'hub' ? '' : $game . '/' ) ),
+        'applicationCategory' => 'Game',
+        'operatingSystem'     => 'Web',
+        'offers'              => [ '@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'USD' ],
+    ];
     echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
 }
 add_action( 'wp_head', 'smallpoles_schema', 3 );
 
 
-/* ── SEO: Add game pages to Yoast sitemap index ── */
-add_filter( 'wpseo_sitemap_index', function( $index ) {
-    $index .= sprintf(
-        "<sitemap>\n<loc>%s</loc>\n<lastmod>%s</lastmod>\n</sitemap>\n",
-        esc_url( home_url( '/games-sitemap.xml' ) ),
-        gmdate( 'Y-m-d' )
-    );
-    return $index;
-} );
-
-add_action( 'template_redirect', function() {
-    if ( ! preg_match( '#^/games-sitemap\.xml$#', $_SERVER['REQUEST_URI'] ?? '' ) ) return;
-
-    header( 'Content-Type: application/xml; charset=UTF-8' );
-    echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-    echo '<?xml-stylesheet type="text/xsl" href="' . esc_url( home_url( '/wp-content/plugins/wordpress-seo/css/main-sitemap.xsl' ) ) . '"?>' . "\n";
-    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-
-    $games = [
-        [ 'loc' => home_url( '/games/' ),              'priority' => '0.9', 'changefreq' => 'weekly' ],
-        [ 'loc' => home_url( '/games/higher-lower/' ), 'priority' => '0.8', 'changefreq' => 'weekly' ],
-        [ 'loc' => home_url( '/games/polele/' ),       'priority' => '0.8', 'changefreq' => 'daily'  ],
-        [ 'loc' => home_url( '/games/bracket/' ),      'priority' => '0.8', 'changefreq' => 'weekly' ],
-        [ 'loc' => home_url( '/games/squad/' ),        'priority' => '0.8', 'changefreq' => 'weekly' ],
-    ];
-
-    foreach ( $games as $url ) {
-        echo "  <url>\n";
-        echo '    <loc>' . esc_url( $url['loc'] ) . "</loc>\n";
-        echo '    <changefreq>' . $url['changefreq'] . "</changefreq>\n";
-        echo '    <priority>' . $url['priority'] . "</priority>\n";
-        echo "  </url>\n";
-    }
-
-    echo '</urlset>';
-    exit;
-} );
 
 add_filter( 'robots_txt', function( $output ) {
     $output .= "\nSitemap: " . home_url( '/sitemap_index.xml' ) . "\n";
@@ -1215,21 +1071,20 @@ function smallpoles_comment( $comment, $args, $depth ) {
    GAMES — routing, templates, titles
    ═══════════════════════════════════════════════════════════════════ */
 
-function smallpoles_games_rewrites() {
-    add_rewrite_rule( '^games/?$',         'index.php?smallpoles_game=hub',     'top' );
-    add_rewrite_rule( '^games/polele/?$',  'index.php?smallpoles_game=polele',  'top' );
-    add_rewrite_rule( '^games/bracket/?$', 'index.php?smallpoles_game=bracket', 'top' );
-    add_rewrite_rule( '^games/squad/?$',         'index.php?smallpoles_game=squad',         'top' );
-    add_rewrite_rule( '^games/higher-lower/?$',  'index.php?smallpoles_game=higher-lower',  'top' );
-}
-add_action( 'init', 'smallpoles_games_rewrites' );
-
-add_filter( 'query_vars', function ( $vars ) {
-    if ( ! in_array( 'smallpoles_game', $vars, true ) ) {
-        $vars[] = 'smallpoles_game';
+/* ── Helper: map current page to game key ── */
+function sp_current_game() {
+    $map = [
+        'games'        => 'hub',
+        'higher-lower' => 'higher-lower',
+        'polele'       => 'polele',
+        'bracket'      => 'bracket',
+        'squad'        => 'squad',
+    ];
+    foreach ( $map as $slug => $game ) {
+        if ( is_page( $slug ) ) return $game;
     }
-    return $vars;
-} );
+    return null;
+}
 
 /* ── Helper: check if a game is enabled ── */
 function sp_game_is_visible( $game ) {
@@ -1237,55 +1092,59 @@ function sp_game_is_visible( $game ) {
     return ! isset( $saved[ $game ] ) || ! empty( $saved[ $game ] );
 }
 
-function smallpoles_games_template( $template ) {
-    $game = get_query_var( 'smallpoles_game' );
-    if ( ! $game ) return $template;
-
-    /* Redirect to hub if a specific game is disabled */
-    $playable = [ 'polele', 'bracket', 'squad', 'higher-lower' ];
-    if ( in_array( $game, $playable, true ) && ! sp_game_is_visible( $game ) ) {
+/* ── Redirect to hub if a disabled game page is visited ── */
+function smallpoles_games_visibility_redirect() {
+    $game = sp_current_game();
+    if ( $game && $game !== 'hub' && ! sp_game_is_visible( $game ) ) {
         wp_safe_redirect( home_url( '/games/' ) );
         exit;
     }
-
-    $map = [
-        'hub'          => 'page-games.php',
-        'polele'       => 'page-polele.php',
-        'bracket'      => 'page-bracket.php',
-        'squad'        => 'page-squad-builder.php',
-        'higher-lower' => 'page-higher-lower.php',
-    ];
-
-    if ( isset( $map[ $game ] ) ) {
-        $t = locate_template( $map[ $game ] );
-        if ( $t ) return $t;
-    }
-    return $template;
 }
-add_filter( 'template_include', 'smallpoles_games_template' );
+add_action( 'template_redirect', 'smallpoles_games_visibility_redirect' );
 
-function smallpoles_games_title( $parts ) {
-    $game   = get_query_var( 'smallpoles_game' );
-    $titles = [
-        'hub'     => 'World Cup Games',
-        'polele'  => 'Polele — Guess the Player',
-        'bracket' => 'World Cup 2026 Bracket Challenge',
-        'squad'        => 'World Cup Squad Builder',
-        'higher-lower' => 'Higher or Lower — World Cup Player Stats',
-    ];
-    if ( isset( $titles[ $game ] ) ) {
-        $parts['title'] = $titles[ $game ];
-        $parts['site']  = get_bloginfo( 'name' );
+/* ── One-time: create WordPress pages for each game ── */
+function smallpoles_create_game_pages() {
+    if ( get_option( 'sp_game_pages_v1' ) ) return;
+
+    $parent    = get_page_by_path( 'games' );
+    $parent_id = $parent ? $parent->ID : wp_insert_post( [
+        'post_title'  => 'Games',
+        'post_name'   => 'games',
+        'post_status' => 'publish',
+        'post_type'   => 'page',
+    ] );
+    if ( is_wp_error( $parent_id ) ) return;
+    update_post_meta( $parent_id, '_wp_page_template', 'page-games.php' );
+
+    foreach ( [
+        [ 'Higher or Lower', 'higher-lower', 'page-higher-lower.php'  ],
+        [ 'Polele',          'polele',        'page-polele.php'        ],
+        [ 'Bracket',         'bracket',       'page-bracket.php'       ],
+        [ 'Squad Builder',   'squad',         'page-squad-builder.php' ],
+    ] as [ $title, $slug, $tpl ] ) {
+        $existing = get_page_by_path( 'games/' . $slug );
+        $id = $existing ? $existing->ID : wp_insert_post( [
+            'post_title'  => $title,
+            'post_name'   => $slug,
+            'post_status' => 'publish',
+            'post_type'   => 'page',
+            'post_parent' => $parent_id,
+        ] );
+        if ( ! is_wp_error( $id ) ) {
+            update_post_meta( $id, '_wp_page_template', $tpl );
+        }
     }
-    return $parts;
+
+    update_option( 'sp_game_pages_v1', true );
+    flush_rewrite_rules( false );
 }
-add_filter( 'document_title_parts', 'smallpoles_games_title' );
+add_action( 'init', 'smallpoles_create_game_pages', 20 );
 
 /* One-time permalink flush whenever routing version bumps */
 function smallpoles_maybe_flush_rewrites() {
-    if ( get_option( 'sp_rewrite_version' ) !== '1.2' ) {
+    if ( get_option( 'sp_rewrite_version' ) !== '1.3' ) {
         flush_rewrite_rules( false );
-        update_option( 'sp_rewrite_version', '1.2' );
+        update_option( 'sp_rewrite_version', '1.3' );
     }
 }
 add_action( 'init', 'smallpoles_maybe_flush_rewrites', 999 );
