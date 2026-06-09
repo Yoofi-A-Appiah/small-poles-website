@@ -38,45 +38,23 @@
           </div>
         </div>
 
-        <!-- Tactics board visual -->
+        <!-- Phone mockup visual -->
         <div class="hero-visual">
-          <div class="tactics-card">
-            <div class="tactics-header">
-              <div class="tactics-header-left">
-                <div class="tactics-header-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="12" y1="3" x2="12" y2="21" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Kakalika FC</h3>
-                  <span style="color:var(--text-muted);font-size:12px">GW 12 · GHS 81.6M / 100M</span>
+          <div class="parallax-phone">
+            <div class="phone-mockup">
+              <div class="phone-frame">
+                <div class="phone-screen">
+                  <div class="phone-dynamic-island"></div>
+                  <img
+                    src="<?php echo get_template_directory_uri(); ?>/assets/mockup-home.webp"
+                    alt="Small Poles App — Home Screen"
+                    class="phone-screenshot"
+                    loading="eager"
+                    decoding="async"
+                  />
                 </div>
               </div>
-              <div class="tactics-formation-badge">4 – 3 – 3</div>
-            </div>
-            <div class="tactics-pitch">
-              <div class="pitch-line horizontal center"></div>
-              <div class="pitch-circle"></div>
-              <div class="player-dot" style="left:50%;top:88%;animation-delay:0.1s"><div class="player-dot-circle">1</div><div class="player-dot-name">Kyei</div></div>
-              <div class="player-dot" style="left:15%;top:70%;animation-delay:0.15s"><div class="player-dot-circle">2</div><div class="player-dot-name">Asibey</div></div>
-              <div class="player-dot" style="left:38%;top:72%;animation-delay:0.2s"><div class="player-dot-circle">5</div><div class="player-dot-name">Gilbani</div></div>
-              <div class="player-dot" style="left:62%;top:72%;animation-delay:0.25s"><div class="player-dot-circle">4</div><div class="player-dot-name">Aquah</div></div>
-              <div class="player-dot" style="left:85%;top:70%;animation-delay:0.3s"><div class="player-dot-circle">3</div><div class="player-dot-name">Hamzata</div></div>
-              <div class="player-dot" style="left:25%;top:48%;animation-delay:0.35s"><div class="player-dot-circle">8</div><div class="player-dot-name">Adabo</div></div>
-              <div class="player-dot captain" style="left:50%;top:45%;animation-delay:0.4s"><div class="player-dot-circle">10</div><div class="player-dot-name">Antwi ★</div></div>
-              <div class="player-dot" style="left:75%;top:48%;animation-delay:0.45s"><div class="player-dot-circle">6</div><div class="player-dot-name">Simpson</div></div>
-              <div class="player-dot" style="left:20%;top:22%;animation-delay:0.5s"><div class="player-dot-circle">11</div><div class="player-dot-name">Amidu</div></div>
-              <div class="player-dot" style="left:50%;top:18%;animation-delay:0.55s"><div class="player-dot-circle">9</div><div class="player-dot-name">Attah Kumi</div><div class="player-dot-pts">+12 pts</div></div>
-              <div class="player-dot" style="left:80%;top:22%;animation-delay:0.6s"><div class="player-dot-circle">7</div><div class="player-dot-name">Annor</div></div>
-            </div>
-            <div class="tactics-footer">
-              <div class="tactics-stat"><div class="tactics-stat-value green">67</div><div class="tactics-stat-label">GW Points</div></div>
-              <div class="tactics-stat"><div class="tactics-stat-value">389</div><div class="tactics-stat-label">Total Points</div></div>
-              <div class="tactics-stat"><div class="tactics-stat-value">#247</div><div class="tactics-stat-label">Global Rank</div></div>
-              <div class="tactics-stat"><div class="tactics-stat-value">2</div><div class="tactics-stat-label">Free Transfers</div></div>
+              <div class="phone-glow"></div>
             </div>
           </div>
         </div>
@@ -86,37 +64,60 @@
     <!-- Why Small Poles -->
     <section id="why-small-poles" class="why-section">
       <div class="container">
-        <div class="why-header reveal">
-          <span class="label">Why Small Poles</span>
-          <h2>Ghana football fans<br />dey deserve a real game.</h2>
-        </div>
-        <div class="why-list">
-          <div class="why-item reveal">
-            <div class="why-num">01</div>
-            <div class="why-body">
-              <h3>Ghana's league. Properly tracked.</h3>
-              <p>No stats platform dey cover the GPL the way it deserves. No form guides, no price history, no depth on the players your club dey actually play every week. Just plenty talk, no evidence. <span class="hero-highlight">We built what should have existed years ago.</span></p>
+        <div class="why-layout">
+          <div class="why-body-col">
+            <div class="why-header reveal">
+              <span class="label">Why Small Poles</span>
+              <h2>Ghana football fans<br />dey deserve a real game.</h2>
+            </div>
+            <div class="why-list">
+              <div class="why-item reveal">
+                <div class="why-num">01</div>
+                <div class="why-body">
+                  <h3>Ghana's league. Properly tracked.</h3>
+                  <p>No stats platform dey cover the GPL the way it deserves. No form guides, no price history, no depth on the players your club dey actually play every week. Just plenty talk, no evidence. <span class="hero-highlight">We built what should have existed years ago.</span></p>
+                </div>
+              </div>
+              <div class="why-item reveal">
+                <div class="why-num">02</div>
+                <div class="why-body">
+                  <h3>Every matchday is yours now.</h3>
+                  <p>When your squad spans Kotoko, Hearts, Medeama, and Legon Cities, no fixture go fit bore you. You get skin in the game no matter who dey play. <span class="hero-highlight">That's 34 weeks of reasons to care.</span></p>
+                </div>
+              </div>
+              <div class="why-item reveal">
+                <div class="why-num">03</div>
+                <div class="why-body">
+                  <h3>Points from what actually happens.</h3>
+                  <p>No algorithm filler. Goals, assists, clean sheets, saves — the same things that count in any football conversation. <span class="hero-highlight">Real performances from real GPL players, scored in real time.</span></p>
+                </div>
+              </div>
+              <div class="why-item reveal">
+                <div class="why-num">04</div>
+                <div class="why-body">
+                  <h3>Ghana football has always been tribal.</h3>
+                  <p>Set up a private league with whoever dey think say them get GPL knowledge pass. There's always one person in the group who's been wrong about Kotoko all year. <span class="hero-highlight">34 gameweeks to prove it.</span></p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="why-item reveal">
-            <div class="why-num">02</div>
-            <div class="why-body">
-              <h3>Every matchday is yours now.</h3>
-              <p>When your squad spans Kotoko, Hearts, Medeama, and Legon Cities, no fixture go fit bore you. You get skin in the game no matter who dey play. <span class="hero-highlight">That's 34 weeks of reasons to care.</span></p>
-            </div>
-          </div>
-          <div class="why-item reveal">
-            <div class="why-num">03</div>
-            <div class="why-body">
-              <h3>Points from what actually happens.</h3>
-              <p>No algorithm filler. Goals, assists, clean sheets, saves — the same things that count in any football conversation. <span class="hero-highlight">Real performances from real GPL players, scored in real time.</span></p>
-            </div>
-          </div>
-          <div class="why-item reveal">
-            <div class="why-num">04</div>
-            <div class="why-body">
-              <h3>Ghana football has always been tribal.</h3>
-              <p>Set up a private league with whoever dey think say them get GPL knowledge pass. There's always one person in the group who's been wrong about Kotoko all year. <span class="hero-highlight">34 gameweeks to prove it.</span></p>
+          <div class="why-visual reveal">
+            <div class="parallax-phone">
+              <div class="phone-mockup phone-mockup--tilt-right">
+                <div class="phone-frame">
+                  <div class="phone-screen">
+                    <div class="phone-dynamic-island"></div>
+                    <img
+                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-scout.webp"
+                      alt="Small Poles Scout Room"
+                      class="phone-screenshot"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </div>
+                <div class="phone-glow"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -160,6 +161,42 @@
       </div>
     </section>
 
+    <!-- Squad Builder Spotlight -->
+    <section class="squad-spotlight">
+      <div class="container">
+        <div class="spotlight-layout reveal">
+          <div class="spotlight-visual">
+            <div class="parallax-phone">
+              <div class="phone-mockup">
+                <div class="phone-frame">
+                  <div class="phone-screen">
+                    <div class="phone-dynamic-island"></div>
+                    <img
+                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-squad2.webp"
+                      alt="Small Poles — Squad Builder"
+                      class="phone-screenshot"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </div>
+                <div class="phone-glow"></div>
+              </div>
+            </div>
+          </div>
+          <div class="spotlight-text">
+            <span class="label">Squad Builder</span>
+            <h2>15 players.<br /><span class="accent">Your formation.</span></h2>
+            <p>Build your squad from every GPL club within a GHS 100M budget. Place your men on the pitch, set your captain, and manage your transfers each gameweek. Every decision counts.</p>
+            <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              Join the Waitlist
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Features -->
     <section class="features" id="features">
       <div class="container">
@@ -189,6 +226,40 @@
             <div class="feature-icon"><img src="<?php echo get_template_directory_uri(); ?>/assets/trophy.png" alt="Leagues" style="width:24px;height:24px" /></div>
             <h3>Leagues & Rankings</h3>
             <p>Set up a private league, bring in your people, and see who really knows the GPL. Plus a global board for when you want a bigger test.</p>
+          </div>
+        </div>
+
+        <!-- League showcase -->
+        <div class="league-showcase reveal">
+          <div class="league-showcase-text">
+            <span class="label">Leagues & Rankings</span>
+            <h2>Compete with<br /><span class="accent">your people.</span></h2>
+            <p>Set up a private league for your crew, join the global standings, and see exactly where you rank every gameweek. Top percentile shown, no hiding from the table.</p>
+            <ul class="league-showcase-bullets">
+              <li>Global leaderboard with real-time rankings</li>
+              <li>Private leagues — create or join with a code</li>
+              <li>Gameweek points + season total tracked</li>
+              <li>Your rank moves visible after every GW</li>
+            </ul>
+          </div>
+          <div class="league-showcase-visual">
+            <div class="parallax-phone">
+              <div class="phone-mockup phone-mockup--tilt-right">
+                <div class="phone-frame">
+                  <div class="phone-screen">
+                    <div class="phone-dynamic-island"></div>
+                    <img
+                      src="<?php echo get_template_directory_uri(); ?>/assets/mockup-league.webp"
+                      alt="Small Poles — Leagues"
+                      class="phone-screenshot"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </div>
+                <div class="phone-glow"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

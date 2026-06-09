@@ -80,7 +80,38 @@ Tags: dark, sports, fantasy, football
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
 }
+
+/* ── Section scroll snap ── */
+.hero,
+.why-section,
+.how-it-works,
+.squad-spotlight,
+.features,
+.wc-intel,
+.sp-fixture-section,
+.cta-section,
+footer {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* ── Hero phone float ── */
+@keyframes phoneFloat {
+  0%, 100% { transform: perspective(1200px) rotateY(-8deg) rotateX(3deg) translateY(0px); }
+  50%       { transform: perspective(1200px) rotateY(-8deg) rotateX(3deg) translateY(-18px); }
+}
+
+.hero-visual .phone-mockup {
+  animation: phoneFloat 3.6s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.hero-visual .phone-mockup:hover {
+  animation-play-state: paused;
+}
+
 
 body {
   font-family: var(--font-body);
@@ -634,7 +665,9 @@ section {
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6);
 }
 
-.hero h1 .accent {
+.hero h1 .accent,
+.spotlight-text h2 .accent,
+.league-showcase-text h2 .accent {
   color: var(--pitch-glow);
   text-shadow: 0 0 32px rgba(0, 255, 127, 0.35);
 }
@@ -693,10 +726,257 @@ section {
   margin-top: 6px;
 }
 
-/* ── Hero Visual (Tactics Card) ── */
+/* ── Hero Visual ── */
 .hero-visual {
   position: relative;
+  display: flex;
+  justify-content: center;
   animation: fadeUp 0.8s 0.2s ease-out both;
+}
+
+/* ── Phone Mockup ── */
+.parallax-phone {
+  will-change: transform;
+}
+
+.phone-mockup {
+  position: relative;
+  width: 272px;
+  transform: perspective(1200px) rotateY(-8deg) rotateX(3deg);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 48px 80px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 40px rgba(0, 100, 54, 0.12));
+}
+
+.phone-mockup:hover {
+  transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
+}
+
+.phone-frame {
+  position: relative;
+  background: linear-gradient(160deg, #2a2a2a 0%, #141414 100%);
+  border-radius: 48px;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 0 1px #080808,
+    6px 12px 48px rgba(0, 0, 0, 0.9);
+}
+
+/* Power button — right side */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: 130px;
+  width: 3px;
+  height: 66px;
+  background: linear-gradient(180deg, #333 0%, #1e1e1e 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Volume buttons — left side */
+.phone-frame::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 100px;
+  width: 3px;
+  height: 38px;
+  background: linear-gradient(180deg, #333 0%, #1e1e1e 100%);
+  border-radius: 2px 0 0 2px;
+  box-shadow: 0 54px 0 #2a2a2a, 0 54px 0 #2a2a2a;
+}
+
+.phone-screen {
+  position: relative;
+  background: #000;
+  border-radius: 36px;
+  overflow: hidden;
+  aspect-ratio: 9 / 19.5;
+}
+
+.phone-dynamic-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 28px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 10;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.phone-screenshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.phone-glow {
+  position: absolute;
+  bottom: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 60px;
+  background: radial-gradient(ellipse, rgba(0, 100, 54, 0.4) 0%, transparent 70%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+/* Ambient glow behind the phone */
+.phone-mockup::before {
+  content: '';
+  position: absolute;
+  inset: -50px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 100, 54, 0.18) 0%, transparent 65%);
+  filter: blur(36px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Tilt variant — right lean */
+.phone-mockup--tilt-right {
+  transform: perspective(1200px) rotateY(8deg) rotateX(3deg);
+}
+
+.phone-mockup--tilt-right:hover {
+  transform: perspective(1200px) rotateY(2deg) rotateX(1deg);
+}
+
+/* ── Why Section Two-Column Layout ── */
+.why-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 80px;
+  align-items: center;
+}
+
+.why-body-col {
+  min-width: 0;
+}
+
+.why-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.why-visual .phone-mockup {
+  width: 240px;
+}
+
+/* ── Squad Spotlight Section ── */
+.squad-spotlight {
+  border-top: 1px solid var(--border);
+  background: var(--carbon-light);
+}
+
+.spotlight-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 80px;
+  align-items: center;
+  padding: 100px 0;
+}
+
+.spotlight-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.spotlight-visual .phone-mockup {
+  width: 272px;
+}
+
+.spotlight-text {
+  max-width: 480px;
+}
+
+.spotlight-text h2 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.spotlight-text p {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+/* ── League Showcase Row ── */
+.league-showcase {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 80px;
+  align-items: center;
+  margin-top: 80px;
+  padding-top: 80px;
+  border-top: 1px solid var(--border);
+}
+
+.league-showcase-text {
+  max-width: 480px;
+}
+
+.league-showcase-text h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.5vw, 48px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.league-showcase-text p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+.league-showcase-bullets {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.league-showcase-bullets li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding-left: 20px;
+  position: relative;
+}
+
+.league-showcase-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  background: var(--pitch-glow);
+  border-radius: 50%;
+}
+
+.league-showcase-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.league-showcase-visual .phone-mockup {
+  width: 260px;
 }
 
 .tactics-card {
@@ -1349,6 +1629,48 @@ section {
 
   .hero-visual {
     max-width: 560px;
+    justify-content: center;
+  }
+
+  .phone-mockup {
+    transform: none;
+    width: 240px;
+  }
+
+  .phone-mockup--tilt-right {
+    transform: none;
+  }
+
+  .why-layout {
+    grid-template-columns: 1fr;
+    gap: 60px;
+  }
+
+  .why-visual .phone-mockup {
+    width: 220px;
+  }
+
+  .spotlight-layout {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 72px 0;
+  }
+
+  .spotlight-visual {
+    order: 1;
+  }
+
+  .spotlight-visual .phone-mockup {
+    width: 240px;
+  }
+
+  .league-showcase {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .league-showcase-visual .phone-mockup {
+    width: 220px;
   }
 
   .features-grid {
@@ -1477,6 +1799,28 @@ section {
 
   .tactics-footer {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .phone-mockup {
+    transform: none;
+    width: 220px;
+  }
+
+  .phone-mockup--tilt-right {
+    transform: none;
+  }
+
+  .spotlight-layout {
+    padding: 56px 0;
+  }
+
+  .spotlight-text h2 {
+    font-size: 32px;
+  }
+
+  .league-showcase {
+    margin-top: 56px;
+    padding-top: 56px;
   }
 
   .tactics-stat:nth-child(2) {
