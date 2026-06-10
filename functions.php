@@ -170,11 +170,6 @@ add_action( 'wp_head', 'smallpoles_schema', 3 );
 
 
 
-add_filter( 'robots_txt', function( $output ) {
-    $output .= "\nSitemap: " . home_url( '/sitemap_index.xml' ) . "\n";
-    return $output;
-} );
-
 /* ── Clean up WordPress cruft ── */
 remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 remove_action( 'wp_print_styles', 'print_emoji_styles' );
