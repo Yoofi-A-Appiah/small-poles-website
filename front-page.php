@@ -56,42 +56,44 @@
       </div>
     </section>
 
-    <!-- Why Small Poles -->
+    <!-- What is Small Poles -->
     <section id="why-small-poles" class="why-section">
       <div class="container">
         <div class="why-layout">
           <div class="why-body-col">
             <div class="why-header reveal">
-              <span class="label">Why Small Poles</span>
+              <span class="label">What is Small Poles</span>
               <h2>Ghana football fans<br />dey deserve a real game.</h2>
             </div>
             <div class="why-list">
               <div class="why-item reveal">
-                <div class="why-num">01</div>
                 <div class="why-body">
-                  <h3>Ghana's league. Properly tracked.</h3>
-                  <p>No stats platform dey cover the GPL the way it deserves. No form guides, no price history, no depth on the players your club dey actually play every week. Just plenty talk, no evidence. <span class="hero-highlight">We built what should have existed years ago.</span></p>
+                  <h3>Fantasy Football</h3>
+                  <p>Pick 15 real GPL players, set your formation, and earn points from every goal, assist, and clean sheet across the season.</p>
                 </div>
               </div>
               <div class="why-item reveal">
-                <div class="why-num">02</div>
                 <div class="why-body">
-                  <h3>Every matchday is yours now.</h3>
-                  <p>When your squad spans Kotoko, Hearts, Medeama, and Legon Cities, no fixture go fit bore you. You get skin in the game no matter who dey play. <span class="hero-highlight">That's 34 weeks of reasons to care.</span></p>
+                  <h3>Match Predictions</h3>
+                  <p>Call results before kickoff. Bonus points when you read the game right.</p>
                 </div>
               </div>
               <div class="why-item reveal">
-                <div class="why-num">03</div>
                 <div class="why-body">
-                  <h3>Points from what actually happens.</h3>
-                  <p>No algorithm filler. Goals, assists, clean sheets, saves — the same things that count in any football conversation. <span class="hero-highlight">Real performances from real GPL players, scored in real time.</span></p>
+                  <h3>In-Depth Player Analysis</h3>
+                  <p>Form guides, price history, fixture difficulty, and full stats on every player in the GPL pool.</p>
                 </div>
               </div>
               <div class="why-item reveal">
-                <div class="why-num">04</div>
                 <div class="why-body">
-                  <h3>Ghana football has always been tribal.</h3>
-                  <p>Set up a private league with whoever dey think say them get GPL knowledge pass. There's always one person in the group who's been wrong about Kotoko all year. <span class="hero-highlight">34 gameweeks to prove it.</span></p>
+                  <h3>News & Match Analysis</h3>
+                  <p>GPL coverage that actually goes deep with team news, odds, match predictions, injury updates, and post-match breakdowns.</p>
+                </div>
+              </div>
+              <div class="why-item reveal">
+                <div class="why-body">
+                  <h3>Private Leagues</h3>
+                  <p>Create a league for your crew or join the global standings. Settle the debates every gameweek.</p>
                 </div>
               </div>
             </div>
@@ -171,6 +173,51 @@
             <span class="label">Squad Builder</span>
             <h2>15 players.<br /><span class="accent">Your formation.</span></h2>
             <p>Pick from every GPL club within a GHS 100M budget. Place your men on the pitch, set your captain, and manage transfers each gameweek. Your squad, your wahala.</p>
+
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:28px">
+
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="width:36px;height:36px;background:rgba(0,255,127,0.08);border:1px solid rgba(0,255,127,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pitch-glow)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M12 14l-4 8h8l-4-8z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Captain &amp; Vice Captain</div>
+                  <div style="font-size:13px;color:var(--text-muted);line-height:1.5">Your captain earns double points. If they don't play, your vice steps up automatically.</div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="width:36px;height:36px;background:rgba(0,255,127,0.08);border:1px solid rgba(0,255,127,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pitch-glow)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Gameweek Boosts</div>
+                  <div style="font-size:13px;color:var(--text-muted);line-height:1.5">Triple Captain, Bench Boost, Free Hit — play your chips at the right moment to climb the table fast.</div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="width:36px;height:36px;background:rgba(0,255,127,0.08);border:1px solid rgba(0,255,127,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pitch-glow)" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Weekly Transfers</div>
+                  <div style="font-size:13px;color:var(--text-muted);line-height:1.5">One free transfer per gameweek. Bank unused transfers or take extra ones with a points hit.</div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="width:36px;height:36px;background:rgba(0,255,127,0.08);border:1px solid rgba(0,255,127,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pitch-glow)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Flexible Formations</div>
+                  <div style="font-size:13px;color:var(--text-muted);line-height:1.5">4-4-2, 4-3-3, 3-5-2 — pick the shape that fits your players and switch it up each week.</div>
+                </div>
+              </div>
+
+            </div>
+
             <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
               Join the Waitlist
@@ -194,6 +241,7 @@
       </div>
     </section>
 
+    <?php /*
     <!-- Features -->
     <section class="features" id="features">
       <div class="container">
@@ -225,7 +273,13 @@
             <p>Set up a private league, bring in your people, and see who really knows the GPL. Plus a global board for when you want a bigger test.</p>
           </div>
         </div>
+      </div>
+    </section>
+    */ ?>
 
+    <!-- Leagues & Rankings -->
+    <section class="features" id="features">
+      <div class="container">
         <!-- League showcase -->
         <div class="league-showcase reveal">
           <div class="league-showcase-text">
@@ -240,7 +294,7 @@
             </ul>
             <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-              Join Your League
+              Join the Waitlist
             </a>
           </div>
           <div class="league-showcase-visual">

@@ -725,13 +725,10 @@ section {
 }
 
 /* ── Phone Mockup ── */
-.parallax-phone {
-  will-change: transform;
-}
 
 .phone-mockup {
   position: relative;
-  width: 680px;
+  width: 340px;
   transform: perspective(1200px) rotateY(-8deg) rotateX(3deg);
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   filter: drop-shadow(0 48px 80px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 40px rgba(0, 100, 54, 0.12));
@@ -801,7 +798,7 @@ section {
 }
 
 .why-visual .phone-mockup {
-  width: 600px;
+  width: 300px;
 }
 
 /* ── Squad Spotlight Section ── */
@@ -824,7 +821,7 @@ section {
 }
 
 .spotlight-visual .phone-mockup {
-  width: 680px;
+  width: 340px;
 }
 
 .spotlight-text {
@@ -910,7 +907,7 @@ section {
 }
 
 .league-showcase-visual .phone-mockup {
-  width: 640px;
+  width: 320px;
 }
 
 .tactics-card {
@@ -1218,6 +1215,7 @@ section {
 
 /* ── How it works (index) ── */
 .how-it-works {
+  display: none;
   border-top: 1px solid var(--border);
   background: var(--carbon-light);
 }
@@ -1739,9 +1737,12 @@ section {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .phone-mockup {
+  .phone-mockup,
+  .why-visual .phone-mockup,
+  .spotlight-visual .phone-mockup,
+  .league-showcase-visual .phone-mockup {
     transform: none;
-    width: min(540px, calc(100vw - 48px));
+    width: min(660px, calc(100vw - 48px));
   }
 
   .phone-mockup--tilt-right {
@@ -4404,9 +4405,9 @@ body.announcement-hidden .announcement-bar {
 
 .why-item {
   display: grid;
-  grid-template-columns: 96px 1fr;
-  gap: 40px;
-  padding: 48px 0;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 28px 0;
   border-top: 1px solid var(--border);
   align-items: start;
 }

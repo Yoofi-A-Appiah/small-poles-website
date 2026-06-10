@@ -1,36 +1,3 @@
-// ── Phone parallax ───────────────────────────────────────────────────
-(function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  var wrappers = Array.from(document.querySelectorAll('.parallax-phone'));
-  if (!wrappers.length) return;
-
-  var ticking = false;
-
-  function update() {
-    var vh = window.innerHeight;
-    var isMobile = window.innerWidth < 768;
-    // Strong factor — 100px off-centre = ~25px travel on desktop
-    var factor = isMobile ? 0.12 : 0.25;
-
-    wrappers.forEach(function (el) {
-      var rect = el.getBoundingClientRect();
-      var centre = rect.top + rect.height / 2;
-      var offset = ((vh / 2) - centre) * factor;
-      el.style.transform = 'translateY(' + offset.toFixed(2) + 'px)';
-    });
-    ticking = false;
-  }
-
-  window.addEventListener('scroll', function () {
-    if (!ticking) {
-      requestAnimationFrame(update);
-      ticking = true;
-    }
-  }, { passive: true });
-
-  update();
-})();
 
 // Scroll reveal
 const reveals = document.querySelectorAll('.reveal');
