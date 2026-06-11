@@ -38,7 +38,21 @@ if (navOverlay) {
 
 if (navLinks) {
   navLinks.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', closeNav);
+    // Dropdown items (inside .nav-dropdown) always close the nav.
+    // The top-level dropdown trigger (.nav-has-dropdown > a) should toggle
+    // the sub-menu on mobile instead of navigating.
+    const isDropdownTrigger = link.parentElement.classList.contains('nav-has-dropdown');
+    if (isDropdownTrigger) {
+      link.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          link.parentElement.classList.toggle('dropdown-open');
+        }
+        // Desktop: let the link navigate normally (no closeNav needed — desktop uses hover)
+      });
+    } else {
+      link.addEventListener('click', closeNav);
+    }
   });
 }
 
@@ -281,6 +295,14 @@ if (annBar) {
       if (pill) scrollPillIntoTrack(pill, false);
     }, 80);
 
+    track.addEventListener('click', function (e) {
+      var pill = e.target.closest('.sp-round-pill');
+      if (!pill) return;
+      var pills = Array.from(track.querySelectorAll('.sp-round-pill'));
+      var idx = pills.indexOf(pill);
+      if (idx !== -1) goTo(idx);
+    });
+
     prevBtn.addEventListener('click', function () { goTo(currentIndex - 1); });
     nextBtn.addEventListener('click', function () { goTo(currentIndex + 1); });
 
@@ -393,6 +415,7 @@ if (annBar) {
 
     apiFetch('next-fixture')
       .then(function (fixture) {
+        console.log('[SP] next-fixture raw response:', JSON.stringify(fixture));
         if (!fixture || !fixture.fixture) throw new Error('no fixture');
         var fid = fixture.fixture.id;
         return Promise.all([
@@ -403,12 +426,16 @@ if (annBar) {
         ]);
       })
       .then(function (r) {
+        console.log('[SP] next-fixture teams:', r[0] && r[0].teams);
+        console.log('[SP] predictions:', r[1]);
+        console.log('[SP] odds:', r[2]);
         if (homeWidget)    renderWidget(homeWidget, r[0], r[1], r[2]);
         if (homeWidgetMob) renderWidget(homeWidgetMob, r[0], r[1], r[2]);
         if (standingsPanel) renderStandings(standingsPanel, r[3], r[0]);
         if (standingsMob)   renderStandings(standingsMob, r[3], r[0]);
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.log('[SP] next-fixture error:', err);
         if (homeWidget)    showNoFixture(homeWidget);
         if (homeWidgetMob) showNoFixture(homeWidgetMob);
         standingsP.then(function (d) {
@@ -423,13 +450,192 @@ if (annBar) {
   var articleWidget = document.getElementById('sp-article-fixture');
   if (articleWidget) {
     var fid = articleWidget.dataset.fixtureId;
+    console.log('[SP] article widget fixture ID:', fid);
     Promise.all([
-      apiFetch('predictions?fixture=' + fid).catch(function () { return null; }),
-      apiFetch('odds?fixture=' + fid).then(function (d) { return Array.isArray(d) && d[0] ? d[0] : null; }).catch(function () { return null; })
+      apiFetch('predictions?fixture=' + fid)
+        .then(function (d) { console.log('[SP] article predictions raw:', d); return d; })
+        .catch(function (e) { console.log('[SP] article predictions error:', e); return null; }),
+      apiFetch('odds?fixture=' + fid)
+        .then(function (d) { console.log('[SP] article odds raw:', d); return Array.isArray(d) && d[0] ? d[0] : null; })
+        .catch(function (e) { console.log('[SP] article odds error:', e); return null; })
     ])
     .then(function (results) { renderWidget(articleWidget, null, results[0], results[1]); })
     .catch(function () { showError(articleWidget, 'Prediction data unavailable.'); });
   }
+})();
+
+// ── Match Intelligence Toggle + Today's Fixtures ────────────────────
+;(function () {
+  var SP = window.spData;
+
+  // Toggle between "All Matches" and "Black Stars" views
+  var toggleBtns   = document.querySelectorAll('.sp-toggle-btn');
+  var viewAll      = document.getElementById('sp-view-all');
+  var viewGhana    = document.getElementById('sp-view-ghana');
+  var sectionTitle = document.getElementById('sp-match-section-title');
+
+  if (toggleBtns.length && viewAll && viewGhana) {
+    toggleBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var view = btn.dataset.view;
+        toggleBtns.forEach(function (b) { b.classList.remove('sp-toggle-btn--active'); });
+        btn.classList.add('sp-toggle-btn--active');
+
+        if (view === 'all') {
+          viewAll.classList.remove('sp-view--hidden');
+          viewGhana.classList.add('sp-view--hidden');
+          if (sectionTitle) sectionTitle.textContent = "Today's Matches";
+        } else {
+          viewGhana.classList.remove('sp-view--hidden');
+          viewAll.classList.add('sp-view--hidden');
+          if (sectionTitle) sectionTitle.innerHTML = "Black Stars'<br />next match.";
+        }
+      });
+    });
+  }
+
+  var todayList = document.getElementById('sp-today-fixtures');
+  if (!todayList || !SP) return;
+
+  var GHANA_ID = 1504;
+
+  function apiFetch(path) {
+    return fetch(SP.restBase + path, { headers: { 'X-WP-Nonce': SP.nonce } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+
+  function pct(val) { return parseFloat(val) || 0; }
+
+  function renderTodayCard(f) {
+    var home    = f.teams.home;
+    var away    = f.teams.away;
+    var isGhana = (home.id === GHANA_ID || away.id === GHANA_ID);
+    var d       = new Date(f.fixture.date);
+    var timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' GMT';
+    var league  = (f.league && f.league.name) ? f.league.name : '';
+    var round   = (f.league && f.league.round) ? ' · ' + f.league.round : '';
+
+    return '<div class="sp-today-card' + (isGhana ? ' sp-today-card--ghana' : '') + '" data-fixture-id="' + f.fixture.id + '">'
+      + '<div class="sp-today-card-meta">'
+      +   '<span class="sp-today-league">' + league + round + '</span>'
+      +   '<span class="sp-today-time">' + timeStr + '</span>'
+      + '</div>'
+      + '<div class="sp-today-teams">'
+      +   '<div class="sp-today-team sp-today-team--home">'
+      +     '<img src="' + home.logo + '" alt="' + home.name + '" class="sp-today-logo" loading="lazy" width="28" height="28" />'
+      +     '<span class="sp-today-name">' + home.name + '</span>'
+      +   '</div>'
+      +   '<div class="sp-today-vs">VS</div>'
+      +   '<div class="sp-today-team sp-today-team--away">'
+      +     '<span class="sp-today-name">' + away.name + '</span>'
+      +     '<img src="' + away.logo + '" alt="' + away.name + '" class="sp-today-logo" loading="lazy" width="28" height="28" />'
+      +   '</div>'
+      + '</div>'
+      + '<div class="sp-today-pred-slot"></div>'
+      + '</div>';
+  }
+
+  function buildPredBar(hPct, dPct, aPct, homeName, awayName) {
+    if (!hPct && !dPct && !aPct) return '';
+    return '<div class="sp-pred-bar sp-pred-bar--today">'
+      + '<div class="sp-pred-bar-track">'
+      +   '<div class="sp-pred-bar-home" style="width:' + hPct + '%"></div>'
+      +   '<div class="sp-pred-bar-draw" style="width:' + dPct + '%"></div>'
+      +   '<div class="sp-pred-bar-away" style="width:' + aPct + '%"></div>'
+      + '</div>'
+      + '<div class="sp-pred-bar-labels">'
+      +   '<span>' + homeName + ' <strong>' + hPct + '%</strong></span>'
+      +   '<span>Draw <strong>' + dPct + '%</strong></span>'
+      +   '<span>' + awayName + ' <strong>' + aPct + '%</strong></span>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function buildCompactOdds(homeName, awayName, bookmaker) {
+    if (!bookmaker || !bookmaker.bets || !bookmaker.bets[0]) return '';
+    var vals = bookmaker.bets[0].values || [];
+    function odd(name) {
+      var m = vals.find(function (v) { return v.value === name; });
+      return m ? m.odd : '–';
+    }
+    return '<div class="sp-today-odds">'
+      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">' + homeName + '</span><strong>' + odd('Home') + '</strong></span>'
+      + '<span class="sp-today-odds-sep">·</span>'
+      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">Draw</span><strong>' + odd('Draw') + '</strong></span>'
+      + '<span class="sp-today-odds-sep">·</span>'
+      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">' + awayName + '</span><strong>' + odd('Away') + '</strong></span>'
+      + '</div>';
+  }
+
+  function injectPrediction(card, fixture, predData, oddsData) {
+    var slot = card.querySelector('.sp-today-pred-slot');
+    if (!slot) return;
+
+    var home = fixture.teams.home;
+    var away = fixture.teams.away;
+    var pred = (predData && predData.predictions) ? predData.predictions : {};
+    var comp = (predData && predData.comparison)  ? predData.comparison  : {};
+    var preds = pred.percent || {};
+
+    var hPct = pct(preds.home || (comp.form ? comp.form.home : 0));
+    var dPct = pct(preds.draw || 0);
+    var aPct = pct(preds.away || (comp.form ? comp.form.away : 0));
+
+    var bookmaker = (oddsData && oddsData.bookmakers && oddsData.bookmakers[0]) ? oddsData.bookmakers[0] : null;
+
+    var html = buildPredBar(hPct, dPct, aPct, home.name, away.name)
+             + buildCompactOdds(home.name, away.name, bookmaker);
+
+    if (html) slot.innerHTML = html;
+  }
+
+  apiFetch('today-fixtures')
+    .then(function (fixtures) {
+      todayList.classList.remove('sp-loading');
+
+      if (!Array.isArray(fixtures) || !fixtures.length) {
+        todayList.innerHTML =
+          '<div class="sp-no-fixture">'
+          + '<strong>No matches today.</strong>'
+          + '<span>Check back on the next World Cup match day.</span>'
+          + '</div>';
+        return;
+      }
+
+      // Ghana match first, then chronological
+      fixtures.sort(function (a, b) {
+        var aG = (a.teams.home.id === GHANA_ID || a.teams.away.id === GHANA_ID) ? 0 : 1;
+        var bG = (b.teams.home.id === GHANA_ID || b.teams.away.id === GHANA_ID) ? 0 : 1;
+        if (aG !== bG) return aG - bG;
+        return (a.fixture.timestamp || 0) - (b.fixture.timestamp || 0);
+      });
+
+      // Render cards immediately; predictions/odds fill in progressively
+      todayList.innerHTML = fixtures.map(renderTodayCard).join('');
+
+      fixtures.forEach(function (f) {
+        var fid  = f.fixture.id;
+        var card = todayList.querySelector('[data-fixture-id="' + fid + '"]');
+        if (!card) return;
+
+        Promise.all([
+          apiFetch('predictions?fixture=' + fid).catch(function () { return null; }),
+          apiFetch('odds?fixture=' + fid)
+            .then(function (d) { return Array.isArray(d) && d[0] ? d[0] : null; })
+            .catch(function () { return null; }),
+        ]).then(function (results) {
+          injectPrediction(card, f, results[0], results[1]);
+        });
+      });
+    })
+    .catch(function () {
+      todayList.classList.remove('sp-loading');
+      todayList.innerHTML =
+        '<div class="sp-no-fixture">'
+        + '<strong>Could not load today\'s fixtures.</strong>'
+        + '<span>Please try again later.</span>'
+        + '</div>';
+    });
 })();
 
 // ── Community Predictions Widget ────────────────────────────────────

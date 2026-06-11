@@ -283,8 +283,8 @@
         <!-- League showcase -->
         <div class="league-showcase reveal">
           <div class="league-showcase-text">
-            <span class="label">Leagues & Rankings</span>
-            <h2>Compete with<br /><span class="accent">your people.</span></h2>
+            <span class="label">Leagues &amp; Rankings</span>
+            <h2>Agenda must<br /><span class="accent">Agend.</span></h2>
             <p>Set up a private league for your crew, join the global standings, and see exactly where you rank every gameweek.</p>
             <ul class="league-showcase-bullets">
               <li>Global leaderboard with real-time rankings</li>
@@ -357,16 +357,42 @@
     </section>
     <?php endif; ?>
 
-    <!-- Next Match Widget — Desktop -->
-    <section class="sp-fixture-section sp-fixture-desktop">
+    <!-- Match Intelligence — Today's Matches + Black Stars Toggle -->
+    <section class="sp-match-intel-section" id="predictions">
       <div class="container">
-        <div class="section-header reveal">
+
+        <!-- Header + toggle -->
+        <div class="sp-match-intel-header reveal">
           <div>
             <span class="label">Match Intelligence</span>
-            <h2 style="margin-top:12px">Black Stars'<br />next match.</h2>
+            <h2 id="sp-match-section-title" style="margin-top:12px">Today's Matches</h2>
+          </div>
+          <div class="sp-match-toggle" role="group" aria-label="Filter matches">
+            <button class="sp-toggle-btn sp-toggle-btn--active" data-view="all" id="sp-toggle-all">
+              All Matches
+            </button>
+            <button class="sp-toggle-btn" data-view="ghana" id="sp-toggle-ghana">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              Black Stars
+            </button>
           </div>
         </div>
-        <div class="sp-intel-grid">
+
+        <!-- All Matches view -->
+        <div id="sp-view-all" class="sp-view">
+          <div id="sp-today-fixtures" class="sp-today-list sp-loading" aria-live="polite">
+            <div class="sp-skeleton">
+              <div class="sp-sk" style="height:72px"></div>
+              <div class="sp-sk" style="height:72px"></div>
+              <div class="sp-sk" style="height:72px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Black Stars view -->
+        <div id="sp-view-ghana" class="sp-view sp-view--hidden">
           <div id="sp-home-fixture" class="sp-widget sp-loading" aria-live="polite">
             <div class="sp-skeleton">
               <div class="sp-sk sp-sk-teams"></div>
@@ -375,6 +401,10 @@
               <div class="sp-sk sp-sk-odds"></div>
             </div>
           </div>
+        </div>
+
+        <!-- Group standings — always visible below both views -->
+        <div class="sp-standings-row">
           <div id="sp-home-standings" class="sp-standings-panel sp-loading" aria-live="polite">
             <div class="sp-skeleton">
               <div class="sp-sk sp-sk-bar"></div>
@@ -384,39 +414,11 @@
             </div>
           </div>
         </div>
-        <div class="reveal" style="text-align:center;margin-top:40px">
-          <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">Read the World Cup Intel →</a>
-        </div>
-      </div>
-    </section>
 
-    <!-- Next Match Widget — Mobile -->
-    <section class="sp-fixture-section sp-fixture-mobile">
-      <div class="container">
-        <div class="section-header reveal">
-          <div>
-            <span class="label">Match Intelligence</span>
-            <h2 style="margin-top:12px">Black Stars'<br />next match.</h2>
-          </div>
-        </div>
-        <div id="sp-home-fixture-mob" class="sp-widget sp-loading" aria-live="polite">
-          <div class="sp-skeleton">
-            <div class="sp-sk sp-sk-teams"></div>
-            <div class="sp-sk sp-sk-bar"></div>
-            <div class="sp-sk sp-sk-odds"></div>
-          </div>
-        </div>
-        <div id="sp-home-standings-mob" class="sp-standings-panel sp-standings-mob sp-loading" aria-live="polite">
-          <div class="sp-skeleton">
-            <div class="sp-sk sp-sk-bar"></div>
-            <div class="sp-sk sp-sk-comps"></div>
-            <div class="sp-sk sp-sk-comps"></div>
-            <div class="sp-sk sp-sk-comps"></div>
-          </div>
-        </div>
         <div class="reveal" style="text-align:center;margin-top:40px">
           <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">Read the World Cup Intel →</a>
         </div>
+
       </div>
     </section>
 

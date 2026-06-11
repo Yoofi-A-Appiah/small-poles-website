@@ -28,10 +28,8 @@
           <span><?php echo smallpoles_post_date(); ?></span>
           <span class="meta-sep"></span>
           <span><?php echo smallpoles_reading_time(); ?></span>
-          <?php if ( get_post_meta( get_the_ID(), '_sp_fixture_id', true ) ) : ?>
           <span class="meta-sep"></span>
-          <a href="#sp-article-fixture" class="article-pred-link">⚽ Match predictions ↓</a>
-          <?php endif; ?>
+          <button type="button" class="article-pred-link sp-join-trigger">Join Small Poles</button>
         </div>
       </div>
     </div>
@@ -43,16 +41,17 @@
     </div>
     <?php endif; ?>
 
-    <!-- Article layout: body + sidebar -->
+    <?php $sp_fixture_id = get_post_meta( get_the_ID(), '_sp_fixture_id', true ); ?>
+
+    <!-- Article layout: main column + sidebar -->
     <div class="article-layout container">
 
-      <!-- Article body -->
-      <div>
+      <!-- Main column -->
+      <div class="article-main">
         <div class="article-body">
           <?php the_content(); ?>
         </div>
 
-        <!-- In-article Beta CTA -->
         <div class="article-cta">
           <div class="article-cta-text">
             <h4>Build your GPL squad with SmallPoles</h4>
@@ -64,11 +63,12 @@
             </a>
           </div>
         </div>
+      </div>
 
-        <!-- Comments -->
+      <!-- Comments + post nav -->
+      <div class="article-comments-section">
         <?php comments_template(); ?>
 
-        <!-- Post navigation -->
         <div class="article-post-nav">
           <?php
           $prev = get_previous_post();
@@ -92,13 +92,12 @@
         </div>
       </div>
 
-      <!-- Sidebar -->
+      <!-- Sidebar — all widgets together; on mobile, display:contents lets children reorder -->
       <aside class="article-sidebar">
 
-        <!-- Predictions widget (shown when article has a fixture ID set) -->
-        <?php $sp_fixture_id = get_post_meta( get_the_ID(), '_sp_fixture_id', true ); ?>
+        <!-- Match Prediction: mobile=first, desktop=top of sidebar -->
         <?php if ( $sp_fixture_id ) : ?>
-        <div class="sidebar-widget">
+        <div class="sidebar-widget sp-pred-widget">
           <div class="sidebar-widget-header">Match Prediction</div>
           <div
             id="sp-article-fixture"
@@ -115,12 +114,11 @@
         </div>
         <?php endif; ?>
 
-        <!-- Community predictions widget (shown when article has a fixture ID) -->
+        <!-- Community predictions: mobile=after article body, desktop=below match prediction -->
         <?php if ( $sp_fixture_id ) : ?>
-        <div class="sidebar-widget">
+        <div class="sidebar-widget sp-community-widget">
           <div class="sidebar-widget-header">Your Prediction</div>
           <div class="sidebar-widget-body sp-community-wrap" id="sp-community" data-fixture-id="<?php echo esc_attr( $sp_fixture_id ); ?>">
-            <!-- Form state -->
             <form class="sp-pred-form" id="sp-pred-form" novalidate>
               <p class="sp-pred-prompt">Call the result before kickoff:</p>
               <div class="sp-pick-row">
@@ -140,7 +138,6 @@
               <button type="submit" class="sp-submit-btn" id="sp-submit" disabled>Submit Prediction</button>
               <p class="sp-form-msg" id="sp-form-msg"></p>
             </form>
-            <!-- Results state (rendered by JS after submit or if already submitted) -->
             <div class="sp-results-wrap" id="sp-results" style="display:none">
               <div id="sp-community-results" class="sp-loading">
                 <div class="sp-skeleton"><div class="sp-sk sp-sk-bar"></div><div class="sp-sk sp-sk-comps"></div></div>
@@ -150,47 +147,84 @@
         </div>
         <?php endif; ?>
 
-        <!-- Beta sign-up widget -->
-        <div class="sidebar-widget">
-          <div class="sidebar-widget-header">Join SmallPoles Beta</div>
-          <div class="sidebar-widget-body" style="text-align:center;padding:20px 18px">
-            <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">
-              The first GPL fantasy platform. Get early access before we launch.
-            </p>
-            <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary" style="width:100%;justify-content:center">
-              Get Early Access →
-            </a>
-          </div>
-        </div>
+        <!-- Beta CTA + related: mobile=last, desktop=bottom of sidebar -->
+        <div class="article-sidebar-rest">
 
-        <!-- Related posts -->
-        <?php
-        $related = smallpoles_related_posts( 4 );
-        if ( $related->have_posts() ) :
-        ?>
-        <div class="sidebar-widget">
-          <div class="sidebar-widget-header">Related News</div>
-          <div class="sidebar-widget-body">
-            <?php while ( $related->have_posts() ) : $related->the_post(); ?>
-            <a href="<?php the_permalink(); ?>" class="sidebar-related-post">
-              <?php if ( has_post_thumbnail() ) : ?>
-                <?php the_post_thumbnail( 'thumbnail', [ 'class' => 'sidebar-related-thumb' ] ); ?>
-              <?php else : ?>
-                <div class="sidebar-related-thumb"></div>
-              <?php endif; ?>
-              <div>
-                <div class="sidebar-related-title"><?php the_title(); ?></div>
-                <div class="sidebar-related-date"><?php echo smallpoles_post_date(); ?></div>
-              </div>
-            </a>
-            <?php endwhile; wp_reset_postdata(); ?>
+          <div class="sidebar-widget">
+            <div class="sidebar-widget-header">Join SmallPoles Beta</div>
+            <div class="sidebar-widget-body" style="text-align:center;padding:20px 18px">
+              <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">
+                The first GPL fantasy platform. Get early access before we launch.
+              </p>
+              <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary" style="width:100%;justify-content:center">
+                Get Early Access →
+              </a>
+            </div>
           </div>
-        </div>
-        <?php endif; ?>
 
+          <?php
+          $related = smallpoles_related_posts( 4 );
+          if ( $related->have_posts() ) :
+          ?>
+          <div class="sidebar-widget">
+            <div class="sidebar-widget-header">Related News</div>
+            <div class="sidebar-widget-body">
+              <?php while ( $related->have_posts() ) : $related->the_post(); ?>
+              <a href="<?php the_permalink(); ?>" class="sidebar-related-post">
+                <?php if ( has_post_thumbnail() ) : ?>
+                  <?php the_post_thumbnail( 'thumbnail', [ 'class' => 'sidebar-related-thumb' ] ); ?>
+                <?php else : ?>
+                  <div class="sidebar-related-thumb"></div>
+                <?php endif; ?>
+                <div>
+                  <div class="sidebar-related-title"><?php the_title(); ?></div>
+                  <div class="sidebar-related-date"><?php echo smallpoles_post_date(); ?></div>
+                </div>
+              </a>
+              <?php endwhile; wp_reset_postdata(); ?>
+            </div>
+          </div>
+          <?php endif; ?>
+
+        </div><!-- .article-sidebar-rest -->
 
       </aside>
     </div>
+
+<!-- Join Small Poles modal -->
+<div class="sp-join-modal" id="sp-join-modal" role="dialog" aria-modal="true" aria-label="Join Small Poles">
+  <div class="sp-join-modal-box">
+    <button class="sp-join-modal-close" id="sp-join-modal-close" aria-label="Close">&times;</button>
+    <span class="label" style="display:block;margin-bottom:14px">Early Access</span>
+    <h3>Get in before kickoff.</h3>
+    <p>Join the waitlist and get first access when Small Poles launches.</p>
+    <iframe
+      src="https://tally.so/embed/ODJ4Np?alignLeft=1&hideTitle=1&transparentBackground=1"
+      loading="lazy"
+      width="100%"
+      height="220"
+      frameborder="0"
+      marginheight="0"
+      marginwidth="0"
+      title="Small Poles Waitlist"
+    ></iframe>
+    <p class="sp-join-modal-note">No spam. Just launch updates and early access.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var modal    = document.getElementById('sp-join-modal');
+  var closeBtn = document.getElementById('sp-join-modal-close');
+  if (!modal) return;
+  function openModal()  { modal.classList.add('is-open');    document.body.style.overflow = 'hidden'; }
+  function closeModal() { modal.classList.remove('is-open'); document.body.style.overflow = ''; }
+  document.querySelectorAll('.sp-join-trigger').forEach(function (btn) { btn.addEventListener('click', openModal); });
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+})();
+</script>
 
 <?php endwhile; ?>
 

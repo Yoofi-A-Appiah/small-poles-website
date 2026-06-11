@@ -33,7 +33,7 @@
         <?php endif; ?>
       </li>
       <li>
-        <a href="<?php echo esc_url( home_url( '/#features' ) ); ?>">Features</a>
+        <a href="<?php echo esc_url( home_url( '/#predictions' ) ); ?>">Predictions</a>
       </li>
       <li>
         <?php if ( $is_news_section ) : ?>

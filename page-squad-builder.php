@@ -33,6 +33,10 @@
           <span class="squad-budget-unit">pts</span>
           <div class="squad-budget-bar-wrap"><div class="squad-budget-bar" id="squadBudgetBar" style="width:0%"></div></div>
         </div>
+        <div class="squad-team-name-wrap">
+          <label class="squad-label" for="squadTeamName">Squad name</label>
+          <input type="text" id="squadTeamName" class="squad-team-name-input" placeholder="My World Cup XI" maxlength="32" autocomplete="off" />
+        </div>
       </div>
     </div>
 

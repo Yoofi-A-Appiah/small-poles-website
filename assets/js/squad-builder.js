@@ -1,4 +1,4 @@
-/* World Cup 2026 Squad Builder
+/* World Cup 2026 Squad Builder v2.0.2
    Squad data loaded from WordPress via spSquadData (seeded by admin). */
 
 ;(function () {
@@ -52,12 +52,12 @@
   var currentNation    = '';
   var currentFormation = '4-3-3';
   var currentFilter    = 'ALL';
-  var selectedSlot     = -1;   // which pitch slot is being filled
-  var squad            = [];   // array of 11 { slot, player } or null
+  var selectedSlot     = -1;
+  var squad            = [];
 
   function initSquad() {
     squad = FORMATIONS[currentFormation].positions.map(function(pos, i) {
-      return { slot: i, pos: pos.pos, player: null };
+      return { slot: i, pos: pos.pos, player: null, flag: '', _new: false };
     });
   }
 
@@ -87,20 +87,36 @@
       dot.className = 'sp-player-dot';
       if (selectedSlot === i) dot.classList.add('sp-player-dot--active');
       if (!s.player) dot.classList.add('sp-player-dot--empty');
+      if (s.player && s._new) {
+        dot.classList.add('sp-player-dot--new');
+        s._new = false;
+      }
 
       dot.style.left = pos.x + '%';
       dot.style.top  = pos.y + '%';
 
       var circle = document.createElement('div');
       circle.className = 'sp-player-dot-circle';
-      circle.textContent = s.player ? s.player.n.split(' ').pop().substring(0,8) : pos.pos;
 
-      var cost = document.createElement('div');
-      cost.className = 'sp-player-dot-name';
-      cost.textContent = s.player ? s.player.n.split(' ')[0] : '';
+      if (s.player) {
+        circle.textContent = s.flag || '⚽';
 
-      dot.appendChild(circle);
-      dot.appendChild(cost);
+        var badge = document.createElement('div');
+        badge.className = 'sp-player-dot-badge sp-pos-badge--' + s.pos.toLowerCase();
+        badge.textContent = s.pos;
+
+        var nameParts = s.player.n.split(' ');
+        var nameEl = document.createElement('div');
+        nameEl.className = 'sp-player-dot-name';
+        nameEl.textContent = nameParts[nameParts.length - 1].substring(0, 9);
+
+        dot.appendChild(circle);
+        dot.appendChild(badge);
+        dot.appendChild(nameEl);
+      } else {
+        circle.textContent = pos.pos;
+        dot.appendChild(circle);
+      }
 
       dot.addEventListener('click', (function(idx){ return function(){ selectSlot(idx); }; })(i));
       pitch.appendChild(dot);
@@ -174,9 +190,10 @@
         return;
       }
       squad[selectedSlot].player = player;
+      squad[selectedSlot]._new   = true;
+      squad[selectedSlot].flag   = FLAGS[currentNation] || '⚽';
       selectedSlot = -1;
     } else {
-      /* Find first empty slot matching position */
       var slot = squad.find(function(s){ return !s.player && s.pos === player.p; });
       if (!slot) {
         flashMsg('No empty ' + player.p + ' slot — click a slot on the pitch to place this player');
@@ -187,6 +204,8 @@
         return;
       }
       slot.player = player;
+      slot._new   = true;
+      slot.flag   = FLAGS[currentNation] || '⚽';
     }
     renderPitch();
     renderPool();
@@ -196,6 +215,7 @@
     var s = squad.find(function(s){ return s.player && s.player.n === player.n; });
     if (s) {
       s.player = null;
+      s._new   = false;
       renderPitch();
       renderPool();
     }
@@ -212,39 +232,7 @@
     }, 2500);
   }
 
-  /* ── Share modal ────────────────────────────────────────────────── */
-  var SHARE_CSS = [
-    '#sq-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}',
-    '#sq-modal{background:#1a1a2e;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:sq-in .2s ease}',
-    '@keyframes sq-in{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}',
-    '#sq-card{padding:24px;background:linear-gradient(135deg,#0f3460 0%,#16213e 100%)}',
-    '.sq-ch{display:flex;align-items:center;gap:14px;margin-bottom:20px}',
-    '.sq-flag{font-size:40px;line-height:1;flex-shrink:0}',
-    '.sq-nation{font-size:22px;font-weight:800;color:#fff;margin:0;line-height:1.1}',
-    '.sq-meta{font-size:13px;color:rgba(255,255,255,.55);margin:4px 0 0}',
-    '.sq-rows{display:flex;flex-direction:column;gap:10px}',
-    '.sq-row{display:flex;align-items:flex-start;gap:10px}',
-    '.sq-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;color:#fff;min-width:34px;text-align:center;flex-shrink:0;margin-top:1px}',
-    '.sq-b-gk{background:#c47d00}.sq-b-def{background:#1e73be}.sq-b-mid{background:#2a7a2a}.sq-b-fwd{background:#c0392b}',
-    '.sq-names{font-size:13px;color:rgba(255,255,255,.88);line-height:1.5}',
-    '.sq-foot{margin-top:18px;font-size:11px;color:rgba(255,255,255,.35);text-align:center;letter-spacing:.5px}',
-    '.sq-actions{display:flex;gap:8px;padding:16px 20px;background:#111}',
-    '.sq-btn{flex:1;padding:11px 6px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.3px}',
-    '.sq-btn:hover{opacity:.82}',
-    '.sq-btn-copy{background:#0073aa;color:#fff}',
-    '.sq-btn-share{background:#27ae60;color:#fff}',
-    '.sq-btn-close{background:#2a2a2a;color:#aaa}',
-  ].join('');
-
-  function injectShareStyles() {
-    if (!document.getElementById('sp-sq-css')) {
-      var s = document.createElement('style');
-      s.id  = 'sp-sq-css';
-      s.textContent = SHARE_CSS;
-      document.head.appendChild(s);
-    }
-  }
-
+  /* ── Screenshot share ───────────────────────────────────────────── */
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       return navigator.clipboard.writeText(text);
@@ -253,16 +241,22 @@
     ta.value = text;
     ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
     document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
+    ta.focus(); ta.select();
     var ok = false;
     try { ok = document.execCommand('copy'); } catch(e) {}
     document.body.removeChild(ta);
     return ok ? Promise.resolve() : Promise.reject();
   }
 
-  function buildShareText(byPos) {
-    var lines = ['🏟️ My ' + currentNation + ' World Cup XI (' + currentFormation + ')', ''];
+  function getTeamName() {
+    var input = document.getElementById('squadTeamName');
+    return (input && input.value.trim()) || 'My World Cup XI';
+  }
+
+  function buildShareText() {
+    var byPos = { GK:[], DEF:[], MID:[], FWD:[] };
+    squad.forEach(function(s){ if (s.player) byPos[s.pos].push(s.player.n); });
+    var lines = ['🏟️ ' + getTeamName() + ' (' + currentFormation + ')', ''];
     ['GK','DEF','MID','FWD'].forEach(function(pos){
       if (byPos[pos].length) lines.push(pos + ': ' + byPos[pos].join(', '));
     });
@@ -270,70 +264,154 @@
     return lines.join('\n');
   }
 
-  function openShareModal() {
-    var filled = squad.filter(function(s){ return s.player; });
-    var byPos  = { GK:[], DEF:[], MID:[], FWD:[] };
-    filled.forEach(function(s){ byPos[s.pos].push(s.player.n); });
+  function injectShareModalCSS() {
+    if (document.getElementById('sp-sq-modal-css')) return;
+    var s = document.createElement('style');
+    s.id = 'sp-sq-modal-css';
+    s.textContent = [
+      '#sq-share-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}',
+      '@keyframes sq-modal-in{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}',
+      '#sq-share-modal{background:#151515;border-radius:16px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.75);animation:sq-modal-in .22s ease;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}',
+      '#sq-share-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px}',
+      '#sq-share-head-title{font-size:15px;font-weight:700;color:#fff}',
+      '#sq-share-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:22px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s;flex-shrink:0}',
+      '#sq-share-close:hover{background:rgba(255,255,255,.1);color:#fff}',
+      '#sq-share-img{width:100%;display:block;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}',
+      '#sq-share-msg-wrap{padding:14px 18px 10px}',
+      '#sq-share-msg-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}',
+      '#sq-share-textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:rgba(255,255,255,.82);font-size:12px;line-height:1.65;padding:10px 12px;resize:none;font-family:system-ui,sans-serif;box-sizing:border-box;outline:none}',
+      '#sq-share-textarea:focus{border-color:rgba(0,255,127,.4)}',
+      '#sq-share-actions{display:flex;gap:8px;padding:10px 18px 18px}',
+      '.sq-sa-btn{flex:1;padding:10px 4px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.2px}',
+      '.sq-sa-btn:hover{opacity:.82}',
+      '.sq-sa-btn--copy{background:#0073aa;color:#fff}',
+      '.sq-sa-btn--dl{background:#00ff7f;color:#000}',
+      '.sq-sa-btn--share{background:#27ae60;color:#fff}',
+    ].join('');
+    document.head.appendChild(s);
+  }
 
-    var flag    = FLAGS[currentNation] || '';
-    var text    = buildShareText(byPos);
-    var posRows = ['GK','DEF','MID','FWD'].map(function(pos) {
-      if (!byPos[pos].length) return '';
-      return '<div class="sq-row">'
-        + '<span class="sq-badge sq-b-' + pos.toLowerCase() + '">' + pos + '</span>'
-        + '<span class="sq-names">' + byPos[pos].join(', ') + '</span>'
-        + '</div>';
-    }).join('');
-
-    injectShareStyles();
+  function openShareResultModal(canvas, shareText, filename) {
+    injectShareModalCSS();
 
     var overlay = document.createElement('div');
-    overlay.id  = 'sq-overlay';
-    overlay.innerHTML = '<div id="sq-modal">'
-      + '<div id="sq-card">'
-      + '<div class="sq-ch"><span class="sq-flag">' + flag + '</span>'
-      + '<div><p class="sq-nation">' + currentNation + ' XI</p>'
-      + '<p class="sq-meta">' + currentFormation + ' &nbsp;·&nbsp; ' + calcSpent() + '/100 pts</p>'
-      + '</div></div>'
-      + '<div class="sq-rows">' + posRows + '</div>'
-      + '<p class="sq-foot">smallpoles.online/games/squad/</p>'
+    overlay.id  = 'sq-share-overlay';
+
+    var canShare = !!(navigator.share && navigator.canShare);
+
+    overlay.innerHTML = '<div id="sq-share-modal">'
+      + '<div id="sq-share-head">'
+      + '<span id="sq-share-head-title">Your Squad</span>'
+      + '<button id="sq-share-close" aria-label="Close">&times;</button>'
       + '</div>'
-      + '<div class="sq-actions">'
-      + '<button class="sq-btn sq-btn-copy" id="sq-copy-btn">Copy Text</button>'
-      + (navigator.share ? '<button class="sq-btn sq-btn-share" id="sq-native-btn">Share</button>' : '')
-      + '<button class="sq-btn sq-btn-close" id="sq-close-btn">Close</button>'
-      + '</div></div>';
+      + '<img id="sq-share-img" src="' + canvas.toDataURL('image/png') + '" alt="Squad screenshot" />'
+      + '<div id="sq-share-msg-wrap">'
+      + '<div id="sq-share-msg-label">Caption &amp; link</div>'
+      + '<textarea id="sq-share-textarea" rows="6">' + shareText + '</textarea>'
+      + '</div>'
+      + '<div id="sq-share-actions">'
+      + '<button class="sq-sa-btn sq-sa-btn--copy" id="sq-sa-copy">Copy Message</button>'
+      + '<button class="sq-sa-btn sq-sa-btn--dl"   id="sq-sa-dl">Download Image</button>'
+      + (canShare ? '<button class="sq-sa-btn sq-sa-btn--share" id="sq-sa-share">Share</button>' : '')
+      + '</div>'
+      + '</div>';
 
     document.body.appendChild(overlay);
 
-    function closeModal() { var el = document.getElementById('sq-overlay'); if (el) el.remove(); }
+    function closeModal() { var el = document.getElementById('sq-share-overlay'); if (el) el.remove(); }
 
+    document.getElementById('sq-share-close').addEventListener('click', closeModal);
     overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
-    document.getElementById('sq-close-btn').addEventListener('click', closeModal);
+    document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape'){ closeModal(); document.removeEventListener('keydown', esc); } });
 
-    document.getElementById('sq-copy-btn').addEventListener('click', function() {
+    document.getElementById('sq-sa-copy').addEventListener('click', function() {
       var btn = this;
-      copyText(text).then(function() {
+      var text = document.getElementById('sq-share-textarea').value;
+      copyText(text).then(function(){
         btn.textContent = '✓ Copied!';
-        setTimeout(function(){ btn.textContent = 'Copy Text'; }, 2500);
-      }).catch(function() {
-        /* clipboard failed — show the text so user can copy manually */
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'width:100%;margin-top:12px;background:#0a0a1a;color:#eee;border:1px solid #333;border-radius:6px;padding:10px;font-size:12px;resize:none';
-        ta.rows = 8;
-        document.getElementById('sq-card').appendChild(ta);
-        ta.select();
-        btn.textContent = 'Select & copy above';
+        setTimeout(function(){ btn.textContent = 'Copy Message'; }, 2500);
+      }).catch(function(){
+        document.getElementById('sq-share-textarea').select();
       });
     });
 
-    var nativeBtn = document.getElementById('sq-native-btn');
-    if (nativeBtn) {
-      nativeBtn.addEventListener('click', function() {
-        navigator.share({ text: text }).catch(function(){});
+    document.getElementById('sq-sa-dl').addEventListener('click', function() {
+      var a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+
+    var shareNativeBtn = document.getElementById('sq-sa-share');
+    if (shareNativeBtn) {
+      shareNativeBtn.addEventListener('click', function() {
+        var text = document.getElementById('sq-share-textarea').value;
+        canvas.toBlob(function(blob) {
+          var file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: currentNation + ' XI — Small Poles', text: text }).catch(function(){});
+          }
+        }, 'image/png');
       });
     }
+  }
+
+  function captureAndShare() {
+    var shareBtn = document.getElementById('squadShareBtn');
+    shareBtn.disabled    = true;
+    shareBtn.textContent = 'Capturing…';
+
+    var teamName  = getTeamName();
+    var flag      = FLAGS[currentNation] || '';
+    var filename  = 'smallpoles-' + teamName.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
+    var shareText = buildShareText();
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:340px;background:#101c10;overflow:hidden;font-family:system-ui,sans-serif';
+
+    var header = document.createElement('div');
+    header.style.cssText = 'padding:14px 18px;background:linear-gradient(135deg,#0f3460 0%,#16213e 100%);display:flex;align-items:center;gap:12px';
+    header.innerHTML = '<span style="font-size:30px;line-height:1;flex-shrink:0">' + flag + '</span>'
+      + '<div>'
+      + '<div style="font-size:17px;font-weight:800;color:#fff;line-height:1.15">' + teamName + '</div>'
+      + '<div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">' + currentFormation + ' · ' + calcSpent() + ' / 100 pts</div>'
+      + '</div>';
+
+    var pitchEl    = document.getElementById('squadPitch');
+    var pitchClone = pitchEl.cloneNode(true);
+    /* Strip transient animation/selection classes so the screenshot is uniform */
+    pitchClone.querySelectorAll('.sp-player-dot--active, .sp-player-dot--new').forEach(function(el){
+      el.classList.remove('sp-player-dot--active');
+      el.classList.remove('sp-player-dot--new');
+    });
+    pitchClone.style.cssText = 'position:relative;width:340px;height:486px;border-radius:0';
+
+    var footer = document.createElement('div');
+    footer.style.cssText = 'padding:8px 16px;text-align:center;font-size:10px;color:rgba(255,255,255,.35);background:#0a0f0a;letter-spacing:.5px';
+    footer.textContent = 'smallpoles.online/games/squad/';
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(pitchClone);
+    wrapper.appendChild(footer);
+    document.body.appendChild(wrapper);
+
+    window.html2canvas(wrapper, {
+      useCORS: true,
+      backgroundColor: '#101c10',
+      scale: 2,
+      logging: false,
+    }).then(function(canvas) {
+      document.body.removeChild(wrapper);
+      shareBtn.disabled    = false;
+      shareBtn.textContent = 'Share Squad';
+      openShareResultModal(canvas, shareText, filename);
+    }).catch(function(err) {
+      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+      shareBtn.disabled    = false;
+      shareBtn.textContent = 'Share Squad';
+      console.error('[SP Squad] screenshot error:', err);
+      flashMsg('Screenshot failed — try a different browser');
+    });
   }
 
   document.getElementById('squadShareBtn').addEventListener('click', function() {
@@ -342,7 +420,7 @@
       flashMsg('Fill all 11 slots before sharing!');
       return;
     }
-    openShareModal();
+    captureAndShare();
   });
 
   /* ── Nation grid ─────────────────────────────────────────────────── */
@@ -357,8 +435,6 @@
       btn.addEventListener('click', function() {
         currentNation = nation;
         selectedSlot  = -1;
-        /* Do NOT call initSquad() here — preserve existing picks.
-           Use "Clear Squad" button to start over. */
         renderNationGrid();
         renderPitch();
         renderPool();
@@ -376,12 +452,11 @@
     document.querySelectorAll('.squad-formation-btn').forEach(function(b){
       b.classList.toggle('active', b === btn);
     });
-    /* Migrate existing picks into new formation slots by position */
-    var prevPlayers = squad.filter(function(s){ return s.player; }).map(function(s){ return s.player; });
+    var prevPicks = squad.filter(function(s){ return s.player; }).map(function(s){ return { player: s.player, flag: s.flag }; });
     initSquad();
-    prevPlayers.forEach(function(player) {
-      var slot = squad.find(function(s){ return !s.player && s.pos === player.p; });
-      if (slot) slot.player = player;
+    prevPicks.forEach(function(pick) {
+      var slot = squad.find(function(s){ return !s.player && s.pos === pick.player.p; });
+      if (slot) { slot.player = pick.player; slot.flag = pick.flag; }
     });
     selectedSlot = -1;
     renderPitch();
@@ -408,9 +483,18 @@
   });
 
   /* ── Boot ────────────────────────────────────────────────────────── */
-  initSquad();
-  renderNationGrid();
-  renderPitch();
-  renderPool();
+  try {
+    console.log('[SP Squad] SQUADS keys:', Object.keys(SQUADS));
+    initSquad();
+    console.log('[SP Squad] initSquad OK');
+    renderNationGrid();
+    console.log('[SP Squad] renderNationGrid OK');
+    renderPitch();
+    console.log('[SP Squad] renderPitch OK');
+    renderPool();
+    console.log('[SP Squad] renderPool OK');
+  } catch (err) {
+    console.error('[SP Squad] boot error:', err);
+  }
 
 })();

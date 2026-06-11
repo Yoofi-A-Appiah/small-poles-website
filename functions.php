@@ -76,8 +76,8 @@ add_action( 'after_setup_theme', 'smallpoles_setup' );
 
 
 function smallpoles_scripts() {
-    wp_enqueue_style( 'smallpoles-style', get_stylesheet_uri(), [], '1.0.3' );
-    wp_enqueue_script( 'smallpoles-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.0.2', true );
+    wp_enqueue_style( 'smallpoles-style', get_stylesheet_uri(), [], '1.1.5' );
+    wp_enqueue_script( 'smallpoles-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.0.7', true );
     wp_localize_script( 'smallpoles-main', 'spData', [
         'restBase' => esc_url_raw( rest_url( 'smallpoles/v1/' ) ),
         'nonce'    => wp_create_nonce( 'wp_rest' ),
@@ -102,7 +102,8 @@ function smallpoles_scripts() {
         foreach ( $sb_teams as $t ) {
             $sb_flags[ $t['name'] ] = $t['flag'] ?? '';
         }
-        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [], '2.0.0', true );
+        wp_enqueue_script( 'html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', [], null, true );
+        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [ 'html2canvas' ], '2.0.2', true );
         wp_localize_script( 'sp-squad', 'spSquadData', [
             'squads' => $sb_squads,
             'flags'  => $sb_flags,
@@ -670,6 +671,10 @@ function smallpoles_register_rest_routes() {
         ],
     ] );
 
+    register_rest_route( 'smallpoles/v1', '/today-fixtures', $public + [
+        'callback' => 'smallpoles_today_fixtures_proxy',
+    ] );
+
     register_rest_route( 'smallpoles/v1', '/rounds', $public + [
         'callback' => 'smallpoles_rounds_proxy',
     ] );
@@ -759,14 +764,16 @@ function smallpoles_register_rest_routes() {
 add_action( 'rest_api_init', 'smallpoles_register_rest_routes' );
 
 function smallpoles_next_fixture_proxy() {
-    if ( $err = smallpoles_rate_check( 'fixture', 10, 60 ) ) return $err;
     $team_id   = (int) get_option( 'smallpoles_team_id',   1504 );
     $league_id = (int) get_option( 'smallpoles_league_id', 1 );
     $season    = (int) get_option( 'smallpoles_season',    2026 );
     $cache_key = "next_fixture_{$team_id}_{$league_id}_{$season}";
 
+    // Serve from cache before touching the rate limiter — cached responses never hit the external API
     $cached = smallpoles_cache_get( $cache_key );
     if ( $cached !== false ) return rest_ensure_response( $cached );
+
+    if ( $err = smallpoles_rate_check( 'fixture', 10, 60 ) ) return $err;
 
     // Stampede lock
     $lock_key = 'sp_lock_next_fixture';
@@ -959,6 +966,48 @@ function smallpoles_fixtures_proxy( WP_REST_Request $request ) {
     return $result['error'] ?? rest_ensure_response( $result['data'] );
 }
 
+function smallpoles_today_fixtures_proxy() {
+    $league_id = (int) get_option( 'smallpoles_league_id', 1 );
+    $season    = (int) get_option( 'smallpoles_season', 2026 );
+    $today     = gmdate( 'Y-m-d' );
+    $cache_key = "today_fixtures_{$league_id}_{$season}_{$today}";
+
+    $cached = smallpoles_cache_get( $cache_key );
+    if ( $cached !== false ) return rest_ensure_response( $cached );
+
+    $lock_key = 'sp_lock_' . md5( $cache_key );
+    if ( get_transient( $lock_key ) ) {
+        $row = get_option( 'sp_cache_' . $cache_key );
+        if ( is_array( $row ) && isset( $row['data'] ) ) return rest_ensure_response( $row['data'] );
+        return rest_ensure_response( [] );
+    }
+    set_transient( $lock_key, 1, 15 );
+
+    $api_key = get_option( 'smallpoles_api_key', '' );
+    if ( ! $api_key ) {
+        delete_transient( $lock_key );
+        return rest_ensure_response( [] );
+    }
+
+    $response = wp_remote_get(
+        add_query_arg(
+            [ 'league' => $league_id, 'season' => $season, 'date' => $today ],
+            'https://v3.football.api-sports.io/fixtures'
+        ),
+        [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ]
+    );
+
+    delete_transient( $lock_key );
+
+    if ( is_wp_error( $response ) ) return rest_ensure_response( [] );
+
+    $body     = json_decode( wp_remote_retrieve_body( $response ), true );
+    $fixtures = $body['response'] ?? [];
+
+    smallpoles_cache_set( $cache_key, $fixtures, 30 * MINUTE_IN_SECONDS );
+    return rest_ensure_response( $fixtures );
+}
+
 function smallpoles_rounds_proxy() {
     $league_id = (int) get_option( 'smallpoles_league_id', 1 );
     $season    = (int) get_option( 'smallpoles_season', 2026 );
@@ -995,16 +1044,19 @@ function smallpoles_lineups_proxy( WP_REST_Request $request ) {
 }
 
 function smallpoles_odds_proxy( WP_REST_Request $request ) {
-    if ( $err = smallpoles_rate_check( 'odds', 15, 60 ) ) return $err;
     $fixture_id = $request->get_param( 'fixture' );
     $bookmaker  = $request->get_param( 'bookmaker' );
-    $params     = [ 'fixture' => $fixture_id ];
     $cache_key  = "odds_{$fixture_id}";
+    if ( $bookmaker ) $cache_key .= "_b{$bookmaker}";
 
-    if ( $bookmaker ) {
-        $params['bookmaker'] = $bookmaker;
-        $cache_key .= "_b{$bookmaker}";
-    }
+    // Serve from cache before touching the rate limiter — cached responses never hit the external API
+    $cached = smallpoles_cache_get( $cache_key );
+    if ( $cached !== false ) return rest_ensure_response( $cached );
+
+    if ( $err = smallpoles_rate_check( 'odds', 15, 60 ) ) return $err;
+
+    $params = [ 'fixture' => $fixture_id ];
+    if ( $bookmaker ) $params['bookmaker'] = $bookmaker;
 
     $result = smallpoles_api_fetch( 'odds', $params, $cache_key, 2 * HOUR_IN_SECONDS );
     return $result['error'] ?? rest_ensure_response( $result['data'] );
@@ -1048,9 +1100,19 @@ function smallpoles_odds_live_proxy( WP_REST_Request $request ) {
 }
 
 function smallpoles_predictions_proxy( WP_REST_Request $request ) {
-    if ( $err = smallpoles_rate_check( 'predictions', 15, 60 ) ) return $err;
     $fixture_id = $request->get_param( 'fixture' );
-    $result     = smallpoles_api_fetch(
+
+    // Serve from cache before touching the rate limiter — cached responses never hit the external API
+    // Cache stores $body['response'] (array); unwrap to [0] for consistency with the non-cache path
+    $cached = smallpoles_cache_get( "predictions_{$fixture_id}" );
+    if ( $cached !== false ) {
+        $data = is_array( $cached ) && isset( $cached[0] ) ? $cached[0] : $cached;
+        return rest_ensure_response( $data );
+    }
+
+    if ( $err = smallpoles_rate_check( 'predictions', 15, 60 ) ) return $err;
+
+    $result = smallpoles_api_fetch(
         'predictions',
         [ 'fixture' => $fixture_id ],
         "predictions_{$fixture_id}",
