@@ -13,7 +13,11 @@
     <div class="squad-controls">
       <div class="squad-control-group">
         <label class="squad-label">Nation</label>
-        <div class="squad-nation-grid" id="squadNationGrid">
+        <button type="button" class="squad-nation-toggle" id="squadNationToggle" aria-expanded="false">
+          <span id="squadNationToggleLabel">Select a nation</span>
+          <svg class="squad-nation-toggle-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 4 6 8 10 4"/></svg>
+        </button>
+        <div class="squad-nation-grid" id="squadNationGrid" aria-hidden="true">
           <!-- Rendered by JS -->
         </div>
       </div>

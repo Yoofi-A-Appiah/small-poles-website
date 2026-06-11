@@ -76,7 +76,7 @@ add_action( 'after_setup_theme', 'smallpoles_setup' );
 
 
 function smallpoles_scripts() {
-    wp_enqueue_style( 'smallpoles-style', get_stylesheet_uri(), [], '1.1.5' );
+    wp_enqueue_style( 'smallpoles-style', get_stylesheet_uri(), [], '1.1.9' );
     wp_enqueue_script( 'smallpoles-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.0.7', true );
     wp_localize_script( 'smallpoles-main', 'spData', [
         'restBase' => esc_url_raw( rest_url( 'smallpoles/v1/' ) ),
@@ -103,7 +103,7 @@ function smallpoles_scripts() {
             $sb_flags[ $t['name'] ] = $t['flag'] ?? '';
         }
         wp_enqueue_script( 'html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', [], null, true );
-        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [ 'html2canvas' ], '2.0.2', true );
+        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [ 'html2canvas' ], '2.0.4', true );
         wp_localize_script( 'sp-squad', 'spSquadData', [
             'squads' => $sb_squads,
             'flags'  => $sb_flags,
@@ -1263,6 +1263,24 @@ function sp_current_game() {
     }
     return null;
 }
+
+/* ── Force correct template for each game page (bypasses WP Admin template setting) ── */
+function smallpoles_game_template( $template ) {
+    $map = [
+        'hub'          => 'page-games.php',
+        'higher-lower' => 'page-higher-lower.php',
+        'polele'       => 'page-polele.php',
+        'bracket'      => 'page-bracket.php',
+        'squad'        => 'page-squad-builder.php',
+    ];
+    $game = sp_current_game();
+    if ( $game && isset( $map[ $game ] ) ) {
+        $path = get_template_directory() . '/' . $map[ $game ];
+        if ( file_exists( $path ) ) return $path;
+    }
+    return $template;
+}
+add_filter( 'template_include', 'smallpoles_game_template' );
 
 /* ── Helper: check if a game is enabled ── */
 function sp_game_is_visible( $game ) {

@@ -156,7 +156,7 @@
               <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">
                 The first GPL fantasy platform. Get early access before we launch.
               </p>
-              <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary" style="width:100%;justify-content:center">
+              <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary sp-join-trigger" style="width:100%;justify-content:center">
                 Get Early Access →
               </a>
             </div>
@@ -202,7 +202,7 @@
       src="https://tally.so/embed/ODJ4Np?alignLeft=1&hideTitle=1&transparentBackground=1"
       loading="lazy"
       width="100%"
-      height="220"
+      height="380"
       frameborder="0"
       marginheight="0"
       marginwidth="0"
@@ -217,7 +217,7 @@
   var modal    = document.getElementById('sp-join-modal');
   var closeBtn = document.getElementById('sp-join-modal-close');
   if (!modal) return;
-  function openModal()  { modal.classList.add('is-open');    document.body.style.overflow = 'hidden'; }
+  function openModal(e) { if (e && e.preventDefault) e.preventDefault(); modal.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
   function closeModal() { modal.classList.remove('is-open'); document.body.style.overflow = ''; }
   document.querySelectorAll('.sp-join-trigger').forEach(function (btn) { btn.addEventListener('click', openModal); });
   closeBtn.addEventListener('click', closeModal);

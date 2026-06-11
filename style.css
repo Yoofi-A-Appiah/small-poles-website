@@ -6245,6 +6245,8 @@ footer {
   max-width: 480px;
   width: 100%;
   position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .sp-join-modal-close {
@@ -7222,6 +7224,35 @@ footer {
   margin-bottom: 10px;
 }
 
+/* Nation toggle — visible on mobile only */
+.squad-nation-toggle {
+  display: none;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+
+.squad-nation-toggle-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.squad-nation-toggle[aria-expanded="true"] { border-color: var(--pitch-glow); }
+.squad-nation-toggle[aria-expanded="true"] .squad-nation-toggle-chevron { transform: rotate(180deg); }
+
 .squad-nation-grid {
   display: flex;
   flex-wrap: wrap;
@@ -7822,5 +7853,46 @@ footer {
   }
   .squad-pitch-wrap { position: static; }
   .squad-pitch { max-width: 360px; margin: 0 auto; }
+}
+
+@media (max-width: 768px) {
+  /* Pool moves above pitch on mobile */
+  .squad-pool-wrap  { order: -1; }
+  .squad-pitch-wrap { order:  1; }
+
+  /* Show ~5.5 cards so the scroll hint is visible */
+  .squad-pool { max-height: calc(5.5 * 43px); }
+
+  /* Show toggle, hide full grid by default */
+  .squad-nation-toggle { display: flex; }
+
+  .squad-nation-grid {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    /* Smooth scroll within the list */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .squad-nation-grid.open { display: flex; }
+
+  /* On mobile: 2 nation buttons per row, easier to tap */
+  .squad-nation-btn {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    font-size: 13px;
+    padding: 8px 10px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 

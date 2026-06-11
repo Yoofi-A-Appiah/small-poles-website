@@ -414,19 +414,28 @@
     });
   }
 
-  document.getElementById('squadShareBtn').addEventListener('click', function() {
-    var filled = squad.filter(function(s){ return s.player; });
-    if (filled.length < 11) {
-      flashMsg('Fill all 11 slots before sharing!');
-      return;
-    }
-    captureAndShare();
-  });
-
   /* ── Nation grid ─────────────────────────────────────────────────── */
+  function collapseNationGrid() {
+    var grid   = document.getElementById('squadNationGrid');
+    var toggle = document.getElementById('squadNationToggle');
+    if (grid)   { grid.classList.remove('open'); grid.setAttribute('aria-hidden', 'true'); }
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
   function renderNationGrid() {
-    var grid = document.getElementById('squadNationGrid');
+    var grid   = document.getElementById('squadNationGrid');
+    var toggle = document.getElementById('squadNationToggle');
+    var label  = document.getElementById('squadNationToggleLabel');
+
     grid.innerHTML = '';
+
+    /* Update toggle label with selected nation */
+    if (label) {
+      label.textContent = currentNation
+        ? (FLAGS[currentNation] ? FLAGS[currentNation] + ' ' : '') + currentNation
+        : 'Select a nation';
+    }
+
     Object.keys(SQUADS).forEach(function(nation) {
       var btn = document.createElement('button');
       btn.className = 'squad-nation-btn';
@@ -435,6 +444,7 @@
       btn.addEventListener('click', function() {
         currentNation = nation;
         selectedSlot  = -1;
+        collapseNationGrid();
         renderNationGrid();
         renderPitch();
         renderPool();
@@ -444,57 +454,84 @@
     });
   }
 
-  /* ── Formation buttons ───────────────────────────────────────────── */
-  document.getElementById('squadFormationRow').addEventListener('click', function(e) {
-    var btn = e.target.closest('.squad-formation-btn');
-    if (!btn) return;
-    currentFormation = btn.dataset.formation;
-    document.querySelectorAll('.squad-formation-btn').forEach(function(b){
-      b.classList.toggle('active', b === btn);
-    });
-    var prevPicks = squad.filter(function(s){ return s.player; }).map(function(s){ return { player: s.player, flag: s.flag }; });
-    initSquad();
-    prevPicks.forEach(function(pick) {
-      var slot = squad.find(function(s){ return !s.player && s.pos === pick.player.p; });
-      if (slot) { slot.player = pick.player; slot.flag = pick.flag; }
-    });
-    selectedSlot = -1;
-    renderPitch();
-    renderPool();
-  });
+  /* ── Boot + event wiring ─────────────────────────────────────────── */
+  (function boot() {
+    /* Required elements — all come from page-squad-builder.php.
+       If any are missing the page template is not assigned in WP Admin. */
+    var required = ['squadPitch','squadPool','squadNationGrid',
+                    'squadFormationRow','squadClear','squadShareBtn',
+                    'squadBudgetUsed','squadBudgetBar','squadPoolTitle'];
+    var missing = required.filter(function(id){ return !document.getElementById(id); });
+    if (missing.length) {
+      console.error(
+        '[SP Squad] Missing DOM elements:', missing.join(', '),
+        '— Make sure the Squad Builder page uses the "page-squad-builder.php" template ' +
+        '(WP Admin → Pages → Squad Builder → Page Attributes → Template).'
+      );
+      return;
+    }
 
-  /* ── Filter buttons ──────────────────────────────────────────────── */
-  document.querySelectorAll('.squad-filter-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      currentFilter = btn.dataset.pos;
-      document.querySelectorAll('.squad-filter-btn').forEach(function(b){
+    try {
+      initSquad();
+      renderNationGrid();
+      renderPitch();
+      renderPool();
+    } catch (err) {
+      console.error('[SP Squad] boot error:', err);
+      return;
+    }
+
+    document.getElementById('squadShareBtn').addEventListener('click', function() {
+      var filled = squad.filter(function(s){ return s.player; });
+      if (filled.length < 11) { flashMsg('Fill all 11 slots before sharing!'); return; }
+      captureAndShare();
+    });
+
+    document.getElementById('squadFormationRow').addEventListener('click', function(e) {
+      var btn = e.target.closest('.squad-formation-btn');
+      if (!btn) return;
+      currentFormation = btn.dataset.formation;
+      document.querySelectorAll('.squad-formation-btn').forEach(function(b){
         b.classList.toggle('active', b === btn);
       });
+      var prevPicks = squad.filter(function(s){ return s.player; }).map(function(s){ return { player: s.player, flag: s.flag }; });
+      initSquad();
+      prevPicks.forEach(function(pick) {
+        var slot = squad.find(function(s){ return !s.player && s.pos === pick.player.p; });
+        if (slot) { slot.player = pick.player; slot.flag = pick.flag; }
+      });
+      selectedSlot = -1;
+      renderPitch();
       renderPool();
     });
-  });
 
-  /* ── Clear ───────────────────────────────────────────────────────── */
-  document.getElementById('squadClear').addEventListener('click', function() {
-    initSquad();
-    selectedSlot = -1;
-    renderPitch();
-    renderPool();
-  });
+    document.querySelectorAll('.squad-filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentFilter = btn.dataset.pos;
+        document.querySelectorAll('.squad-filter-btn').forEach(function(b){
+          b.classList.toggle('active', b === btn);
+        });
+        renderPool();
+      });
+    });
 
-  /* ── Boot ────────────────────────────────────────────────────────── */
-  try {
-    console.log('[SP Squad] SQUADS keys:', Object.keys(SQUADS));
-    initSquad();
-    console.log('[SP Squad] initSquad OK');
-    renderNationGrid();
-    console.log('[SP Squad] renderNationGrid OK');
-    renderPitch();
-    console.log('[SP Squad] renderPitch OK');
-    renderPool();
-    console.log('[SP Squad] renderPool OK');
-  } catch (err) {
-    console.error('[SP Squad] boot error:', err);
-  }
+    document.getElementById('squadClear').addEventListener('click', function() {
+      initSquad();
+      selectedSlot = -1;
+      renderPitch();
+      renderPool();
+    });
+
+    /* Nation toggle (mobile) */
+    var nationToggle = document.getElementById('squadNationToggle');
+    if (nationToggle) {
+      nationToggle.addEventListener('click', function() {
+        var grid    = document.getElementById('squadNationGrid');
+        var isOpen  = grid.classList.toggle('open');
+        grid.setAttribute('aria-hidden', String(!isOpen));
+        nationToggle.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+  })();
 
 })();
