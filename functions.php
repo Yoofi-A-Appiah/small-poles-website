@@ -1710,12 +1710,15 @@ function sb_admin_page() {
     </form>
 
     <style>
-    .sb-player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+    .sb-player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:6px}
     .sb-player-item{display:flex;align-items:center;gap:6px;background:#fff;padding:6px 10px;border-radius:4px;border:1px solid #ddd}
-    .sb-pname{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .sb-pos{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;color:#fff;flex-shrink:0;min-width:30px;text-align:center}
+    .sb-pname{flex:1;font-size:13px;border:1px solid #ddd;border-radius:3px;padding:2px 6px;min-width:0}
+    .sb-pos{font-size:10px;font-weight:700;padding:2px 4px;border-radius:3px;color:#fff;flex-shrink:0;min-width:36px;text-align:center;border:none;cursor:pointer}
     .sb-pos-gk{background:#c47d00}.sb-pos-def{background:#1e73be}.sb-pos-mid{background:#2a7a2a}.sb-pos-fwd{background:#c0392b}
     .sb-pval{width:44px!important;text-align:center}
+    .sb-del-player{flex-shrink:0;background:none;border:none;color:#b32d2e;font-size:15px;cursor:pointer;padding:0 2px;line-height:1;font-weight:700}
+    .sb-del-player:hover{color:#a00}
+    .sb-add-form{display:none;margin-top:10px;background:#f0f4f8;padding:10px;border:1px solid #ccd;border-radius:4px;gap:8px;align-items:center;flex-wrap:wrap}
     </style>
 
     <script>
@@ -1792,15 +1795,55 @@ function sb_admin_page() {
             var players = [];
             btn.closest('td').find('.sb-player-item').each(function(){
                 players.push({
-                    n: $(this).find('.sb-pname').text().trim(),
-                    p: $(this).find('.sb-pos').text().trim(),
+                    n: $(this).find('.sb-pname').val().trim(),
+                    p: $(this).find('.sb-pos').val().trim(),
                     v: parseInt($(this).find('.sb-pval').val(),10)||7
                 });
             });
             $.post(ajaxurl,{action:'sb_save_players',nonce:nonce,name:name,players:JSON.stringify(players)},function(res){
-                btn.prop('disabled',false).text('Save Values');
+                btn.prop('disabled',false).text('Save Changes');
                 if(res.success) btn.siblings('.sb-saved-msg').show().delay(2000).fadeOut();
             });
+        });
+
+        /* delete individual player */
+        $(document).on('click','.sb-del-player',function(){
+            $(this).closest('.sb-player-item').remove();
+        });
+
+        /* update position select color on change */
+        $(document).on('change','.sb-pos',function(){
+            var posClass = {GK:'gk',DEF:'def',MID:'mid',FWD:'fwd'};
+            $(this).removeClass('sb-pos-gk sb-pos-def sb-pos-mid sb-pos-fwd')
+                   .addClass('sb-pos-'+(posClass[$(this).val()]||'mid'));
+        });
+
+        /* show add player form */
+        $(document).on('click','.sb-add-player',function(){
+            $(this).closest('td').find('.sb-add-form').css('display','flex');
+        });
+
+        /* cancel add player */
+        $(document).on('click','.sb-cancel-add',function(){
+            var form = $(this).closest('.sb-add-form');
+            form.find('.sb-new-name').val('');
+            form.find('.sb-new-pos').val('GK').trigger('change');
+            form.find('.sb-new-val').val('7');
+            form.hide();
+        });
+
+        /* confirm add player */
+        $(document).on('click','.sb-confirm-add',function(){
+            var form    = $(this).closest('.sb-add-form');
+            var pName   = form.find('.sb-new-name').val().trim();
+            var pos     = form.find('.sb-new-pos').val();
+            var val     = parseInt(form.find('.sb-new-val').val(),10)||7;
+            if(!pName){ alert('Enter a player name'); return; }
+            form.closest('td').find('.sb-player-grid').append(playerItem({n:pName,p:pos,v:val}));
+            form.find('.sb-new-name').val('');
+            form.find('.sb-new-pos').val('GK').trigger('change');
+            form.find('.sb-new-val').val('7');
+            form.hide();
         });
 
         /* delete team */
@@ -1835,21 +1878,40 @@ function sb_admin_page() {
             }).fail(function(){ if(btn) btn.prop('disabled',false).text('Seed'); cb(false); });
         }
 
-        function rebuildPlayerRow(idx, name, players){
+        function posSelect(cur){
             var posClass = {GK:'gk',DEF:'def',MID:'mid',FWD:'fwd'};
-            var items = players.map(function(p){
-                var pc = posClass[p.p]||'mid';
-                return '<div class="sb-player-item">'
-                    +'<span class="sb-pos sb-pos-'+pc+'">'+esc(p.p)+'</span>'
-                    +'<span class="sb-pname">'+esc(p.n)+'</span>'
-                    +'<input type="number" class="sb-pval small-text" value="'+p.v+'" min="1" max="20" />'
-                    +'<span style="font-size:11px;color:#999">pts</span>'
-                    +'</div>';
-            }).join('');
+            var pc = posClass[cur]||'mid';
+            return '<select class="sb-pos sb-pos-'+pc+'">'
+                +['GK','DEF','MID','FWD'].map(function(x){
+                    return '<option value="'+x+'"'+(x===cur?' selected':'')+'>'+x+'</option>';
+                }).join('')+'</select>';
+        }
+
+        function playerItem(p){
+            return '<div class="sb-player-item">'
+                +posSelect(p.p)
+                +'<input type="text" class="sb-pname" value="'+esc(p.n)+'" />'
+                +'<input type="number" class="sb-pval small-text" value="'+p.v+'" min="1" max="20" />'
+                +'<span style="font-size:11px;color:#999">pts</span>'
+                +'<button type="button" class="sb-del-player" title="Remove player">✕</button>'
+                +'</div>';
+        }
+
+        function rebuildPlayerRow(idx, name, players){
+            var items = players.map(playerItem).join('');
             var html = '<div class="sb-player-grid">'+items+'</div>'
-                +'<div style="margin-top:12px">'
-                +'<button class="button button-primary sb-save-vals" data-name="'+esc(name)+'">Save Values</button>'
+                +'<div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+                +'<button class="button button-primary sb-save-vals" data-name="'+esc(name)+'">Save Changes</button>'
                 +' <span class="sb-saved-msg" style="color:#46b450;font-weight:600;display:none">✓ Saved</span>'
+                +'<button type="button" class="button sb-add-player" style="margin-left:auto">+ Add Player</button>'
+                +'</div>'
+                +'<div class="sb-add-form">'
+                +'<select class="sb-new-pos sb-pos sb-pos-gk"><option value="GK">GK</option><option value="DEF">DEF</option><option value="MID">MID</option><option value="FWD">FWD</option></select>'
+                +'<input type="text" class="sb-new-name regular-text" placeholder="Player name" style="flex:1;min-width:160px" />'
+                +'<input type="number" class="sb-new-val small-text" value="7" min="1" max="20" style="width:50px" />'
+                +'<span style="font-size:11px;color:#999">pts</span>'
+                +'<button type="button" class="button button-primary sb-confirm-add">Add</button>'
+                +'<button type="button" class="button sb-cancel-add">Cancel</button>'
                 +'</div>';
             $('#sb-pr-'+idx).find('td').html(html).end().show();
         }
@@ -1866,15 +1928,40 @@ function sb_render_player_grid( array $players, string $name ) {
     $pos_class = [ 'GK' => 'gk', 'DEF' => 'def', 'MID' => 'mid', 'FWD' => 'fwd' ];
     echo '<div class="sb-player-grid">';
     foreach ( $players as $p ) {
-        $pc = $pos_class[ $p['p'] ] ?? 'mid';
+        $pos = $p['p'];
+        $pc  = $pos_class[ $pos ] ?? 'mid';
+        $sel = fn( $v ) => $v === $pos ? ' selected' : '';
         printf(
-            '<div class="sb-player-item"><span class="sb-pos sb-pos-%s">%s</span><span class="sb-pname">%s</span><input type="number" class="sb-pval small-text" value="%d" min="1" max="20" /><span style="font-size:11px;color:#999">pts</span></div>',
-            esc_attr( $pc ), esc_html( $p['p'] ), esc_html( $p['n'] ), (int) $p['v']
+            '<div class="sb-player-item">'
+            . '<select class="sb-pos sb-pos-%s">'
+            . '<option value="GK"%s>GK</option><option value="DEF"%s>DEF</option>'
+            . '<option value="MID"%s>MID</option><option value="FWD"%s>FWD</option>'
+            . '</select>'
+            . '<input type="text" class="sb-pname" value="%s" />'
+            . '<input type="number" class="sb-pval small-text" value="%d" min="1" max="20" />'
+            . '<span style="font-size:11px;color:#999">pts</span>'
+            . '<button type="button" class="sb-del-player" title="Remove player">✕</button>'
+            . '</div>',
+            esc_attr( $pc ),
+            $sel( 'GK' ), $sel( 'DEF' ), $sel( 'MID' ), $sel( 'FWD' ),
+            esc_attr( $p['n'] ), (int) $p['v']
         );
     }
     echo '</div>';
     printf(
-        '<div style="margin-top:12px"><button class="button button-primary sb-save-vals" data-name="%s">Save Values</button> <span class="sb-saved-msg" style="color:#46b450;font-weight:600;display:none">✓ Saved</span></div>',
+        '<div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        . '<button class="button button-primary sb-save-vals" data-name="%1$s">Save Changes</button>'
+        . ' <span class="sb-saved-msg" style="color:#46b450;font-weight:600;display:none">✓ Saved</span>'
+        . '<button type="button" class="button sb-add-player" style="margin-left:auto">+ Add Player</button>'
+        . '</div>'
+        . '<div class="sb-add-form">'
+        . '<select class="sb-new-pos sb-pos sb-pos-gk"><option value="GK">GK</option><option value="DEF">DEF</option><option value="MID">MID</option><option value="FWD">FWD</option></select>'
+        . '<input type="text" class="sb-new-name regular-text" placeholder="Player name" style="flex:1;min-width:160px" />'
+        . '<input type="number" class="sb-new-val small-text" value="7" min="1" max="20" style="width:50px" />'
+        . '<span style="font-size:11px;color:#999">pts</span>'
+        . '<button type="button" class="button button-primary sb-confirm-add">Add</button>'
+        . '<button type="button" class="button sb-cancel-add">Cancel</button>'
+        . '</div>',
         esc_attr( $name )
     );
 }
