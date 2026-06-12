@@ -368,32 +368,255 @@ function smallpoles_settings_page() {
 
         <hr />
         <h2>API Endpoint Tester</h2>
-        <p style="color:#666;margin-bottom:16px">Test every endpoint directly from here — responses appear below.</p>
 
-        <table class="form-table" style="max-width:700px">
-            <tr>
-                <th scope="row"><label for="sp_fixture_test">Fixture ID</label></th>
-                <td>
-                    <input type="number" id="sp_fixture_test" value="1489385" class="small-text" placeholder="e.g. 1489385" />
-                    <p class="description">Used by predictions, lineups, stats, and odds endpoints.</p>
-                </td>
-            </tr>
-        </table>
+        <style>
+        .sp-tester-card {
+            background: #fff;
+            border: 1px solid #dcdcde;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 860px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .sp-tester-desc {
+            color: #50575e;
+            margin: 0 0 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .sp-fixture-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f6f7f7;
+            border: 1px solid #dcdcde;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .sp-fixture-row label {
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+            color: #1d2327;
+        }
+        .sp-fixture-row input {
+            flex: 1;
+            max-width: 200px;
+            font-family: monospace;
+            font-size: 13px !important;
+        }
+        .sp-fixture-hint {
+            font-size: 12px;
+            color: #50575e;
+            flex: 1;
+        }
+        .sp-ep-group {
+            margin-bottom: 16px;
+        }
+        .sp-ep-group-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #8c8f94;
+            margin: 0 0 8px;
+        }
+        .sp-ep-group-label span {
+            display: inline-block;
+            background: #f0f0f1;
+            border-radius: 3px;
+            padding: 2px 6px;
+            margin-left: 6px;
+            font-weight: 500;
+            color: #50575e;
+            letter-spacing: 0;
+            text-transform: none;
+            font-size: 11px;
+        }
+        .sp-ep-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sp-ep-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #dcdcde !important;
+            border-radius: 5px !important;
+            background: #f6f7f7 !important;
+            color: #1d2327 !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            padding: 5px 12px !important;
+            height: auto !important;
+            cursor: pointer;
+            transition: background .12s, border-color .12s;
+            position: relative;
+        }
+        .sp-ep-btn:hover:not(:disabled) {
+            background: #fff !important;
+            border-color: #2271b1 !important;
+            color: #2271b1 !important;
+        }
+        .sp-ep-btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+        .sp-ep-btn--fixture {
+            border-style: dashed !important;
+        }
+        .sp-ep-btn--loading .sp-btn-label { opacity: .5; }
+        .sp-btn-spinner {
+            display: none;
+            width: 12px; height: 12px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: sp-spin .6s linear infinite;
+            flex-shrink: 0;
+        }
+        .sp-ep-btn--loading .sp-btn-spinner { display: block; }
+        @keyframes sp-spin { to { transform: rotate(360deg); } }
+        .sp-response-panel {
+            margin-top: 20px;
+            border: 1px solid #dcdcde;
+            border-radius: 6px;
+            overflow: hidden;
+            display: none;
+        }
+        .sp-response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f6f7f7;
+            border-bottom: 1px solid #dcdcde;
+            padding: 10px 14px;
+            flex-wrap: wrap;
+        }
+        .sp-response-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #8c8f94;
+        }
+        .sp-response-url {
+            font-family: monospace;
+            font-size: 12px;
+            color: #1d2327;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sp-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .sp-status-badge--ok   { background: #edfaef; color: #0a6b24; }
+        .sp-status-badge--err  { background: #fce8e8; color: #8a1c1c; }
+        .sp-status-badge--load { background: #e8f0fa; color: #2271b1; }
+        .sp-timing {
+            font-size: 11px;
+            color: #8c8f94;
+            white-space: nowrap;
+        }
+        .sp-copy-btn {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #dcdcde !important;
+            border-radius: 4px !important;
+            background: #fff !important;
+            color: #50575e !important;
+            font-size: 11px !important;
+            padding: 3px 10px !important;
+            height: auto !important;
+            cursor: pointer;
+            transition: color .12s, border-color .12s;
+        }
+        .sp-copy-btn:hover { border-color: #2271b1 !important; color: #2271b1 !important; }
+        .sp-response-body {
+            background: #1a1d21;
+            color: #abb2bf;
+            padding: 16px 18px;
+            max-height: 480px;
+            overflow: auto;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0;
+        }
+        .sp-response-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #8c8f94;
+            font-size: 13px;
+            gap: 6px;
+        }
+        .sp-response-empty svg { opacity: .35; }
+        </style>
 
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">
-            <button class="button" data-endpoint="next-fixture">Next Fixture</button>
-            <button class="button" data-endpoint="standings">Standings</button>
-            <button class="button" data-endpoint="fixtures">All Fixtures</button>
-            <button class="button" data-endpoint="rounds">Rounds</button>
-            <button class="button" data-endpoint="predictions">Predictions</button>
-            <button class="button" data-endpoint="lineups">Lineups</button>
-            <button class="button" data-endpoint="fixture-stats">Match Stats</button>
-            <button class="button" data-endpoint="odds">Pre-match Odds</button>
-            <button class="button" data-endpoint="odds-live">Live Odds</button>
+        <div class="sp-tester-card">
+            <p class="sp-tester-desc">Fire any endpoint and inspect the raw JSON response. Fixture-specific endpoints (dashed border) require a fixture ID.</p>
+
+            <div class="sp-fixture-row">
+                <label for="sp_fixture_test">Fixture ID</label>
+                <input type="number" id="sp_fixture_test" value="1489385" placeholder="e.g. 1489385" class="regular-text" />
+                <p class="sp-fixture-hint">Required for predictions, lineups, stats &amp; odds</p>
+            </div>
+
+            <div class="sp-ep-group">
+                <p class="sp-ep-group-label">General <span>No fixture ID needed</span></p>
+                <div class="sp-ep-btns">
+                    <button class="button sp-ep-btn" data-endpoint="next-fixture"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Next Fixture</span></button>
+                    <button class="button sp-ep-btn" data-endpoint="standings"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Standings</span></button>
+                    <button class="button sp-ep-btn" data-endpoint="fixtures"><span class="sp-btn-spinner"></span><span class="sp-btn-label">All Fixtures</span></button>
+                    <button class="button sp-ep-btn" data-endpoint="today-fixtures"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Today &amp; Tomorrow</span></button>
+                    <button class="button sp-ep-btn" data-endpoint="rounds"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Rounds</span></button>
+                </div>
+            </div>
+
+            <div class="sp-ep-group">
+                <p class="sp-ep-group-label">Fixture-Specific <span>Fixture ID required</span></p>
+                <div class="sp-ep-btns">
+                    <button class="button sp-ep-btn sp-ep-btn--fixture" data-endpoint="predictions"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Predictions</span></button>
+                    <button class="button sp-ep-btn sp-ep-btn--fixture" data-endpoint="lineups"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Lineups</span></button>
+                    <button class="button sp-ep-btn sp-ep-btn--fixture" data-endpoint="fixture-stats"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Match Stats</span></button>
+                    <button class="button sp-ep-btn sp-ep-btn--fixture" data-endpoint="odds"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Pre-match Odds</span></button>
+                    <button class="button sp-ep-btn sp-ep-btn--fixture" data-endpoint="odds-live"><span class="sp-btn-spinner"></span><span class="sp-btn-label">Live Odds</span></button>
+                </div>
+            </div>
+
+            <div class="sp-response-panel" id="sp-response-panel" role="region" aria-label="API response" aria-live="polite">
+                <div class="sp-response-header">
+                    <span class="sp-response-label">Response</span>
+                    <code class="sp-response-url" id="sp-response-url"></code>
+                    <span class="sp-status-badge" id="sp-status-badge"></span>
+                    <span class="sp-timing" id="sp-timing"></span>
+                    <button class="button sp-copy-btn" id="sp-copy-btn" aria-label="Copy JSON to clipboard">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span id="sp-copy-label">Copy</span>
+                    </button>
+                </div>
+                <pre class="sp-response-body" id="sp-response-body" tabindex="0"></pre>
+            </div>
         </div>
-
-        <div id="sp-test-status" style="margin-bottom:8px;font-weight:600;color:#0073aa;display:none"></div>
-        <pre id="sp-test-output" style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;max-height:500px;overflow:auto;font-size:12px;line-height:1.6;display:none;white-space:pre-wrap;word-break:break-all"></pre>
 
         <hr />
         <h2>WC 2026 Bracket Groups</h2>
@@ -461,42 +684,89 @@ function smallpoles_settings_page() {
                 showGroupStatus(res.ok ? '✓ Cleared' : '✗ Failed', res.ok);
                 groupsTextarea.value = '';
             });
-            const fixtureInput = document.getElementById('sp_fixture_test');
-            const status = document.getElementById('sp-test-status');
-            const output = document.getElementById('sp-test-output');
+            // ── API Tester ──────────────────────────────────────────────
+            const fixtureInput  = document.getElementById('sp_fixture_test');
+            const responsePanel = document.getElementById('sp-response-panel');
+            const responseUrl   = document.getElementById('sp-response-url');
+            const statusBadge   = document.getElementById('sp-status-badge');
+            const timingEl      = document.getElementById('sp-timing');
+            const responseBody  = document.getElementById('sp-response-body');
+            const copyBtn       = document.getElementById('sp-copy-btn');
+            const copyLabel     = document.getElementById('sp-copy-label');
 
             const fixtureEndpoints = ['predictions','lineups','fixture-stats','odds','odds-live'];
+
+            function setBadge(ok, text) {
+                statusBadge.className = 'sp-status-badge ' + (ok === null ? 'sp-status-badge--load' : ok ? 'sp-status-badge--ok' : 'sp-status-badge--err');
+                statusBadge.textContent = text;
+            }
 
             document.querySelectorAll('[data-endpoint]').forEach(btn => {
                 btn.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    const ep = this.dataset.endpoint;
+                    const ep  = this.dataset.endpoint;
                     const fid = fixtureInput.value.trim();
-                    let url = base + '/' + ep;
+                    let url   = base + '/' + ep;
 
                     if (fixtureEndpoints.includes(ep)) {
-                        if (!fid) { alert('Enter a fixture ID first'); return; }
+                        if (!fid) {
+                            fixtureInput.focus();
+                            fixtureInput.style.outline = '2px solid #dc3232';
+                            setTimeout(() => { fixtureInput.style.outline = ''; }, 1800);
+                            return;
+                        }
                         url += '?fixture=' + encodeURIComponent(fid);
                     }
 
+                    // Loading state
+                    this.classList.add('sp-ep-btn--loading');
                     this.disabled = true;
-                    status.style.display = 'block';
-                    status.textContent = 'Fetching ' + url + ' …';
-                    output.style.display = 'none';
+                    responsePanel.style.display = 'block';
+                    responseUrl.textContent = url.replace(base, '/smallpoles/v1');
+                    setBadge(null, '● Fetching…');
+                    timingEl.textContent = '';
+                    responseBody.textContent = '';
+                    copyLabel.textContent = 'Copy';
 
+                    const t0 = performance.now();
                     try {
-                        const res = await fetch(url, { headers: { 'X-WP-Nonce': nonce } });
+                        const res  = await fetch(url, { headers: { 'X-WP-Nonce': nonce } });
+                        const ms   = Math.round(performance.now() - t0);
                         const data = await res.json();
-                        status.style.color = res.ok ? '#46b450' : '#dc3232';
-                        status.textContent = (res.ok ? '✓ ' : '✗ ') + res.status + ' ' + url;
-                        output.style.display = 'block';
-                        output.textContent = JSON.stringify(data, null, 2);
+
+                        setBadge(res.ok, (res.ok ? '✓ ' : '✗ ') + res.status);
+                        timingEl.textContent = ms + 'ms';
+                        responseBody.textContent = JSON.stringify(data, null, 2);
                     } catch(err) {
-                        status.style.color = '#dc3232';
-                        status.textContent = '✗ Error: ' + err.message;
+                        setBadge(false, '✗ Network error');
+                        responseBody.textContent = err.message;
                     }
 
+                    this.classList.remove('sp-ep-btn--loading');
                     this.disabled = false;
+                    responseBody.scrollTop = 0;
+                });
+            });
+
+            // Highlight fixture input border on focus when empty + fixture endpoint
+            document.querySelectorAll('.sp-ep-btn--fixture').forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    if (!fixtureInput.value.trim()) fixtureInput.style.borderColor = '#2271b1';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    fixtureInput.style.borderColor = '';
+                });
+            });
+
+            // Copy JSON
+            copyBtn.addEventListener('click', function() {
+                const text = responseBody.textContent;
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(() => {
+                    copyLabel.textContent = '✓ Copied!';
+                    setTimeout(() => { copyLabel.textContent = 'Copy'; }, 2000);
+                }).catch(() => {
+                    copyLabel.textContent = 'Failed';
                 });
             });
         })();
@@ -592,6 +862,97 @@ function smallpoles_register_prediction_cpt() {
     ] );
 }
 add_action( 'init', 'smallpoles_register_prediction_cpt' );
+
+// Custom admin columns for Fan Predictions
+add_filter( 'manage_sp_prediction_posts_columns', function( $cols ) {
+    return [
+        'cb'         => $cols['cb'],
+        'title'      => 'Predictor',
+        'sp_fixture' => 'Fixture ID',
+        'sp_pick'    => 'Pick',
+        'sp_score'   => 'Score',
+        'date'       => 'Submitted',
+    ];
+} );
+
+add_action( 'manage_sp_prediction_posts_custom_column', function( $col, $post_id ) {
+    switch ( $col ) {
+        case 'sp_fixture':
+            echo esc_html( get_post_meta( $post_id, '_sp_pred_fixture_id', true ) ?: '—' );
+            break;
+
+        case 'sp_pick':
+            $winner  = get_post_meta( $post_id, '_sp_pred_winner', true );
+            $labels  = [ 'home' => 'Home Win', 'draw' => 'Draw', 'away' => 'Away Win' ];
+            $colours = [ 'home' => '#0a6b24', 'draw' => '#6b4800', 'away' => '#8a1c1c' ];
+            $bgs     = [ 'home' => '#edfaef', 'draw' => '#fef9e7', 'away' => '#fce8e8' ];
+            if ( $winner && isset( $labels[ $winner ] ) ) {
+                printf(
+                    '<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:%s;color:%s">%s</span>',
+                    esc_attr( $bgs[ $winner ] ),
+                    esc_attr( $colours[ $winner ] ),
+                    esc_html( $labels[ $winner ] )
+                );
+            } else {
+                echo '—';
+            }
+            break;
+
+        case 'sp_score':
+            $h = get_post_meta( $post_id, '_sp_pred_home_score', true );
+            $a = get_post_meta( $post_id, '_sp_pred_away_score', true );
+            if ( $h !== '' && $h !== false && $a !== '' && $a !== false ) {
+                echo '<code style="font-size:12px;background:#f0f0f1;padding:1px 6px;border-radius:3px">' . esc_html( $h . ' – ' . $a ) . '</code>';
+            } else {
+                echo '<span style="color:#8c8f94">—</span>';
+            }
+            break;
+    }
+}, 10, 2 );
+
+// Sortable Fixture ID column
+add_filter( 'manage_edit-sp_prediction_sortable_columns', function( $cols ) {
+    $cols['sp_fixture'] = 'sp_fixture';
+    return $cols;
+} );
+
+// Fixture ID filter dropdown + sorting handler
+add_action( 'pre_get_posts', function( $query ) {
+    if ( ! is_admin() || ! $query->is_main_query() ) return;
+    if ( $query->get( 'post_type' ) !== 'sp_prediction' ) return;
+
+    // Sorting by fixture ID
+    if ( $query->get( 'orderby' ) === 'sp_fixture' ) {
+        $query->set( 'meta_key', '_sp_pred_fixture_id' );
+        $query->set( 'orderby', 'meta_value_num' );
+    }
+
+    // Filter by fixture ID from dropdown
+    $fid = isset( $_GET['sp_fixture_filter'] ) ? sanitize_text_field( $_GET['sp_fixture_filter'] ) : '';
+    if ( $fid ) {
+        $query->set( 'meta_query', [ [ 'key' => '_sp_pred_fixture_id', 'value' => $fid ] ] );
+    }
+} );
+
+add_action( 'restrict_manage_posts', function( $post_type ) {
+    if ( $post_type !== 'sp_prediction' ) return;
+    global $wpdb;
+    $fixtures = $wpdb->get_col(
+        "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_sp_pred_fixture_id' ORDER BY (meta_value+0) ASC"
+    );
+    $current = isset( $_GET['sp_fixture_filter'] ) ? sanitize_text_field( $_GET['sp_fixture_filter'] ) : '';
+    echo '<select name="sp_fixture_filter">';
+    echo '<option value="">All Fixtures</option>';
+    foreach ( $fixtures as $fid ) {
+        printf(
+            '<option value="%s"%s>Fixture %s</option>',
+            esc_attr( $fid ),
+            selected( $current, $fid, false ),
+            esc_html( $fid )
+        );
+    }
+    echo '</select>';
+} );
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -970,6 +1331,7 @@ function smallpoles_today_fixtures_proxy() {
     $league_id = (int) get_option( 'smallpoles_league_id', 1 );
     $season    = (int) get_option( 'smallpoles_season', 2026 );
     $today     = gmdate( 'Y-m-d' );
+    $tomorrow  = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
     $cache_key = "today_fixtures_{$league_id}_{$season}_{$today}";
 
     $cached = smallpoles_cache_get( $cache_key );
@@ -989,20 +1351,23 @@ function smallpoles_today_fixtures_proxy() {
         return rest_ensure_response( [] );
     }
 
-    $response = wp_remote_get(
-        add_query_arg(
-            [ 'league' => $league_id, 'season' => $season, 'date' => $today ],
-            'https://v3.football.api-sports.io/fixtures'
-        ),
-        [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ]
-    );
+    $base_url = 'https://v3.football.api-sports.io/fixtures';
+    $headers  = [ 'timeout' => 10, 'headers' => [ 'x-apisports-key' => $api_key ] ];
+
+    $resp_today    = wp_remote_get( add_query_arg( [ 'league' => $league_id, 'season' => $season, 'date' => $today ], $base_url ), $headers );
+    $resp_tomorrow = wp_remote_get( add_query_arg( [ 'league' => $league_id, 'season' => $season, 'date' => $tomorrow ], $base_url ), $headers );
 
     delete_transient( $lock_key );
 
-    if ( is_wp_error( $response ) ) return rest_ensure_response( [] );
-
-    $body     = json_decode( wp_remote_retrieve_body( $response ), true );
-    $fixtures = $body['response'] ?? [];
+    $fixtures = [];
+    if ( ! is_wp_error( $resp_today ) ) {
+        $body     = json_decode( wp_remote_retrieve_body( $resp_today ), true );
+        $fixtures = array_merge( $fixtures, $body['response'] ?? [] );
+    }
+    if ( ! is_wp_error( $resp_tomorrow ) ) {
+        $body     = json_decode( wp_remote_retrieve_body( $resp_tomorrow ), true );
+        $fixtures = array_merge( $fixtures, $body['response'] ?? [] );
+    }
 
     smallpoles_cache_set( $cache_key, $fixtures, 30 * MINUTE_IN_SECONDS );
     return rest_ensure_response( $fixtures );
@@ -2198,3 +2563,11 @@ function smallpoles_hl_import_defaults() {
     }
 }
 add_action( 'init', 'smallpoles_hl_import_defaults', 20 );
+
+// Override WordPress virtual robots.txt
+add_filter( 'robots_txt', function ( $output, $public ) {
+    if ( '1' !== $public ) {
+        return $output;
+    }
+    return "User-agent: *\nAllow: /\nDisallow: /wp-admin/\nDisallow: /wp-login.php\nDisallow: /wp-includes/\nDisallow: /xmlrpc.php\n\nSitemap: https://smallpoles.online/sitemap_index.xml\n";
+}, 10, 2 );

@@ -5134,67 +5134,112 @@ footer {
   margin-top: 3px;
 }
 
-/* Odds row */
-.sp-odds {
+/* Market odds — compact footnote, not the hero */
+.sp-odds-note {
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
-}
-
-.sp-odd {
-  flex: 1;
-  background: var(--surface-raised);
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border-radius: 8px;
 }
 
-.sp-odd span {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.sp-odds-note--today {
+  margin: 8px 0 0;
+  font-size: 11px;
 }
 
-.sp-odd strong {
-  font-family: var(--font-mono);
-  font-size: 17px;
+.sp-odds-note-label {
+  font-size: 9px;
   font-weight: 700;
-  color: var(--text-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.sp-odd--home strong { color: var(--pitch-glow); }
+.sp-odds-note-items {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
 
-/* Advice / winner label */
+.sp-odds-note-items span { white-space: nowrap; }
+
+.sp-odds-note-items strong {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sp-odds-note-sep { opacity: 0.35; }
+
+/* Win Probability bar header */
+.sp-pred-bar-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sp-pred-bar-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Small Poles pick / advice block */
 .sp-advice {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
+  gap: 3px;
   background: rgba(0,255,127,0.04);
   border: 1px solid rgba(0,255,127,0.12);
   border-radius: 8px;
-  padding: 10px 14px;
-  line-height: 1.55;
+  padding: 12px 14px;
+  margin-bottom: 16px;
 }
 
-.sp-advice strong { color: var(--pitch-glow); }
+.sp-advice-pick-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pitch-glow);
+  opacity: 0.7;
+}
+
+.sp-advice-pick {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pitch-glow);
+  line-height: 1.2;
+  margin-top: 2px;
+}
 
 .sp-advice-comment {
   color: var(--text-muted);
   font-size: 11px;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 
 .sp-advice-text {
   display: block;
   color: var(--text-secondary);
   font-size: 12px;
-  margin-top: 2px;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 
 /* H2H recent results */

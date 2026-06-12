@@ -144,8 +144,8 @@
       <div class="page-cta-bg"></div>
       <div class="container reveal">
         <h2>Simple enough to start.<br />Deep enough to keep you hooked.</h2>
-        <p>Join the waitlist and be ready when that first gameweek kicks off.</p>
-        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join the Waitlist →</a>
+        <p>Join Small Poles and be ready when that first gameweek kicks off.</p>
+        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join Small Poles →</a>
       </div>
     </section>
 

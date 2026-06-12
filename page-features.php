@@ -210,8 +210,8 @@
       <div class="page-cta-bg"></div>
       <div class="container reveal">
         <h2>Ready to see what the GPL has to offer?</h2>
-        <p>Join the waitlist and be one of the first to get in when we go live.</p>
-        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join the Waitlist →</a>
+        <p>Join Small Poles and be one of the first to get in when we go live.</p>
+        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join Small Poles →</a>
       </div>
     </section>
 

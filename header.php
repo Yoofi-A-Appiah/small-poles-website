@@ -64,7 +64,7 @@
         </ul>
       </li>
       <li>
-        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="nav-cta">Join Beta</a>
+        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="nav-cta">Join Small Poles</a>
       </li>
     </ul>
 

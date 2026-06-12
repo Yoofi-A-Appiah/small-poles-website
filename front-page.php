@@ -18,7 +18,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-              Join the Waitlist
+              Join Small Poles
             </a>
             <a href="<?php echo esc_url( home_url( '/news/' ) ); ?>" class="btn-ghost">World Cup News →</a>
           </div>
@@ -100,7 +100,7 @@
             <div class="reveal" style="margin-top:40px">
               <a href="#waitlist" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                Join the Waitlist
+                Join Small Poles
               </a>
             </div>
           </div>
@@ -220,7 +220,7 @@
 
             <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-              Join the Waitlist
+              Join Small Poles
             </a>
           </div>
           <div class="spotlight-visual">
@@ -294,7 +294,7 @@
             </ul>
             <a href="#waitlist" class="btn-primary" style="margin-top:32px;display:inline-flex;align-items:center;gap:8px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-              Join the Waitlist
+              Join Small Poles
             </a>
           </div>
           <div class="league-showcase-visual">
@@ -365,7 +365,7 @@
         <div class="sp-match-intel-header reveal">
           <div>
             <span class="label">Match Intelligence</span>
-            <h2 id="sp-match-section-title" style="margin-top:12px">Today's Matches</h2>
+            <h2 id="sp-match-section-title" style="margin-top:12px">Today &amp; Tomorrow</h2>
           </div>
           <div class="sp-match-toggle" role="group" aria-label="Filter matches">
             <button class="sp-toggle-btn sp-toggle-btn--active" data-view="all" id="sp-toggle-all">
@@ -430,7 +430,7 @@
         <h2>Get in before<br />kickoff.</h2>
         <p>
           We dey build Small Poles for people who genuinely love the GPL.
-          Join the waitlist and get "first sele" on the pitch when we launch.
+          Join Small Poles and get "first sele" on the pitch when we launch.
         </p>
         <iframe
           data-tally-src="https://tally.so/embed/ODJ4Np?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"

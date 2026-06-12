@@ -113,8 +113,8 @@
       <div class="page-cta-bg"></div>
       <div class="container reveal">
         <h2>The GPL has always<br />deserved this.</h2>
-        <p>Join the waitlist and be part of the community that builds it. Chale, we're just getting started.</p>
-        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join the Waitlist →</a>
+        <p>Join Small Poles and be part of the community that builds it. Chale, we're just getting started.</p>
+        <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join Small Poles →</a>
       </div>
     </section>
 

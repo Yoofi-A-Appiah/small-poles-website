@@ -1,4 +1,14 @@
 
+// Shared helper: detect "No predictions available" state from the API
+function isPredEmpty(pred) {
+  if (!pred) return true;
+  if (pred.advice === 'No predictions available') return true;
+  var w = pred.winner || {};
+  var p = pred.percent || {};
+  if (w.id === null && p.home === '33%' && p.away === '33%') return true;
+  return false;
+}
+
 // Scroll reveal
 const reveals = document.querySelectorAll('.reveal');
 if (reveals.length) {
@@ -114,10 +124,17 @@ if (annBar) {
       var match = vals.find(function (v) { return v.value === name; });
       return match ? match.odd : '–';
     }
-    return '<div class="sp-odds">'
-      + '<div class="sp-odd sp-odd--home"><span>' + homeLabel + '</span><strong>' + odd('Home') + '</strong></div>'
-      + '<div class="sp-odd"><span>Draw</span><strong>' + odd('Draw') + '</strong></div>'
-      + '<div class="sp-odd sp-odd--away"><span>' + awayLabel + '</span><strong>' + odd('Away') + '</strong></div>'
+    var h = odd('Home'), d = odd('Draw'), a = odd('Away');
+    if (h === '–' && d === '–' && a === '–') return '';
+    return '<div class="sp-odds-note">'
+      + '<span class="sp-odds-note-label">Market odds</span>'
+      + '<span class="sp-odds-note-items">'
+      +   '<span>' + homeLabel + ' <strong>' + h + '</strong></span>'
+      +   '<span class="sp-odds-note-sep">·</span>'
+      +   '<span>Draw <strong>' + d + '</strong></span>'
+      +   '<span class="sp-odds-note-sep">·</span>'
+      +   '<span>' + awayLabel + ' <strong>' + a + '</strong></span>'
+      + '</span>'
       + '</div>';
   }
 
@@ -200,20 +217,23 @@ if (annBar) {
         + '</div>';
     }
 
+    var predEmpty = isPredEmpty(predData ? predData.predictions : null);
+
     var adviceHtml = '';
-    if (pred.advice || winner.name) {
+    if (!predEmpty && (pred.advice || winner.name)) {
       adviceHtml = '<div class="sp-advice">'
-        + (winner.name ? 'Tip: <strong>' + winner.name + '</strong>' : '')
-        + (winner.comment ? ' <span class="sp-advice-comment">(' + winner.comment + ')</span>' : '')
-        + (pred.advice ? '<span class="sp-advice-text">' + pred.advice + '</span>' : '')
+        + (winner.name ? '<span class="sp-advice-pick-label">Small Poles says</span><strong class="sp-advice-pick">' + winner.name + '</strong>' : '')
+        + (winner.comment ? '<span class="sp-advice-comment">' + winner.comment + '</span>' : '')
+        + (pred.advice && pred.advice !== 'No predictions available' ? '<span class="sp-advice-text">' + pred.advice + '</span>' : '')
         + '</div>';
-    } else if (!predData) {
-      adviceHtml = '<p class="sp-no-predictions">No predictions available yet. Check back a day before the match.</p>';
     }
 
-    // 3-segment probability bar (home / draw / away)
-    var probBar = (hPct || dPct || aPct)
+    // 3-segment probability bar — only when real predictions exist
+    var probBar = (!predEmpty && (hPct || dPct || aPct))
       ? '<div class="sp-pred-bar">'
+        +   '<div class="sp-pred-bar-header">'
+        +     '<span class="sp-pred-bar-title">Win Probability</span>'
+        +   '</div>'
         +   '<div class="sp-pred-bar-track">'
         +     '<div class="sp-pred-bar-home" style="width:' + hPct + '%"></div>'
         +     '<div class="sp-pred-bar-draw"  style="width:' + dPct + '%"></div>'
@@ -226,6 +246,8 @@ if (annBar) {
         +   '</div>'
         + '</div>'
       : '';
+
+    if (predEmpty) compHtml = '';
 
     container.innerHTML =
       '<div class="sp-widget-header">'
@@ -240,8 +262,8 @@ if (annBar) {
       + probBar
       + compHtml
       + h2hHtml
-      + oddsHtml
-      + adviceHtml;
+      + adviceHtml
+      + oddsHtml;
 
     container.classList.remove('sp-loading');
   }
@@ -335,7 +357,7 @@ if (annBar) {
       standings.forEach(function (g) {
         if (!g.length) return;
         var gName = (g[0].group || '').toLowerCase();
-        if (gName.indexOf('third') !== -1 || gName.indexOf('ranking') !== -1) return;
+        if (gName.indexOf('third') !== -1 || gName.indexOf('ranking') !== -1 || gName === 'group stage') return;
         groups.push(g);
       });
     } else {
@@ -484,7 +506,7 @@ if (annBar) {
         if (view === 'all') {
           viewAll.classList.remove('sp-view--hidden');
           viewGhana.classList.add('sp-view--hidden');
-          if (sectionTitle) sectionTitle.textContent = "Today's Matches";
+          if (sectionTitle) sectionTitle.textContent = "Today & Tomorrow";
         } else {
           viewGhana.classList.remove('sp-view--hidden');
           viewAll.classList.add('sp-view--hidden');
@@ -506,19 +528,23 @@ if (annBar) {
 
   function pct(val) { return parseFloat(val) || 0; }
 
+  var _todayDateStr = new Date().toDateString();
+
   function renderTodayCard(f) {
     var home    = f.teams.home;
     var away    = f.teams.away;
     var isGhana = (home.id === GHANA_ID || away.id === GHANA_ID);
     var d       = new Date(f.fixture.date);
     var timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' GMT';
+    var isTomorrow = d.toDateString() !== _todayDateStr;
+    var dateLabel  = isTomorrow ? d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' : '';
     var league  = (f.league && f.league.name) ? f.league.name : '';
     var round   = (f.league && f.league.round) ? ' · ' + f.league.round : '';
 
     return '<div class="sp-today-card' + (isGhana ? ' sp-today-card--ghana' : '') + '" data-fixture-id="' + f.fixture.id + '">'
       + '<div class="sp-today-card-meta">'
       +   '<span class="sp-today-league">' + league + round + '</span>'
-      +   '<span class="sp-today-time">' + timeStr + '</span>'
+      +   '<span class="sp-today-time">' + dateLabel + timeStr + '</span>'
       + '</div>'
       + '<div class="sp-today-teams">'
       +   '<div class="sp-today-team sp-today-team--home">'
@@ -558,12 +584,17 @@ if (annBar) {
       var m = vals.find(function (v) { return v.value === name; });
       return m ? m.odd : '–';
     }
-    return '<div class="sp-today-odds">'
-      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">' + homeName + '</span><strong>' + odd('Home') + '</strong></span>'
-      + '<span class="sp-today-odds-sep">·</span>'
-      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">Draw</span><strong>' + odd('Draw') + '</strong></span>'
-      + '<span class="sp-today-odds-sep">·</span>'
-      + '<span class="sp-today-odds-item"><span class="sp-today-odds-label">' + awayName + '</span><strong>' + odd('Away') + '</strong></span>'
+    var h = odd('Home'), d = odd('Draw'), a = odd('Away');
+    if (h === '–' && d === '–' && a === '–') return '';
+    return '<div class="sp-odds-note sp-odds-note--today">'
+      + '<span class="sp-odds-note-label">Odds</span>'
+      + '<span class="sp-odds-note-items">'
+      +   '<span>' + homeName + ' <strong>' + h + '</strong></span>'
+      +   '<span class="sp-odds-note-sep">·</span>'
+      +   '<span>Draw <strong>' + d + '</strong></span>'
+      +   '<span class="sp-odds-note-sep">·</span>'
+      +   '<span>' + awayName + ' <strong>' + a + '</strong></span>'
+      + '</span>'
       + '</div>';
   }
 
@@ -583,8 +614,8 @@ if (annBar) {
 
     var bookmaker = (oddsData && oddsData.bookmakers && oddsData.bookmakers[0]) ? oddsData.bookmakers[0] : null;
 
-    var html = buildPredBar(hPct, dPct, aPct, home.name, away.name)
-             + buildCompactOdds(home.name, away.name, bookmaker);
+    var predBar = isPredEmpty(pred) ? '' : buildPredBar(hPct, dPct, aPct, home.name, away.name);
+    var html    = predBar + buildCompactOdds(home.name, away.name, bookmaker);
 
     if (html) slot.innerHTML = html;
   }
@@ -596,7 +627,7 @@ if (annBar) {
       if (!Array.isArray(fixtures) || !fixtures.length) {
         todayList.innerHTML =
           '<div class="sp-no-fixture">'
-          + '<strong>No matches today.</strong>'
+          + '<strong>No matches today or tomorrow.</strong>'
           + '<span>Check back on the next World Cup match day.</span>'
           + '</div>';
         return;

@@ -142,7 +142,7 @@
       <div class="page-cta-bg"></div>
       <div class="container reveal">
         <h2>Know the rules.<br />Exploit the edges.</h2>
-        <p>Join the waitlist and start strategizing before the first ball is kicked.</p>
+        <p>Join Small Poles and start strategizing before the first ball is kicked.</p>
         <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">Join SmallPoles Beta →</a>
       </div>
     </section>

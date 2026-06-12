@@ -222,7 +222,7 @@
       <div class="container">
         <span class="label" style="display:block;margin-bottom:16px">Beta Access</span>
         <h2>Ready to manage your<br />own team in the GPL?</h2>
-        <p>Join the waitlist — be first on the pitch when SmallPoles launches.</p>
+        <p>Join Small Poles — be first on the pitch when SmallPoles launches.</p>
         <a href="<?php echo esc_url( home_url( '/#waitlist' ) ); ?>" class="btn-primary">
           Join SmallPoles Beta →
         </a>

@@ -197,7 +197,7 @@
     <button class="sp-join-modal-close" id="sp-join-modal-close" aria-label="Close">&times;</button>
     <span class="label" style="display:block;margin-bottom:14px">Early Access</span>
     <h3>Get in before kickoff.</h3>
-    <p>Join the waitlist and get first access when Small Poles launches.</p>
+    <p>Join Small Poles and get first access when Small Poles launches.</p>
     <iframe
       src="https://tally.so/embed/ODJ4Np?alignLeft=1&hideTitle=1&transparentBackground=1"
       loading="lazy"
