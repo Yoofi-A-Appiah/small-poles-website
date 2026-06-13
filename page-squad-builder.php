@@ -1,4 +1,7 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$sq_user = sp_squads_get_page_user();
+?>
 
 <div class="squad-wrap">
   <div class="container">
@@ -7,6 +10,14 @@
       <a href="<?php echo esc_url( home_url( '/games/' ) ); ?>" class="back-link">← Games</a>
       <h1>World Cup<br /><span class="accent">Squad Builder</span></h1>
       <p class="squad-sub">Pick your ultimate World Cup XI. Stay within budget. Share your squad.</p>
+    </div>
+
+    <div id="squadUserBar" class="squad-user-bar<?php echo $sq_user ? '' : ' squad-user-bar--hidden'; ?>">
+      <span class="squad-user-name">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span id="squadUserNameText"><?php echo $sq_user ? esc_html( $sq_user['display_name'] ) : ''; ?></span>
+      </span>
+      <button type="button" id="squadLogoutBtn" class="squad-logout-btn">Log out</button>
     </div>
 
     <!-- Nation + Formation picker -->
@@ -54,11 +65,36 @@
         </div>
         <div class="squad-pitch-actions">
           <button class="btn-ghost squad-clear-btn" id="squadClear">Clear Squad</button>
+          <button class="btn-ghost squad-save-btn" id="squadSaveBtn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Squad
+          </button>
+          <button class="btn-ghost squad-mysquads-btn" id="squadMySquadsBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+            My Squads
+          </button>
           <button class="btn-primary squad-share-btn" id="squadShareBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
             Share Squad
           </button>
         </div>
+        <div id="squadPointsBar" class="squad-points-bar" style="display:none" role="status" aria-live="polite" aria-atomic="true" aria-label="Squad fantasy points">
+          <div class="squad-points-bar-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H3.5a2.5 2.5 0 0 1 0-5H6"/>
+              <path d="M18 9h2.5a2.5 2.5 0 0 0 0-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+            </svg>
+          </div>
+          <div class="squad-points-bar-info">
+            <span class="squad-points-bar-label">Fantasy Points</span>
+            <span class="squad-points-bar-value"><span id="squadPointsTotal">0</span> pts</span>
+          </div>
+        </div>
+        <p id="squadSaveHint" class="squad-save-hint">Select all 11 players to save your squad</p>
       </div>
 
       <!-- Player pool -->
@@ -82,5 +118,7 @@
 
   </div>
 </div>
+
+<div id="squadSaveToast" role="status" aria-live="polite"></div>
 
 <?php get_footer(); ?>

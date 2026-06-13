@@ -103,10 +103,27 @@ function smallpoles_scripts() {
             $sb_flags[ $t['name'] ] = $t['flag'] ?? '';
         }
         wp_enqueue_script( 'html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', [], null, true );
-        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [ 'html2canvas' ], '2.0.4', true );
+        wp_enqueue_script( 'sp-squad', get_template_directory_uri() . '/assets/js/squad-builder.js', [ 'html2canvas' ], '2.1.0', true );
+        /* Build per-player fantasy points lookup for pitch display */
+        global $wpdb;
+        $sp_stats_t  = $wpdb->prefix . 'sp_player_stats';
+        $pts_rows    = $wpdb->get_results(
+            "SELECT sp_player_key, SUM(points_earned) AS total FROM {$sp_stats_t} WHERE sp_player_key != '' GROUP BY sp_player_key",
+            ARRAY_A
+        );
+        $player_pts  = [];
+        if ( is_array( $pts_rows ) ) {
+            foreach ( $pts_rows as $r ) {
+                $player_pts[ $r['sp_player_key'] ] = (int) $r['total'];
+            }
+        }
+
         wp_localize_script( 'sp-squad', 'spSquadData', [
-            'squads' => $sb_squads,
-            'flags'  => $sb_flags,
+            'squads'       => $sb_squads,
+            'flags'        => $sb_flags,
+            'restBase'     => esc_url_raw( rest_url( 'smallpoles/v1/' ) ),
+            'user'         => sp_squads_get_page_user(),
+            'playerPoints' => $player_pts,
         ] );
     }
     if ( $game === 'higher-lower' ) {
@@ -1978,6 +1995,14 @@ add_action( 'admin_menu', function () {
         'sp-squad-builder',
         'sb_admin_page'
     );
+    add_submenu_page(
+        'sp-games',
+        'Squad Users',
+        'Squad Users',
+        'manage_options',
+        'sp-squad-users',
+        'sp_squads_users_admin_page'
+    );
 } );
 
 /* ── Admin page ── */
@@ -2571,3 +2596,1450 @@ add_filter( 'robots_txt', function ( $output, $public ) {
     }
     return "User-agent: *\nAllow: /\nDisallow: /wp-admin/\nDisallow: /wp-login.php\nDisallow: /wp-includes/\nDisallow: /xmlrpc.php\n\nSitemap: https://smallpoles.online/sitemap_index.xml\n";
 }, 10, 2 );
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Squad Builder — User Save & Email Notifications
+   Completely separate from WordPress users — no wp_users entries.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── DB tables ────────────────────────────────────────────────────── */
+function sp_squads_maybe_create_table() {
+    if ( get_option( 'sp_squads_db_version' ) === '2.0' ) return;
+    global $wpdb;
+    $charset = $wpdb->get_charset_collate();
+
+    // Custom users table — completely separate from wp_users
+    $users_table = $wpdb->prefix . 'sp_users';
+    $sql_users   = "CREATE TABLE {$users_table} (
+        id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        display_name  VARCHAR(64)     NOT NULL DEFAULT '',
+        email         VARCHAR(100)    NOT NULL,
+        password_hash VARCHAR(255)    NOT NULL,
+        created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY   (id),
+        UNIQUE KEY    email (email)
+    ) {$charset};";
+
+    // Squads table
+    $squads_table = $wpdb->prefix . 'sp_user_squads';
+    $sql_squads   = "CREATE TABLE {$squads_table} (
+        id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id      BIGINT UNSIGNED NOT NULL,
+        squad_name   VARCHAR(64)     NOT NULL DEFAULT '',
+        nation       VARCHAR(64)     NOT NULL DEFAULT '',
+        formation    VARCHAR(16)     NOT NULL DEFAULT '',
+        squad_data   LONGTEXT        NOT NULL,
+        budget_used  TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        total_points INT UNSIGNED    NOT NULL DEFAULT 0,
+        created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        KEY          user_id (user_id)
+    ) {$charset};";
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql_users );
+    dbDelta( $sql_squads );
+    update_option( 'sp_squads_db_version', '2.0' );
+}
+add_action( 'init', 'sp_squads_maybe_create_table' );
+
+/* ── Session helpers ──────────────────────────────────────────────── */
+function sp_squads_create_session( int $sp_user_id ): void {
+    $token = bin2hex( random_bytes( 32 ) ); // 64-char hex string
+    set_transient( 'sp_sess_' . $token, $sp_user_id, 30 * DAY_IN_SECONDS );
+    setcookie( 'sp_squad_sess', $token, [
+        'expires'  => time() + 30 * DAY_IN_SECONDS,
+        'path'     => '/',
+        'secure'   => is_ssl(),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ] );
+}
+
+function sp_squads_get_current_sp_user_id(): int {
+    $token = isset( $_COOKIE['sp_squad_sess'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['sp_squad_sess'] ) ) : '';
+    if ( strlen( $token ) !== 64 ) return 0;
+    return (int) get_transient( 'sp_sess_' . $token );
+}
+
+function sp_squads_auth_check(): bool {
+    return sp_squads_get_current_sp_user_id() > 0;
+}
+
+/* Reads the current sp_user from the session cookie — used by localize_script */
+function sp_squads_get_page_user(): ?array {
+    $user_id = sp_squads_get_current_sp_user_id();
+    if ( ! $user_id ) return null;
+    global $wpdb;
+    $table = $wpdb->prefix . 'sp_users';
+    return $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, display_name, email FROM {$table} WHERE id = %d",
+        $user_id
+    ), ARRAY_A ) ?: null;
+}
+
+/* ── REST routes ──────────────────────────────────────────────────── */
+function sp_squads_register_rest_routes() {
+    register_rest_route( 'smallpoles/v1', '/squad-auth/register', [
+        'methods'             => 'POST',
+        'permission_callback' => '__return_true',
+        'callback'            => 'sp_squads_rest_register',
+        'args'                => [
+            'display_name' => [ 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
+            'email'        => [ 'required' => true, 'sanitize_callback' => 'sanitize_email' ],
+            'password'     => [ 'required' => true ],
+        ],
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/squad-auth/login', [
+        'methods'             => 'POST',
+        'permission_callback' => '__return_true',
+        'callback'            => 'sp_squads_rest_login',
+        'args'                => [
+            'email'    => [ 'required' => true, 'sanitize_callback' => 'sanitize_email' ],
+            'password' => [ 'required' => true ],
+        ],
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/squads', [
+        [
+            'methods'             => 'GET',
+            'permission_callback' => 'sp_squads_auth_check',
+            'callback'            => 'sp_squads_rest_get',
+        ],
+        [
+            'methods'             => 'POST',
+            'permission_callback' => 'sp_squads_auth_check',
+            'callback'            => 'sp_squads_rest_save',
+            'args'                => [
+                'squad_name'  => [ 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
+                'nation'      => [ 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
+                'formation'   => [ 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
+                'squad_data'  => [ 'required' => true ],
+                'budget_used' => [ 'default' => 0, 'sanitize_callback' => 'absint' ],
+            ],
+        ],
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/squads/(?P<id>\d+)', [
+        'methods'             => 'DELETE',
+        'permission_callback' => 'sp_squads_auth_check',
+        'callback'            => 'sp_squads_rest_delete',
+    ] );
+
+    register_rest_route( 'smallpoles/v1', '/squad-auth/logout', [
+        'methods'             => 'POST',
+        'permission_callback' => '__return_true',
+        'callback'            => 'sp_squads_rest_logout',
+    ] );
+}
+add_action( 'rest_api_init', 'sp_squads_register_rest_routes' );
+
+function sp_squads_rest_logout( WP_REST_Request $req ) {
+    $token = isset( $_COOKIE['sp_squad_sess'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['sp_squad_sess'] ) ) : '';
+    if ( strlen( $token ) === 64 ) {
+        delete_transient( 'sp_sess_' . $token );
+    }
+    setcookie( 'sp_squad_sess', '', [
+        'expires'  => time() - DAY_IN_SECONDS,
+        'path'     => '/',
+        'secure'   => is_ssl(),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ] );
+    return rest_ensure_response( [ 'logged_out' => true ] );
+}
+
+/* ── Route callbacks ──────────────────────────────────────────────── */
+function sp_squads_rest_register( WP_REST_Request $req ) {
+    if ( $err = smallpoles_rate_check( 'sq_register', 5, 300 ) ) return $err;
+
+    $email = $req->get_param( 'email' );
+    $name  = $req->get_param( 'display_name' );
+    $pass  = $req->get_param( 'password' );
+
+    if ( ! is_email( $email ) ) {
+        return new WP_Error( 'invalid_email', 'Invalid email address.', [ 'status' => 400 ] );
+    }
+    if ( strlen( $pass ) < 8 ) {
+        return new WP_Error( 'weak_password', 'Password must be at least 8 characters.', [ 'status' => 400 ] );
+    }
+
+    global $wpdb;
+    $table  = $wpdb->prefix . 'sp_users';
+    $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE email = %s", $email ) );
+    if ( $exists ) {
+        return new WP_Error( 'email_exists', 'An account with this email already exists.', [ 'status' => 409 ] );
+    }
+
+    $result = $wpdb->insert( $table, [
+        'display_name'  => $name,
+        'email'         => $email,
+        'password_hash' => password_hash( $pass, PASSWORD_DEFAULT ),
+    ] );
+
+    if ( ! $result ) {
+        return new WP_Error( 'register_failed', 'Registration failed. Please try again.', [ 'status' => 500 ] );
+    }
+
+    $sp_user_id = (int) $wpdb->insert_id;
+    sp_squads_create_session( $sp_user_id );
+    sp_squads_send_welcome_email( $name, $email );
+
+    return rest_ensure_response( [
+        'user_id'      => $sp_user_id,
+        'display_name' => $name,
+        'email'        => $email,
+    ] );
+}
+
+function sp_squads_rest_login( WP_REST_Request $req ) {
+    if ( $err = smallpoles_rate_check( 'sq_login', 10, 300 ) ) return $err;
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'sp_users';
+    $user  = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, display_name, email, password_hash FROM {$table} WHERE email = %s",
+        $req->get_param( 'email' )
+    ), ARRAY_A );
+
+    if ( ! $user || ! password_verify( $req->get_param( 'password' ), $user['password_hash'] ) ) {
+        return new WP_Error( 'invalid_credentials', 'Incorrect email or password.', [ 'status' => 401 ] );
+    }
+
+    sp_squads_create_session( (int) $user['id'] );
+
+    return rest_ensure_response( [
+        'user_id'      => (int) $user['id'],
+        'display_name' => $user['display_name'],
+        'email'        => $user['email'],
+    ] );
+}
+
+function sp_squads_rest_get( WP_REST_Request $req ) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'sp_user_squads';
+    $rows  = $wpdb->get_results( $wpdb->prepare(
+        "SELECT id, squad_name, nation, formation, squad_data, budget_used, total_points, created_at
+         FROM {$table} WHERE user_id = %d ORDER BY updated_at DESC",
+        sp_squads_get_current_sp_user_id()
+    ), ARRAY_A );
+
+    foreach ( $rows as &$row ) {
+        $row['squad_data'] = json_decode( $row['squad_data'], true );
+    }
+
+    return rest_ensure_response( $rows );
+}
+
+function sp_squads_rest_save( WP_REST_Request $req ) {
+    global $wpdb;
+    $sp_user_id   = sp_squads_get_current_sp_user_id();
+    $squads_table = $wpdb->prefix . 'sp_user_squads';
+    $users_table  = $wpdb->prefix . 'sp_users';
+
+    $valid_formations = [ '4-3-3', '4-4-2', '3-5-2', '4-2-3-1' ];
+    if ( ! in_array( $req->get_param( 'formation' ), $valid_formations, true ) ) {
+        return new WP_Error( 'invalid_formation', 'Invalid formation.', [ 'status' => 400 ] );
+    }
+
+    $count = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$squads_table} WHERE user_id = %d", $sp_user_id
+    ) );
+    if ( $count >= 5 ) {
+        return new WP_Error( 'squad_limit', 'You can save up to 5 squads. Delete one first.', [ 'status' => 400 ] );
+    }
+
+    $result = $wpdb->insert( $squads_table, [
+        'user_id'    => $sp_user_id,
+        'squad_name' => $req->get_param( 'squad_name' ),
+        'nation'     => $req->get_param( 'nation' ),
+        'formation'  => $req->get_param( 'formation' ),
+        'squad_data' => wp_json_encode( $req->get_param( 'squad_data' ) ),
+        'budget_used'=> $req->get_param( 'budget_used' ),
+    ] );
+
+    if ( ! $result ) {
+        return new WP_Error( 'save_failed', 'Failed to save squad.', [ 'status' => 500 ] );
+    }
+
+    $user = $wpdb->get_row( $wpdb->prepare(
+        "SELECT display_name, email FROM {$users_table} WHERE id = %d", $sp_user_id
+    ), ARRAY_A );
+
+    if ( $user ) {
+        sp_squads_send_confirm_email(
+            $user['display_name'],
+            $user['email'],
+            $req->get_param( 'squad_name' ),
+            $req->get_param( 'formation' ),
+            $req->get_param( 'squad_data' )
+        );
+    }
+
+    return rest_ensure_response( [ 'id' => $wpdb->insert_id, 'message' => 'Squad saved!' ] );
+}
+
+function sp_squads_rest_delete( WP_REST_Request $req ) {
+    global $wpdb;
+    $table   = $wpdb->prefix . 'sp_user_squads';
+    $deleted = $wpdb->delete( $table, [
+        'id'      => (int) $req->get_param( 'id' ),
+        'user_id' => sp_squads_get_current_sp_user_id(),
+    ] );
+    if ( ! $deleted ) {
+        return new WP_Error( 'not_found', 'Squad not found.', [ 'status' => 404 ] );
+    }
+    return rest_ensure_response( [ 'deleted' => true ] );
+}
+
+/* ── Email helpers ────────────────────────────────────────────────── */
+function sp_squads_email_header() {
+    return '<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0f0a"><tr><td align="center" style="padding:32px 16px">'
+         . '<table width="560" cellpadding="0" cellspacing="0" style="background:#151515;border-radius:16px;overflow:hidden;max-width:100%">'
+         . '<tr><td style="background:linear-gradient(135deg,#0f3460,#16213e);padding:28px 32px">'
+         . '<div style="font-size:22px;font-weight:800;color:#fff">&#x26BD; Small Poles</div>'
+         . '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">World Cup 2026 Squad Builder</div>'
+         . '</td></tr>';
+}
+
+function sp_squads_email_footer() {
+    $url = esc_url( home_url( '/games/squad/' ) );
+    return '<tr><td style="padding:16px 32px;background:#0a0f0a;font-size:11px;color:rgba(255,255,255,.25);text-align:center">'
+         . 'Small Poles &middot; <a href="' . $url . '" style="color:rgba(255,255,255,.35)">smallpoles.online</a>'
+         . '</td></tr></table></td></tr></table>';
+}
+
+function sp_squads_mailer_headers() {
+    return [
+        'Content-Type: text/html; charset=UTF-8',
+        'From: Small Poles <noreply@smallpoles.online>',
+    ];
+}
+
+function sp_squads_send_confirm_email( string $display_name, string $email, string $squad_name, string $formation, $squad_data ) {
+    $by_pos = [ 'GK' => [], 'DEF' => [], 'MID' => [], 'FWD' => [] ];
+    if ( is_array( $squad_data ) ) {
+        foreach ( $squad_data as $slot ) {
+            $pos = $slot['pos'] ?? '';
+            if ( ! empty( $slot['player']['n'] ) && isset( $by_pos[ $pos ] ) ) {
+                $by_pos[ $pos ][] = esc_html( $slot['player']['n'] );
+            }
+        }
+    }
+
+    $rows = '';
+    foreach ( $by_pos as $pos => $names ) {
+        if ( $names ) {
+            $rows .= '<tr><td style="color:#9ca3af;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:6px 0 2px;vertical-align:top;width:40px">'
+                   . esc_html( $pos ) . '</td>'
+                   . '<td style="color:#f3f4f6;font-size:14px;padding:6px 0 2px">' . implode( ', ', $names ) . '</td></tr>';
+        }
+    }
+
+    $cta_url = esc_url( home_url( '/games/squad/' ) );
+    $body    = '<tr><td style="padding:28px 32px">'
+             . '<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">' . esc_html( $squad_name ) . '</div>'
+             . '<div style="font-size:13px;color:#9ca3af;margin-bottom:20px">' . esc_html( $formation ) . ' formation</div>'
+             . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">' . $rows . '</table>'
+             . '<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">'
+             . '<a href="' . $cta_url . '" style="display:inline-block;background:#00ff7f;color:#000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px">Edit Your Squad &#x2192;</a>'
+             . '</div></td></tr>';
+
+    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#0a0f0a;font-family:system-ui,sans-serif">'
+          . sp_squads_email_header() . $body . sp_squads_email_footer()
+          . '</body></html>';
+
+    wp_mail( $email, 'Squad saved: ' . $squad_name . ' — Small Poles', $html, sp_squads_mailer_headers() );
+}
+
+function sp_squads_send_welcome_email( string $display_name, string $email ) {
+    $cta_url = esc_url( home_url( '/games/squad/' ) );
+    $body    = '<tr><td style="padding:28px 32px">'
+             . '<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">Welcome, ' . esc_html( $display_name ) . '!</div>'
+             . '<p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 20px">Your Small Poles account is ready. Start building and saving your World Cup 2026 squads.</p>'
+             . '<a href="' . $cta_url . '" style="display:inline-block;background:#00ff7f;color:#000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px">Build Your Squad &#x2192;</a>'
+             . '</td></tr>';
+
+    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#0a0f0a;font-family:system-ui,sans-serif">'
+          . sp_squads_email_header() . $body . sp_squads_email_footer()
+          . '</body></html>';
+
+    wp_mail( $email, 'Welcome to Small Poles — your account is ready', $html, sp_squads_mailer_headers() );
+}
+
+/* ── Weekly points summary cron ───────────────────────────────────── */
+function sp_squads_schedule_cron() {
+    if ( ! wp_next_scheduled( 'sp_squads_weekly_update' ) ) {
+        wp_schedule_event( time(), 'weekly', 'sp_squads_weekly_update' );
+    }
+}
+add_action( 'wp', 'sp_squads_schedule_cron' );
+
+add_action( 'sp_squads_weekly_update', 'sp_squads_send_weekly_emails' );
+
+function sp_squads_send_weekly_emails() {
+    global $wpdb;
+    $squads_table = $wpdb->prefix . 'sp_user_squads';
+    $users_table  = $wpdb->prefix . 'sp_users';
+    $user_ids     = $wpdb->get_col( "SELECT DISTINCT user_id FROM {$squads_table}" );
+
+    foreach ( $user_ids as $user_id ) {
+        $user = $wpdb->get_row( $wpdb->prepare(
+            "SELECT id, display_name, email FROM {$users_table} WHERE id = %d", $user_id
+        ), ARRAY_A );
+        if ( ! $user ) continue;
+
+        $squads = $wpdb->get_results( $wpdb->prepare(
+            "SELECT squad_name, nation, formation, budget_used, total_points FROM {$squads_table} WHERE user_id = %d ORDER BY total_points DESC",
+            $user_id
+        ), ARRAY_A );
+        sp_squads_send_weekly_summary_email( $user, $squads );
+    }
+}
+
+function sp_squads_send_weekly_summary_email( array $user, array $squads ) {
+    $cta_url = esc_url( home_url( '/games/squad/' ) );
+    $rows    = '';
+    foreach ( $squads as $sq ) {
+        $rows .= '<tr style="border-bottom:1px solid rgba(255,255,255,.06)">'
+               . '<td style="padding:10px 0;color:#f3f4f6;font-size:14px">' . esc_html( $sq['squad_name'] ) . '</td>'
+               . '<td style="padding:10px 0;color:#9ca3af;font-size:13px">' . esc_html( $sq['formation'] ) . '</td>'
+               . '<td style="padding:10px 0;color:#00ff7f;font-size:14px;font-weight:700;text-align:right">' . (int) $sq['total_points'] . ' pts</td>'
+               . '</tr>';
+    }
+
+    $body = '<tr><td style="padding:28px 32px">'
+          . '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">Your Squads — Weekly Update</div>'
+          . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">' . $rows . '</table>'
+          . '<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">'
+          . '<a href="' . $cta_url . '" style="display:inline-block;background:#00ff7f;color:#000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px">Manage Your Squads &#x2192;</a>'
+          . '</div></td></tr>';
+
+    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#0a0f0a;font-family:system-ui,sans-serif">'
+          . sp_squads_email_header() . $body . sp_squads_email_footer()
+          . '</body></html>';
+
+    wp_mail( $user['email'], 'Your Weekly Squad Update — Small Poles', $html, sp_squads_mailer_headers() );
+}
+
+/* ── Squad Users admin page ───────────────────────────────────────── */
+function sp_squads_users_admin_page() {
+    if ( ! current_user_can( 'manage_options' ) ) return;
+
+    global $wpdb;
+    $users_table  = $wpdb->prefix . 'sp_users';
+    $squads_table = $wpdb->prefix . 'sp_user_squads';
+
+    /* Handle delete */
+    if (
+        isset( $_POST['sp_delete_user'], $_POST['sp_delete_user_id'], $_POST['_wpnonce'] ) &&
+        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'sp_delete_sq_user' )
+    ) {
+        $del_id = absint( $_POST['sp_delete_user_id'] );
+        $wpdb->delete( $squads_table, [ 'user_id' => $del_id ] );
+        $wpdb->delete( $users_table,  [ 'id'      => $del_id ] );
+        echo '<div class="notice notice-success"><p>User deleted.</p></div>';
+    }
+
+    /* Fetch users with squad count */
+    $users = $wpdb->get_results(
+        "SELECT u.id, u.display_name, u.email, u.created_at,
+                COUNT(s.id) AS squad_count
+         FROM {$users_table} u
+         LEFT JOIN {$squads_table} s ON s.user_id = u.id
+         GROUP BY u.id
+         ORDER BY u.created_at DESC",
+        ARRAY_A
+    );
+
+    ?>
+    <div class="wrap">
+        <h1>Squad Users <span style="font-size:13px;font-weight:400;color:#666;margin-left:8px"><?php echo count( $users ); ?> registered</span></h1>
+
+        <?php if ( empty( $users ) ) : ?>
+            <p>No squad users yet.</p>
+        <?php else : ?>
+        <table class="widefat striped" style="margin-top:16px">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Registered</th>
+                    <th style="text-align:center">Squads</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ( $users as $u ) : ?>
+                <tr>
+                    <td style="color:#999"><?php echo (int) $u['id']; ?></td>
+                    <td><strong><?php echo esc_html( $u['display_name'] ); ?></strong></td>
+                    <td><?php echo esc_html( $u['email'] ); ?></td>
+                    <td style="color:#666"><?php echo esc_html( date_i18n( 'd M Y', strtotime( $u['created_at'] ) ) ); ?></td>
+                    <td style="text-align:center"><?php echo (int) $u['squad_count']; ?></td>
+                    <td>
+                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this user and all their squads?')">
+                            <?php wp_nonce_field( 'sp_delete_sq_user' ); ?>
+                            <input type="hidden" name="sp_delete_user_id" value="<?php echo (int) $u['id']; ?>" />
+                            <button type="submit" name="sp_delete_user" class="button button-small" style="color:#a00;border-color:#a00">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php endif; ?>
+    </div>
+    <?php
+}
+
+/* ============================================================
+   MATCH SCORING SYSTEM
+   DB · Point Formula · REST · Admin · Cron
+   ============================================================ */
+
+/* ── DB tables ────────────────────────────────────────────────── */
+function sp_scoring_maybe_create_tables(): void {
+    if ( get_option( 'sp_scoring_db_version' ) === '1.0' ) return;
+    global $wpdb;
+    $c = $wpdb->get_charset_collate();
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+    dbDelta( "CREATE TABLE {$wpdb->prefix}sp_matches (
+        id         BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+        fixture_id BIGINT UNSIGNED  NOT NULL,
+        home_team  VARCHAR(100)     NOT NULL DEFAULT '',
+        away_team  VARCHAR(100)     NOT NULL DEFAULT '',
+        home_score TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        away_score TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        round      VARCHAR(50)      NOT NULL DEFAULT '',
+        match_date DATE,
+        scored     TINYINT(1)       NOT NULL DEFAULT 0,
+        created_at DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY  fixture_id (fixture_id)
+    ) {$c};" );
+
+    dbDelta( "CREATE TABLE {$wpdb->prefix}sp_player_stats (
+        id              BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
+        match_id        BIGINT UNSIGNED   NOT NULL,
+        fixture_id      BIGINT UNSIGNED   NOT NULL,
+        api_player_id   INT               NOT NULL DEFAULT 0,
+        api_player_name VARCHAR(100)      NOT NULL DEFAULT '',
+        api_team_name   VARCHAR(100)      NOT NULL DEFAULT '',
+        sp_player_key   VARCHAR(200)      NOT NULL DEFAULT '',
+        sp_player_pos   VARCHAR(10)       NOT NULL DEFAULT '',
+        minutes_played  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+        goals           TINYINT           NOT NULL DEFAULT 0,
+        assists         TINYINT           NOT NULL DEFAULT 0,
+        clean_sheet     TINYINT(1)        NOT NULL DEFAULT 0,
+        saves           TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        goals_conceded  TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        yellow_cards    TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        red_cards       TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        own_goals       TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        penalty_misses  TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+        bonus_points    TINYINT           NOT NULL DEFAULT 0,
+        points_earned   SMALLINT          NOT NULL DEFAULT 0,
+        PRIMARY KEY (id),
+        UNIQUE KEY  api_player_match (match_id, api_player_id),
+        KEY         match_id (match_id),
+        KEY         sp_player_key (sp_player_key(100))
+    ) {$c};" );
+
+    update_option( 'sp_scoring_db_version', '1.0' );
+}
+add_action( 'init', 'sp_scoring_maybe_create_tables' );
+
+/* Remove any previously scheduled periodic scoring job */
+add_action( 'init', function () {
+    $ts = wp_next_scheduled( 'sp_scoring_batch_job' );
+    if ( $ts ) {
+        wp_unschedule_event( $ts, 'sp_scoring_batch_job' );
+    }
+} );
+
+/* ── Point formula ────────────────────────────────────────────── */
+function sp_calc_player_points( array $s, string $pos ): int {
+    $pos = strtoupper( trim( $pos ) );
+    $p   = 0;
+    $m   = max( 0, (int) ( $s['minutes_played'] ?? 0 ) );
+    if ( $m > 0 ) { $p += 1; if ( $m >= 60 ) $p += 1; }
+    $gm  = in_array( $pos, [ 'GK', 'DEF' ], true ) ? 6 : 5;
+    $p  += (int) ( $s['goals'] ?? 0 ) * $gm;
+    $p  += (int) ( $s['assists'] ?? 0 ) * 3;
+    if ( ! empty( $s['clean_sheet'] ) ) {
+        if ( in_array( $pos, [ 'GK', 'DEF' ], true ) ) $p += 3;
+        elseif ( $pos === 'MID' ) $p += 1;
+    }
+    if ( $pos === 'GK' ) $p += (int) floor( (int) ( $s['saves'] ?? 0 ) / 3 );
+    $gc = (int) ( $s['goals_conceded'] ?? 0 );
+    if ( in_array( $pos, [ 'GK', 'DEF' ], true ) && $gc >= 2 ) $p -= (int) floor( $gc / 2 );
+    $p -= (int) ( $s['yellow_cards'] ?? 0 );
+    $p -= (int) ( $s['red_cards'] ?? 0 ) * 3;
+    $p -= (int) ( $s['own_goals'] ?? 0 ) * 2;
+    $p -= (int) ( $s['penalty_misses'] ?? 0 ) * 2;
+    $p += (int) ( $s['bonus_points'] ?? 0 );
+    return $p;
+}
+
+/* ── REST: admin-only fixture-players proxy ───────────────────── */
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'smallpoles/v1', '/fixture-players', [
+        'methods'             => 'GET',
+        'permission_callback' => fn() => current_user_can( 'manage_options' ),
+        'callback'            => 'sp_fixture_players_proxy',
+        'args'                => [
+            'fixture' => [
+                'required'          => true,
+                'validate_callback' => fn( $v ) => is_numeric( $v ) && $v > 0,
+                'sanitize_callback' => 'absint',
+            ],
+        ],
+    ] );
+} );
+
+function sp_fixture_players_proxy( WP_REST_Request $req ) {
+    $fid    = (int) $req->get_param( 'fixture' );
+    $result = smallpoles_api_fetch( 'fixtures/players', [ 'fixture' => $fid ], "fplayers_{$fid}", 60 * MINUTE_IN_SECONDS );
+    return $result['error'] ?? rest_ensure_response( $result['data'] );
+}
+
+/* ── Admin AJAX — fetch fixture info (for Add Match form) ─────── */
+add_action( 'wp_ajax_sp_scoring_fetch_fixture', function () {
+    check_ajax_referer( 'sp_scoring_nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Forbidden' );
+
+    $fid    = absint( $_GET['fixture_id'] ?? 0 );
+    if ( ! $fid ) wp_send_json_error( 'No fixture ID provided' );
+
+    $result = smallpoles_api_fetch( 'fixtures', [ 'id' => $fid ], "fix_info_{$fid}", 30 * MINUTE_IN_SECONDS );
+    if ( $result['error'] ) wp_send_json_error( $result['error']->get_error_message() );
+
+    $fix = $result['data'][0] ?? null;
+    if ( ! $fix ) wp_send_json_error( 'Fixture not found' );
+
+    wp_send_json_success( [
+        'home'  => $fix['teams']['home']['name'] ?? '',
+        'away'  => $fix['teams']['away']['name'] ?? '',
+        'hGoal' => (int) ( $fix['goals']['home'] ?? 0 ),
+        'aGoal' => (int) ( $fix['goals']['away'] ?? 0 ),
+        'round' => $fix['league']['round'] ?? '',
+        'date'  => isset( $fix['fixture']['date'] ) ? date( 'Y-m-d', strtotime( $fix['fixture']['date'] ) ) : '',
+    ] );
+} );
+
+/* ── Admin AJAX — fetch fixture player stats from API ─────────── */
+add_action( 'wp_ajax_sp_scoring_fetch_players', function () {
+    check_ajax_referer( 'sp_scoring_nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Forbidden' );
+
+    $fid    = absint( $_GET['fixture_id'] ?? 0 );
+    if ( ! $fid ) wp_send_json_error( 'No fixture ID' );
+
+    $result = smallpoles_api_fetch( 'fixtures/players', [ 'fixture' => $fid ], "fplayers_{$fid}", 60 * MINUTE_IN_SECONDS );
+    if ( $result['error'] ) wp_send_json_error( $result['error']->get_error_message() );
+
+    $pos_map = [ 'G' => 'GK', 'D' => 'DEF', 'M' => 'MID', 'F' => 'FWD' ];
+    $out     = [];
+    foreach ( $result['data'] ?? [] as $team_data ) {
+        $team = $team_data['team']['name'] ?? '';
+        foreach ( $team_data['players'] ?? [] as $pd ) {
+            $st  = $pd['statistics'][0] ?? [];
+            $out[] = [
+                'id'      => (int) ( $pd['player']['id'] ?? 0 ),
+                'name'    => $pd['player']['name'] ?? '',
+                'team'    => $team,
+                'pos'     => $pos_map[ $st['games']['position'] ?? '' ] ?? 'MID',
+                'min'     => (int) ( $st['games']['minutes'] ?? 0 ),
+                'goals'   => (int) ( $st['goals']['total'] ?? 0 ),
+                'assists' => (int) ( $st['goals']['assists'] ?? 0 ),
+                'saves'   => (int) ( $st['goals']['saves'] ?? 0 ),
+                'yc'      => (int) ( $st['cards']['yellow'] ?? 0 ),
+                'rc'      => (int) ( $st['cards']['red'] ?? 0 ),
+                'pm'      => (int) ( $st['penalty']['missed'] ?? 0 ),
+            ];
+        }
+    }
+    wp_send_json_success( $out );
+} );
+
+/* ── Admin menu ───────────────────────────────────────────────── */
+add_action( 'admin_menu', function () {
+    add_submenu_page(
+        'sp-games',
+        'Match Scoring',
+        'Match Scoring',
+        'manage_options',
+        'sp-match-scoring',
+        'sp_match_scoring_admin_page'
+    );
+} );
+
+/* ── Admin actions — must run before any output ───────────────── */
+add_action( 'admin_init', function () {
+    if ( ( $_GET['page'] ?? '' ) !== 'sp-match-scoring' ) return;
+    if ( ! current_user_can( 'manage_options' ) ) return;
+
+    global $wpdb;
+    $mt       = $wpdb->prefix . 'sp_matches';
+    $st       = $wpdb->prefix . 'sp_player_stats';
+    $match_id = absint( $_GET['match'] ?? 0 );
+
+    /* Add match -------------------------------------------------- */
+    if ( isset( $_POST['sp_add_match'] ) && check_admin_referer( 'sp_add_match' ) ) {
+        $fid = absint( $_POST['fixture_id'] ?? 0 );
+        if ( $fid ) {
+            $wpdb->replace( $mt, [
+                'fixture_id' => $fid,
+                'home_team'  => sanitize_text_field( $_POST['home_team'] ?? '' ),
+                'away_team'  => sanitize_text_field( $_POST['away_team'] ?? '' ),
+                'home_score' => absint( $_POST['home_score'] ?? 0 ),
+                'away_score' => absint( $_POST['away_score'] ?? 0 ),
+                'round'      => sanitize_text_field( $_POST['round'] ?? '' ),
+                'match_date' => sanitize_text_field( $_POST['match_date'] ?? '' ) ?: null,
+            ] );
+            $new_id = (int) $wpdb->insert_id ?: (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$mt} WHERE fixture_id=%d", $fid ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=sp-match-scoring&view=players&match=' . $new_id . '&added=1' ) );
+            exit;
+        }
+    }
+
+    /* Save player stats ------------------------------------------ */
+    if ( isset( $_POST['sp_save_player_stats'] ) && $match_id && check_admin_referer( 'sp_save_ps_' . $match_id ) ) {
+        $match = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$mt} WHERE id=%d", $match_id ) );
+        if ( $match ) {
+            foreach ( (array) ( $_POST['player'] ?? [] ) as $api_pid => $r ) {
+                $api_pid = (int) $api_pid;
+                $pos     = sanitize_text_field( $r['sp_player_pos'] ?? 'MID' );
+                $stats   = [
+                    'minutes_played' => absint( $r['minutes_played'] ?? 0 ),
+                    'goals'          => absint( $r['goals'] ?? 0 ),
+                    'assists'        => absint( $r['assists'] ?? 0 ),
+                    'clean_sheet'    => empty( $r['clean_sheet'] ) ? 0 : 1,
+                    'saves'          => absint( $r['saves'] ?? 0 ),
+                    'goals_conceded' => absint( $r['goals_conceded'] ?? 0 ),
+                    'yellow_cards'   => absint( $r['yellow_cards'] ?? 0 ),
+                    'red_cards'      => absint( $r['red_cards'] ?? 0 ),
+                    'own_goals'      => absint( $r['own_goals'] ?? 0 ),
+                    'penalty_misses' => absint( $r['penalty_misses'] ?? 0 ),
+                    'bonus_points'   => (int) ( $r['bonus_points'] ?? 0 ),
+                ];
+                $wpdb->replace( $st, array_merge( $stats, [
+                    'match_id'        => $match_id,
+                    'fixture_id'      => (int) $match->fixture_id,
+                    'api_player_id'   => $api_pid,
+                    'api_player_name' => sanitize_text_field( $r['api_player_name'] ?? '' ),
+                    'api_team_name'   => sanitize_text_field( $r['api_team_name'] ?? '' ),
+                    'sp_player_key'   => sanitize_text_field( $r['sp_player_key'] ?? '' ),
+                    'sp_player_pos'   => $pos,
+                    'points_earned'   => sp_calc_player_points( $stats, $pos ),
+                ] ) );
+            }
+            $wpdb->update( $mt, [ 'scored' => 1 ], [ 'id' => $match_id ] );
+            sp_scoring_schedule_batch();
+        }
+        wp_safe_redirect( admin_url( 'admin.php?page=sp-match-scoring&view=players&match=' . $match_id . '&saved=1' ) );
+        exit;
+    }
+
+    /* Delete match ----------------------------------------------- */
+    if ( isset( $_GET['del_match'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), 'sp_del_match_' . (int) $_GET['del_match'] ) ) {
+        $del = absint( $_GET['del_match'] );
+        $wpdb->delete( $st, [ 'match_id' => $del ] );
+        $wpdb->delete( $mt, [ 'id' => $del ] );
+        wp_safe_redirect( admin_url( 'admin.php?page=sp-match-scoring&deleted=1' ) );
+        exit;
+    }
+} );
+
+/* ── Admin page renderer (output only) ───────────────────────── */
+function sp_match_scoring_admin_page(): void {
+    if ( ! current_user_can( 'manage_options' ) ) return;
+    $view     = sanitize_key( $_GET['view'] ?? '' );
+    $match_id = absint( $_GET['match'] ?? 0 );
+
+    echo '<div class="wrap">';
+    if ( $view === 'players' && $match_id ) {
+        sp_scoring_render_players_view( $match_id );
+    } else {
+        sp_scoring_render_match_list();
+    }
+    echo '</div>';
+}
+
+/* ── Match list view ──────────────────────────────────────────── */
+function sp_scoring_render_match_list(): void {
+    global $wpdb;
+    $mt = $wpdb->prefix . 'sp_matches';
+    $st = $wpdb->prefix . 'sp_player_stats';
+
+    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+    $matches = $wpdb->get_results( "SELECT m.*,COUNT(ps.id) pc FROM {$mt} m LEFT JOIN {$st} ps ON ps.match_id=m.id GROUP BY m.id ORDER BY m.match_date DESC,m.id DESC" );
+
+    if ( isset( $_GET['added'] ) )   echo '<div class="notice notice-success is-dismissible"><p>Match added — now link player stats below.</p></div>';
+    if ( isset( $_GET['deleted'] ) ) echo '<div class="notice notice-success is-dismissible"><p>Match deleted.</p></div>';
+    if ( isset( $_GET['saved'] ) )   echo '<div class="notice notice-success is-dismissible"><p>Player stats saved. Scoring job queued.</p></div>';
+    ?>
+    <h1 class="wp-heading-inline">Match Scoring</h1>
+    <hr class="wp-header-end" style="margin-bottom:16px">
+
+    <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;margin-bottom:24px">
+        <h2 style="margin-top:0">Add Match by Fixture ID</h2>
+        <p style="color:#666;margin-top:-8px">Enter the API-Football fixture ID. Use <strong>Fetch from API</strong> to auto-fill team names &amp; score.</p>
+        <form method="post" id="sp-add-match-form">
+            <?php wp_nonce_field( 'sp_add_match' ); ?>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Fixture ID *
+                    <input type="number" name="fixture_id" id="sp-fid-input" class="regular-text" required placeholder="e.g. 1489385" style="width:140px">
+                </label>
+                <button type="button" id="sp-fetch-fixture-btn" class="button">⬇ Fetch from API</button>
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Home Team
+                    <input type="text" name="home_team" id="sp-home-team" placeholder="England" style="width:130px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Away Team
+                    <input type="text" name="away_team" id="sp-away-team" placeholder="Germany" style="width:130px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Score
+                    <span style="display:flex;gap:4px;align-items:center">
+                        <input type="number" name="home_score" id="sp-home-score" min="0" max="99" value="0" style="width:50px">
+                        <span style="font-weight:700">–</span>
+                        <input type="number" name="away_score" id="sp-away-score" min="0" max="99" value="0" style="width:50px">
+                    </span>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Round
+                    <input type="text" name="round" id="sp-round" placeholder="Group Stage" style="width:140px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                    Date
+                    <input type="date" name="match_date" id="sp-match-date">
+                </label>
+                <button type="submit" name="sp_add_match" class="button button-primary">Add Match</button>
+            </div>
+        </form>
+    </div>
+
+    <h2>Recorded Matches</h2>
+    <?php if ( empty( $matches ) ) : ?>
+        <p style="color:#888;padding:12px 0">No matches added yet.</p>
+    <?php else : ?>
+    <table class="wp-list-table widefat fixed striped">
+        <thead>
+            <tr>
+                <th style="width:100px">Fixture ID</th>
+                <th>Match</th>
+                <th style="width:70px">Score</th>
+                <th style="width:120px">Round</th>
+                <th style="width:100px">Date</th>
+                <th style="width:80px;text-align:center">Players</th>
+                <th style="width:90px;text-align:center">Status</th>
+                <th style="width:180px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ( $matches as $m ) : ?>
+            <tr>
+                <td style="color:#888;font-family:monospace"><?php echo (int) $m->fixture_id; ?></td>
+                <td><strong><?php echo esc_html( $m->home_team ); ?> vs <?php echo esc_html( $m->away_team ); ?></strong></td>
+                <td><?php echo (int) $m->home_score; ?>–<?php echo (int) $m->away_score; ?></td>
+                <td style="color:#666"><?php echo esc_html( $m->round ); ?></td>
+                <td style="color:#666"><?php echo $m->match_date ? esc_html( date_i18n( 'd M Y', strtotime( $m->match_date ) ) ) : '—'; ?></td>
+                <td style="text-align:center"><?php echo (int) $m->pc; ?></td>
+                <td style="text-align:center">
+                    <?php if ( $m->scored ) : ?>
+                        <span style="color:#00a32a;font-weight:600">● Scored</span>
+                    <?php else : ?>
+                        <span style="color:#888">○ Draft</span>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=sp-match-scoring&view=players&match=' . (int) $m->id ) ); ?>" class="button button-small">Player Stats</a>
+                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=sp-match-scoring&del_match=' . (int) $m->id ), 'sp_del_match_' . (int) $m->id ) ); ?>" class="button button-small" style="color:#a00" onclick="return confirm('Delete this match and all player stats?')">Delete</a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+
+    <?php
+    $last = get_option( 'sp_scoring_last_run' );
+    $next = wp_next_scheduled( 'sp_scoring_batch_job' );
+    ?>
+    <div style="margin-top:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <button type="button" id="sp-run-scoring-now" class="button button-primary">▶ Run Scoring Now</button>
+        <span id="sp-scoring-status" style="font-size:13px;color:#666">
+            Last run: <?php echo $last ? esc_html( date_i18n( 'd M Y H:i', strtotime( $last ) ) ) : 'never'; ?>.
+            <?php echo $next ? ' Cron next in ~' . round( ( $next - time() ) / 60 ) . ' min.' : ''; ?>
+        </span>
+    </div>
+
+    <script>
+    (function () {
+        var nonce = <?php echo wp_json_encode( wp_create_nonce( 'sp_scoring_nonce' ) ); ?>;
+        var ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+
+        document.getElementById('sp-fetch-fixture-btn').addEventListener('click', function () {
+            var fid = document.getElementById('sp-fid-input').value.trim();
+            if (!fid) { alert('Enter a Fixture ID first.'); return; }
+            var btn = this; btn.disabled = true; btn.textContent = 'Fetching…';
+            fetch(ajaxUrl + '?action=sp_scoring_fetch_fixture&fixture_id=' + encodeURIComponent(fid) + '&_ajax_nonce=' + encodeURIComponent(nonce))
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    btn.disabled = false; btn.textContent = '⬇ Fetch from API';
+                    if (!d.success) { alert('API error: ' + (d.data || 'unknown')); return; }
+                    var f = d.data;
+                    document.getElementById('sp-home-team').value  = f.home;
+                    document.getElementById('sp-away-team').value  = f.away;
+                    document.getElementById('sp-home-score').value = f.hGoal;
+                    document.getElementById('sp-away-score').value = f.aGoal;
+                    document.getElementById('sp-round').value      = f.round;
+                    document.getElementById('sp-match-date').value = f.date;
+                })
+                .catch(function () { btn.disabled = false; btn.textContent = '⬇ Fetch from API'; alert('Fetch failed.'); });
+        });
+
+        document.getElementById('sp-run-scoring-now').addEventListener('click', function () {
+            var btn = this, status = document.getElementById('sp-scoring-status');
+            btn.disabled = true; btn.textContent = '⏳ Scoring…';
+            status.textContent = 'Running…'; status.style.color = '#666';
+            fetch(ajaxUrl + '?action=sp_scoring_run_now&_ajax_nonce=' + encodeURIComponent(nonce))
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    btn.disabled = false; btn.textContent = '▶ Run Scoring Now';
+                    if (d.success) {
+                        var r = d.data;
+                        console.group('SP Scoring diagnostic');
+                        console.log('Stat keys (wp_sp_player_stats):', r.stat_keys);
+                        console.log('Squad keys (from squads):', r.squad_keys);
+                        console.log('Matched:', r.matched);
+                        console.log('Unmatched:', r.unmatched);
+                        console.log('Squad structure debug:', r.squad_debug);
+                        console.groupEnd();
+
+                        var matchInfo = r.matched.length
+                            ? r.matched.length + '/' + r.squad_keys.length + ' keys matched'
+                            : '⚠ 0 keys matched';
+                        status.innerHTML = '✓ ' + r.squads_updated + ' squads scored. ' + matchInfo + '.';
+                        status.style.color = r.matched.length ? '#00a32a' : '#d63638';
+
+                        // Show inline diagnostic table when nothing matches
+                        var old = document.getElementById('sp-diag-box');
+                        if (old) old.remove();
+                        if (!r.matched.length) {
+                            var box = document.createElement('div');
+                            box.id = 'sp-diag-box';
+                            box.style.cssText = 'margin-top:12px;padding:12px;background:#fff8f8;border:1px solid #d63638;border-radius:4px;font-size:12px;font-family:monospace';
+                            box.innerHTML = '<strong>Stat keys in DB (' + r.stat_keys.length + '):</strong><br>'
+                                + (r.stat_keys.slice(0,5).join('<br>') || '(none)')
+                                + (r.stat_keys.length > 5 ? '<br>…and ' + (r.stat_keys.length-5) + ' more' : '')
+                                + '<br><br><strong>Squad keys looked up (' + r.squad_keys.length + '):</strong><br>'
+                                + (r.squad_keys.slice(0,5).join('<br>') || '(none)')
+                                + (r.squad_keys.length > 5 ? '<br>…and ' + (r.squad_keys.length-5) + ' more' : '')
+                                + '<br><br><strong>Squad structure:</strong><br>'
+                                + r.squad_debug.join('<br>');
+                            btn.parentElement.after(box);
+                        }
+                    } else {
+                        status.textContent = 'Error: ' + (d.data || 'unknown');
+                        status.style.color = '#d63638';
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false; btn.textContent = '▶ Run Scoring Now';
+                    status.textContent = 'Network error — try again'; status.style.color = '#d63638';
+                });
+        });
+    })();
+    </script>
+    <?php
+}
+
+/* ── Player stats view ────────────────────────────────────────── */
+function sp_scoring_render_players_view( int $match_id ): void {
+    global $wpdb;
+    $mt = $wpdb->prefix . 'sp_matches';
+    $st = $wpdb->prefix . 'sp_player_stats';
+
+    $match = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$mt} WHERE id=%d", $match_id ) );
+    if ( ! $match ) { echo '<p>Match not found.</p>'; return; }
+
+    // Existing saved stats keyed by api_player_id
+    $saved_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$st} WHERE match_id=%d ORDER BY api_team_name,api_player_name", $match_id ) );
+    $saved      = [];
+    foreach ( $saved_rows as $row ) $saved[ (int) $row->api_player_id ] = $row;
+
+    // All squad players for the mapping dropdown
+    $sb_squads   = get_option( 'sb_squads', [] );
+    $player_opts = [];
+    foreach ( $sb_squads as $nation => $players ) {
+        foreach ( $players as $p ) {
+            $key   = $nation . '|' . $p['n'];
+            $label = '[' . $nation . '] ' . $p['n'] . ' (' . $p['p'] . ')';
+            $player_opts[ $key ] = $label;
+        }
+    }
+    asort( $player_opts );
+
+    $home_cs = (int) $match->away_score === 0;
+    $away_cs = (int) $match->home_score === 0;
+
+    if ( isset( $_GET['saved'] ) )   echo '<div class="notice notice-success is-dismissible"><p>Player stats saved. Scoring job queued.</p></div>';
+    if ( isset( $_GET['added'] ) )   echo '<div class="notice notice-info is-dismissible"><p>Match added. Load player stats from API below.</p></div>';
+    ?>
+    <h1>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=sp-match-scoring' ) ); ?>" style="text-decoration:none;color:#1d2327">← Match Scoring</a>
+        &rsaquo;
+        <?php echo esc_html( $match->home_team . ' ' . (int)$match->home_score . '–' . (int)$match->away_score . ' ' . $match->away_team ); ?>
+        <span style="font-size:14px;font-weight:400;color:#888;margin-left:8px"><?php echo esc_html( $match->round ); ?> <?php echo $match->match_date ? '· ' . esc_html( date_i18n( 'd M Y', strtotime( $match->match_date ) ) ) : ''; ?></span>
+    </h1>
+    <hr class="wp-header-end" style="margin-bottom:16px">
+
+    <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
+        <button type="button" id="sp-load-api-players" class="button button-primary">⬇ Load / Refresh Player Stats from API</button>
+        <span id="sp-api-status" style="color:#666;font-size:13px"></span>
+    </div>
+
+    <form method="post" id="sp-player-stats-form">
+        <?php wp_nonce_field( 'sp_save_ps_' . $match_id ); ?>
+        <div style="overflow-x:auto">
+        <table class="wp-list-table widefat fixed" id="sp-player-table">
+            <thead>
+                <tr>
+                    <th style="width:170px">API Player</th>
+                    <th style="width:100px">Team</th>
+                    <th style="width:70px">Pos</th>
+                    <th style="width:220px">Map to Squad Player</th>
+                    <th style="width:58px" title="Minutes Played">Min</th>
+                    <th style="width:48px" title="Goals">G</th>
+                    <th style="width:48px" title="Assists">A</th>
+                    <th style="width:44px" title="Clean Sheet">CS</th>
+                    <th style="width:48px" title="Saves (GK)">Sv</th>
+                    <th style="width:48px" title="Goals Conceded">GC</th>
+                    <th style="width:48px" title="Yellow Cards">YC</th>
+                    <th style="width:48px" title="Red Cards">RC</th>
+                    <th style="width:48px" title="Own Goals">OG</th>
+                    <th style="width:48px" title="Penalty Misses">PM</th>
+                    <th style="width:48px" title="Bonus Points">BP</th>
+                    <th style="width:50px" title="Points Earned">Pts</th>
+                </tr>
+            </thead>
+            <tbody id="sp-player-tbody">
+            <?php foreach ( $saved as $api_pid => $row ) : ?>
+                <?php sp_scoring_render_player_row( $api_pid, $row->api_player_name, $row->api_team_name, $row, $player_opts ); ?>
+            <?php endforeach; ?>
+            <?php if ( empty( $saved ) ) : ?>
+                <tr id="sp-empty-row"><td colspan="16" style="color:#888;padding:20px;text-align:center">No player stats yet. Click "Load / Refresh Player Stats from API" above.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+        </div>
+
+        <?php if ( ! empty( $saved ) ) : ?>
+        <div style="margin-top:16px;display:flex;gap:10px">
+            <button type="submit" name="sp_save_player_stats" class="button button-primary button-large">Save Player Mappings &amp; Stats</button>
+        </div>
+        <?php endif; ?>
+    </form>
+
+    <script>
+    (function () {
+        var nonce    = <?php echo wp_json_encode( wp_create_nonce( 'sp_scoring_nonce' ) ); ?>;
+        var ajaxUrl  = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+        var fixId    = <?php echo (int) $match->fixture_id; ?>;
+        var homeTeam = <?php echo wp_json_encode( $match->home_team ); ?>;
+        var awayTeam = <?php echo wp_json_encode( $match->away_team ); ?>;
+        var homeCs   = <?php echo (int) $home_cs; ?>;
+        var awayCs   = <?php echo (int) $away_cs; ?>;
+        var homeGc   = <?php echo (int) $match->away_score; ?>;
+        var awayGc   = <?php echo (int) $match->home_score; ?>;
+
+        // Player options for the Map-to dropdown
+        var playerOpts = <?php echo wp_json_encode( $player_opts ); ?>;
+
+        function calcPts(row) {
+            if (!row.querySelector('.sp-pos-sel')) return;
+            var pos   = row.querySelector('.sp-pos-sel').value.toUpperCase();
+            var min   = parseInt(row.querySelector('.sp-min').value) || 0;
+            var goals = parseInt(row.querySelector('.sp-goals').value) || 0;
+            var ast   = parseInt(row.querySelector('.sp-ast').value) || 0;
+            var cs    = row.querySelector('.sp-cs').checked ? 1 : 0;
+            var sv    = parseInt(row.querySelector('.sp-sv').value) || 0;
+            var gc    = parseInt(row.querySelector('.sp-gc').value) || 0;
+            var yc    = parseInt(row.querySelector('.sp-yc').value) || 0;
+            var rc    = parseInt(row.querySelector('.sp-rc').value) || 0;
+            var og    = parseInt(row.querySelector('.sp-og').value) || 0;
+            var pm    = parseInt(row.querySelector('.sp-pm').value) || 0;
+            var bp    = parseInt(row.querySelector('.sp-bp').value) || 0;
+            var p = 0;
+            if (min > 0) { p += 1; if (min >= 60) p += 1; }
+            var gm = (pos==='GK'||pos==='DEF') ? 6 : 5;
+            p += goals * gm;
+            p += ast * 3;
+            if (cs) { if (pos==='GK'||pos==='DEF') p += 3; else if (pos==='MID') p += 1; }
+            if (pos==='GK') p += Math.floor(sv / 3);
+            if ((pos==='GK'||pos==='DEF') && gc>=2) p -= Math.floor(gc / 2);
+            p -= yc; p -= rc*3; p -= og*2; p -= pm*2; p += bp;
+            row.querySelector('.sp-pts').textContent = p;
+            row.querySelector('.sp-pts').style.color = p < 0 ? '#d63638' : p > 0 ? '#00a32a' : '#888';
+        }
+
+        function buildRow(player, existingKey, existingPos, cs, gc) {
+            var tr  = document.createElement('tr');
+            var pid = player.id;
+
+            // Auto-map if no existing key was provided
+            var mappedKey = existingKey || autoMap(player.name, player.team);
+            // If auto-mapped, derive position from the option label
+            var resolvedPos = existingPos || player.pos;
+            if (mappedKey && !existingPos) {
+                var lbl = playerOpts[mappedKey] || '';
+                var pm  = lbl.match(/\((\w+)\)$/);
+                if (pm) resolvedPos = pm[1];
+            }
+
+            var teamLower   = player.team.toLowerCase();
+            var teamKeys    = Object.keys(playerOpts).filter(function(k){ return k.split('|')[0].toLowerCase() === teamLower; });
+            var displayKeys = teamKeys.length ? teamKeys : Object.keys(playerOpts); // fallback: all if team not found
+            displayKeys.sort(function(a,b){ return playerOpts[a].localeCompare(playerOpts[b]); });
+
+            var mapSel = '<select name="player['+pid+'][sp_player_key]" class="sp-map-sel" style="max-width:200px;font-size:12px">'
+                + '<option value="">— Not mapped —</option>';
+            if (!teamKeys.length) {
+                mapSel += '<option disabled style="color:#d63638">⚠ No team match — showing all</option>';
+            }
+            displayKeys.forEach(function(k){
+                // Strip the "nation|" prefix from the label when team is filtered — show just "Name (POS)"
+                var label = teamKeys.length
+                    ? escHtml(playerOpts[k].replace(/^\[[^\]]+\]\s*/, ''))
+                    : escHtml(playerOpts[k]);
+                mapSel += '<option value="'+escAttr(k)+'"'+(k===mappedKey?' selected':'')+'>'+label+'</option>';
+            });
+            mapSel += '</select>';
+
+            var posSel = '<select name="player['+pid+'][sp_player_pos]" class="sp-pos-sel" style="width:60px;font-size:12px">';
+            ['GK','DEF','MID','FWD'].forEach(function(p){
+                posSel += '<option'+(p===resolvedPos?' selected':'')+'>'+p+'</option>';
+            });
+            posSel += '</select>';
+
+            tr.innerHTML = [
+                '<td><strong>'+escHtml(player.name)+'</strong>'
+                    +(mappedKey ? '<br><small style="color:#00a32a;font-size:10px">✓ auto-mapped</small>' : '')
+                    +'<input type="hidden" name="player['+pid+'][api_player_name]" value="'+escAttr(player.name)+'">'
+                    +'<input type="hidden" name="player['+pid+'][api_team_name]" value="'+escAttr(player.team)+'">'
+                    +'</td>',
+                '<td style="font-size:12px;color:#666">'+escHtml(player.team)+'</td>',
+                '<td>'+posSel+'</td>',
+                '<td>'+mapSel+'</td>',
+                '<td><input type="number" name="player['+pid+'][minutes_played]" value="'+player.min+'" min="0" max="120" class="sp-min" style="width:52px"></td>',
+                '<td><input type="number" name="player['+pid+'][goals]" value="'+player.goals+'" min="0" max="20" class="sp-goals" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][assists]" value="'+player.assists+'" min="0" max="20" class="sp-ast" style="width:42px"></td>',
+                '<td style="text-align:center"><input type="checkbox" name="player['+pid+'][clean_sheet]" class="sp-cs" value="1"'+(cs?' checked':'')+'></td>',
+                '<td><input type="number" name="player['+pid+'][saves]" value="'+player.saves+'" min="0" max="30" class="sp-sv" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][goals_conceded]" value="'+gc+'" min="0" max="20" class="sp-gc" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][yellow_cards]" value="'+player.yc+'" min="0" max="2" class="sp-yc" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][red_cards]" value="'+player.rc+'" min="0" max="1" class="sp-rc" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][own_goals]" value="0" min="0" max="5" class="sp-og" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][penalty_misses]" value="'+player.pm+'" min="0" max="5" class="sp-pm" style="width:42px"></td>',
+                '<td><input type="number" name="player['+pid+'][bonus_points]" value="0" min="0" max="10" class="sp-bp" style="width:42px"></td>',
+                '<td class="sp-pts" style="font-weight:700;text-align:right">0</td>',
+            ].join('');
+            return tr;
+        }
+
+        function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+        // Auto-map an API player to a squad player key.
+        // 1. Exact match on "nation|name"
+        // 2. Case-insensitive exact match
+        // 3. Unambiguous last-name match within the same team
+        // Returns '' if no confident match found.
+        function autoMap(apiName, apiTeam) {
+            var exactKey = apiTeam + '|' + apiName;
+            if (playerOpts[exactKey] !== undefined) return exactKey;
+
+            var teamLower = apiTeam.toLowerCase();
+            var nameLower = apiName.toLowerCase();
+
+            // Case-insensitive exact
+            for (var k in playerOpts) {
+                var kp = k.split('|');
+                if (kp[0].toLowerCase() === teamLower && kp.slice(1).join('|').toLowerCase() === nameLower) return k;
+            }
+
+            // Last-name fallback within same team
+            var apiParts = apiName.trim().split(/\s+/);
+            var apiLast  = apiParts[apiParts.length - 1].toLowerCase();
+            var hits = [];
+            for (var k in playerOpts) {
+                var kp = k.split('|');
+                if (kp[0].toLowerCase() !== teamLower) continue;
+                var spParts = kp.slice(1).join('|').trim().split(/\s+/);
+                var spLast  = spParts[spParts.length - 1].toLowerCase();
+                if (spLast === apiLast) hits.push(k);
+            }
+            return hits.length === 1 ? hits[0] : '';
+        }
+
+        function wireRow(tr) {
+            if (!tr.querySelector('.sp-map-sel')) return;
+            tr.querySelectorAll('input,select').forEach(function(el){
+                el.addEventListener('input', function(){ calcPts(tr); });
+                el.addEventListener('change', function(){ calcPts(tr); });
+            });
+            // When Map-to changes, auto-set position from the option label
+            tr.querySelector('.sp-map-sel').addEventListener('change', function(){
+                var key = this.value;
+                if (!key) return;
+                var label = playerOpts[key] || '';
+                var m = label.match(/\((\w+)\)$/);
+                if (m) { tr.querySelector('.sp-pos-sel').value = m[1]; calcPts(tr); }
+            });
+            calcPts(tr);
+        }
+
+        // Wire existing rows
+        document.querySelectorAll('#sp-player-tbody tr').forEach(wireRow);
+
+        // Recalculate all on form load
+        document.querySelectorAll('#sp-player-tbody tr').forEach(calcPts);
+
+        document.getElementById('sp-load-api-players').addEventListener('click', function(){
+            var btn = this, status = document.getElementById('sp-api-status');
+            btn.disabled = true; btn.textContent = 'Loading…'; status.textContent = '';
+            fetch(ajaxUrl+'?action=sp_scoring_fetch_players&fixture_id='+fixId+'&_ajax_nonce='+encodeURIComponent(nonce))
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    btn.disabled = false; btn.textContent = '⬇ Load / Refresh Player Stats from API';
+                    if (!d.success){ status.textContent = 'Error: '+(d.data||'unknown'); status.style.color='#d63638'; return; }
+                    var players = d.data;
+                    status.textContent = 'Loaded '+players.length+' players. Review mappings & save.';
+                    status.style.color = '#00a32a';
+
+                    var tbody = document.getElementById('sp-player-tbody');
+                    var empty = document.getElementById('sp-empty-row');
+                    if (empty) empty.remove();
+
+                    // Build index of existing rows by api_player_id
+                    var existingRows = {};
+                    tbody.querySelectorAll('tr[data-pid]').forEach(function(tr){
+                        existingRows[tr.dataset.pid] = tr;
+                    });
+
+                    players.forEach(function(player){
+                        var isHome = player.team === homeTeam;
+                        var cs     = isHome ? homeCs : awayCs;
+                        var gc     = isHome ? homeGc : awayGc;
+
+                        if (existingRows[player.id]) {
+                            // Row already exists — don't overwrite, just re-calc
+                            calcPts(existingRows[player.id]);
+                        } else {
+                            var tr = buildRow(player, '', player.pos, cs, gc);
+                            tr.dataset.pid = player.id;
+                            tbody.appendChild(tr);
+                            wireRow(tr);
+                        }
+                    });
+
+                    // Show the save button
+                    var formEl = document.getElementById('sp-player-stats-form');
+                    if (!formEl.querySelector('[name=sp_save_player_stats]')) {
+                        var div = document.createElement('div');
+                        div.style.cssText = 'margin-top:16px;display:flex;gap:10px';
+                        div.innerHTML = '<button type="submit" name="sp_save_player_stats" class="button button-primary button-large">Save Player Mappings &amp; Stats</button>';
+                        formEl.appendChild(div);
+                    }
+                })
+                .catch(function(){ btn.disabled=false; btn.textContent='⬇ Load / Refresh Player Stats from API'; status.textContent='Network error'; status.style.color='#d63638'; });
+        });
+    })();
+    </script>
+    <?php
+}
+
+/* ── Render a single player row (for saved stats) ─────────────── */
+function sp_scoring_render_player_row( int $api_pid, string $api_name, string $api_team, object $row, array $player_opts ): void {
+    $pos_options = [ 'GK', 'DEF', 'MID', 'FWD' ];
+    $pts = sp_calc_player_points( (array) $row, $row->sp_player_pos );
+    ?>
+    <tr data-pid="<?php echo $api_pid; ?>">
+        <td>
+            <strong><?php echo esc_html( $api_name ); ?></strong>
+            <input type="hidden" name="player[<?php echo $api_pid; ?>][api_player_name]" value="<?php echo esc_attr( $api_name ); ?>">
+            <input type="hidden" name="player[<?php echo $api_pid; ?>][api_team_name]" value="<?php echo esc_attr( $api_team ); ?>">
+        </td>
+        <td style="font-size:12px;color:#666"><?php echo esc_html( $api_team ); ?></td>
+        <td>
+            <select name="player[<?php echo $api_pid; ?>][sp_player_pos]" class="sp-pos-sel" style="width:60px;font-size:12px">
+                <?php foreach ( $pos_options as $p ) : ?>
+                    <option<?php selected( $row->sp_player_pos, $p ); ?>><?php echo esc_html( $p ); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </td>
+        <td>
+            <?php
+            // Filter to the same team; fall back to all if no team match exists
+            $team_opts = array_filter( $player_opts, fn( $k ) => strtolower( explode( '|', $k, 2 )[0] ) === strtolower( $api_team ), ARRAY_FILTER_USE_KEY );
+            $show_opts = $team_opts ?: $player_opts;
+            $no_match  = empty( $team_opts );
+            ?>
+            <select name="player[<?php echo $api_pid; ?>][sp_player_key]" class="sp-map-sel" style="max-width:200px;font-size:12px">
+                <option value="">— Not mapped —</option>
+                <?php if ( $no_match ) : ?>
+                    <option disabled style="color:#d63638">⚠ No team match — showing all</option>
+                <?php endif; ?>
+                <?php foreach ( $show_opts as $key => $label ) :
+                    // Strip "nation|" prefix when filtered to one team
+                    $display = $no_match ? $label : preg_replace( '/^\[[^\]]+\]\s*/', '', $label );
+                ?>
+                    <option value="<?php echo esc_attr( $key ); ?>"<?php selected( $row->sp_player_key, $key ); ?>><?php echo esc_html( $display ); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </td>
+        <?php
+        $fields = [
+            [ 'minutes_played', 'sp-min',   'number', 0, 120 ],
+            [ 'goals',          'sp-goals',  'number', 0, 20 ],
+            [ 'assists',        'sp-ast',    'number', 0, 20 ],
+        ];
+        foreach ( $fields as $f ) : ?>
+        <td><input type="number" name="player[<?php echo $api_pid; ?>][<?php echo esc_attr($f[0]); ?>]" value="<?php echo (int) $row->{ $f[0] }; ?>" min="<?php echo $f[3]; ?>" max="<?php echo $f[4]; ?>" class="<?php echo esc_attr($f[1]); ?>" style="width:52px"></td>
+        <?php endforeach; ?>
+        <td style="text-align:center"><input type="checkbox" name="player[<?php echo $api_pid; ?>][clean_sheet]" class="sp-cs" value="1"<?php checked( $row->clean_sheet, 1 ); ?>></td>
+        <?php
+        $num_fields = [
+            [ 'saves',          'sp-sv', 30 ],
+            [ 'goals_conceded', 'sp-gc', 20 ],
+            [ 'yellow_cards',   'sp-yc', 2 ],
+            [ 'red_cards',      'sp-rc', 1 ],
+            [ 'own_goals',      'sp-og', 5 ],
+            [ 'penalty_misses', 'sp-pm', 5 ],
+            [ 'bonus_points',   'sp-bp', 10 ],
+        ];
+        foreach ( $num_fields as $f ) : ?>
+        <td><input type="number" name="player[<?php echo $api_pid; ?>][<?php echo esc_attr($f[0]); ?>]" value="<?php echo (int) $row->{ $f[0] }; ?>" min="0" max="<?php echo (int) $f[2]; ?>" class="<?php echo esc_attr($f[1]); ?>" style="width:42px"></td>
+        <?php endforeach; ?>
+        <td class="sp-pts" style="font-weight:700;text-align:right;color:<?php echo $pts < 0 ? '#d63638' : ( $pts > 0 ? '#00a32a' : '#888' ); ?>"><?php echo $pts; ?></td>
+    </tr>
+    <?php
+}
+
+/* Scoring runs on-demand only (when stats are saved or via "Run Scoring Now").
+   No periodic cron needed — stats only change when an admin manually enters them. */
+
+/* ── Core scoring function — recalculates total_points for every squad ── */
+function sp_scoring_score_all_squads(): array {
+    global $wpdb;
+    $squad_t = $wpdb->prefix . 'sp_user_squads';
+    $stats_t = $wpdb->prefix . 'sp_player_stats';
+
+    // Build a complete lookup: sp_player_key → total points_earned across all matches
+    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+    $all_stats = $wpdb->get_results(
+        "SELECT sp_player_key, SUM(points_earned) AS total FROM {$stats_t} WHERE sp_player_key != '' GROUP BY sp_player_key",
+        ARRAY_A
+    );
+    $pts_by_key = [];
+    foreach ( $all_stats as $r ) {
+        $pts_by_key[ $r['sp_player_key'] ] = (int) $r['total'];
+    }
+
+    // Fetch and score squads in batches to avoid memory issues
+    $limit      = 50;
+    $offset     = 0;
+    $updated    = 0;
+
+    do {
+        $squads = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, nation, squad_data FROM {$squad_t} LIMIT %d OFFSET %d",
+            $limit, $offset
+        ) );
+
+        foreach ( $squads as $squad ) {
+            $slots = json_decode( $squad->squad_data, true );
+            if ( ! is_array( $slots ) ) continue;
+
+            $total = 0;
+            foreach ( $slots as $slot ) {
+                $pname = $slot['player']['n'] ?? '';
+                if ( ! $pname ) continue;
+                $key    = $squad->nation . '|' . $pname;
+                $total += $pts_by_key[ $key ] ?? 0;
+            }
+
+            $wpdb->update( $squad_t, [ 'total_points' => max( 0, $total ) ], [ 'id' => (int) $squad->id ] );
+            $updated++;
+        }
+
+        $offset += $limit;
+    } while ( count( $squads ) === $limit );
+
+    update_option( 'sp_scoring_last_run', current_time( 'mysql' ), false );
+    return [ 'squads_updated' => $updated, 'player_keys' => count( $pts_by_key ) ];
+}
+
+/* ── Admin AJAX — run scoring now ─────────────────────────────── */
+add_action( 'wp_ajax_sp_scoring_run_now', function () {
+    check_ajax_referer( 'sp_scoring_nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Forbidden' );
+
+    global $wpdb;
+    $squad_t = $wpdb->prefix . 'sp_user_squads';
+    $stats_t = $wpdb->prefix . 'sp_player_stats';
+
+    // Diagnostic: keys that have stats
+    $stat_keys = $wpdb->get_col( "SELECT DISTINCT sp_player_key FROM {$stats_t} WHERE sp_player_key != ''" );
+
+    // Diagnostic: raw squad data to catch encoding issues
+    $squads     = $wpdb->get_results( "SELECT id, nation, squad_data FROM {$squad_t}" );
+    $squad_keys = [];
+    $squad_debug = [];
+    foreach ( $squads as $sq ) {
+        $raw   = $sq->squad_data;
+        $slots = json_decode( $raw, true );
+        // Detect double-encoding: if json_decode returns a string, it was encoded twice
+        if ( is_string( $slots ) ) {
+            $slots = json_decode( $slots, true );
+            $squad_debug[] = 'Squad #' . $sq->id . ': DOUBLE-ENCODED — fixed by decoding twice';
+        }
+        if ( ! is_array( $slots ) ) {
+            $squad_debug[] = 'Squad #' . $sq->id . ': squad_data is not an array after decode (type=' . gettype( $slots ) . ') raw=' . substr( $raw, 0, 80 );
+            continue;
+        }
+        foreach ( $slots as $slot ) {
+            $pname = $slot['player']['n'] ?? ( $slot['n'] ?? '' ); // handle flat structure too
+            if ( $pname ) $squad_keys[] = $sq->nation . '|' . $pname;
+        }
+        $squad_debug[] = 'Squad #' . $sq->id . ' (' . $sq->nation . '): ' . count( $slots ) . ' slots, sample key=' . ( $squad_keys ? end( $squad_keys ) : 'none' );
+    }
+    $squad_keys = array_unique( $squad_keys );
+
+    $matched   = array_intersect( $squad_keys, $stat_keys );
+    $unmatched = array_diff( $squad_keys, $stat_keys );
+
+    $result = sp_scoring_score_all_squads();
+    $result['stat_keys']   = array_values( $stat_keys );
+    $result['squad_keys']  = array_values( $squad_keys );
+    $result['matched']     = array_values( $matched );
+    $result['unmatched']   = array_values( $unmatched );
+    $result['squad_debug'] = $squad_debug;
+
+    wp_send_json_success( $result );
+} );
+
+/* ── Trigger scoring immediately when stats are saved ─────────── */
+function sp_scoring_schedule_batch(): void {
+    sp_scoring_score_all_squads();
+}
