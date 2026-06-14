@@ -36,6 +36,13 @@
         <a href="<?php echo esc_url( home_url( '/#predictions' ) ); ?>">Predictions</a>
       </li>
       <li>
+        <?php if ( sp_current_game() === 'fixtures' ) : ?>
+          <span class="nav-status"><span class="nav-status-dot"></span>WC Match Schedule</span>
+        <?php else : ?>
+          <a href="<?php echo esc_url( home_url( '/fixtures/' ) ); ?>">WC Match Schedule</a>
+        <?php endif; ?>
+      </li>
+      <li>
         <?php if ( $is_news_section ) : ?>
           <span class="nav-status"><span class="nav-status-dot"></span>News</span>
         <?php else : ?>

@@ -389,6 +389,9 @@
               <div class="sp-sk" style="height:72px"></div>
             </div>
           </div>
+          <div style="text-align:center;margin-top:20px">
+            <a href="<?php echo esc_url( home_url( '/fixtures/' ) ); ?>" class="btn-ghost">View full match schedule →</a>
+          </div>
         </div>
 
         <!-- Black Stars view -->

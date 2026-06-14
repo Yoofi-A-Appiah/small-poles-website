@@ -163,6 +163,7 @@ function smallpoles_schema() {
         'polele'       => 'Polele — Daily World Cup 2026 Player Guessing Game',
         'bracket'      => 'World Cup 2026 Bracket Challenge',
         'squad'        => 'World Cup 2026 Squad Builder',
+        'fixtures'     => 'World Cup 2026 Match Schedule',
     ];
     $descs = [
         'hub'          => 'Free World Cup 2026 mini-games: Higher or Lower, Polele, Bracket Challenge, and Squad Builder.',
@@ -170,6 +171,7 @@ function smallpoles_schema() {
         'polele'       => 'Daily World Cup player guessing game. 6 attempts, colour-coded clues after every wrong guess.',
         'bracket'      => 'Pick every winner of the 2026 World Cup from Group Stage to Final. Share your bracket.',
         'squad'        => 'Build and share your ultimate World Cup XI. Pick a formation, stay within budget.',
+        'fixtures'     => 'Full World Cup 2026 match schedule — past results, live scores, and upcoming fixtures.',
     ];
 
     $schema = [
@@ -1639,6 +1641,7 @@ function sp_current_game() {
         'polele'       => 'polele',
         'bracket'      => 'bracket',
         'squad'        => 'squad',
+        'fixtures'     => 'fixtures',
     ];
     foreach ( $map as $slug => $game ) {
         if ( is_page( $slug ) ) return $game;
@@ -1654,6 +1657,7 @@ function smallpoles_game_template( $template ) {
         'polele'       => 'page-polele.php',
         'bracket'      => 'page-bracket.php',
         'squad'        => 'page-squad-builder.php',
+        'fixtures'     => 'page-fixtures.php',
     ];
     $game = sp_current_game();
     if ( $game && isset( $map[ $game ] ) ) {
@@ -1682,7 +1686,7 @@ add_action( 'template_redirect', 'smallpoles_games_visibility_redirect' );
 
 /* ── One-time: create WordPress pages for each game ── */
 function smallpoles_create_game_pages() {
-    if ( get_option( 'sp_game_pages_v1' ) ) return;
+    if ( get_option( 'sp_game_pages_v2' ) ) return;
 
     $parent    = get_page_by_path( 'games' );
     $parent_id = $parent ? $parent->ID : wp_insert_post( [
@@ -1695,12 +1699,14 @@ function smallpoles_create_game_pages() {
     update_post_meta( $parent_id, '_wp_page_template', 'page-games.php' );
 
     foreach ( [
-        [ 'Higher or Lower', 'higher-lower', 'page-higher-lower.php'  ],
-        [ 'Polele',          'polele',        'page-polele.php'        ],
-        [ 'Bracket',         'bracket',       'page-bracket.php'       ],
-        [ 'Squad Builder',   'squad',         'page-squad-builder.php' ],
+        [ 'Higher or Lower',    'higher-lower', 'page-higher-lower.php'  ],
+        [ 'Polele',             'polele',        'page-polele.php'        ],
+        [ 'Bracket',            'bracket',       'page-bracket.php'       ],
+        [ 'Squad Builder',      'squad',         'page-squad-builder.php' ],
+        [ 'Match Schedule',     'fixtures',      'page-fixtures.php'      ],
     ] as [ $title, $slug, $tpl ] ) {
         $existing = get_page_by_path( 'games/' . $slug );
+        if ( ! $existing ) $existing = get_page_by_path( $slug );
         $id = $existing ? $existing->ID : wp_insert_post( [
             'post_title'  => $title,
             'post_name'   => $slug,
@@ -1713,7 +1719,7 @@ function smallpoles_create_game_pages() {
         }
     }
 
-    update_option( 'sp_game_pages_v1', true );
+    update_option( 'sp_game_pages_v2', true );
     flush_rewrite_rules( false );
 }
 add_action( 'init', 'smallpoles_create_game_pages', 20 );
@@ -2915,7 +2921,7 @@ function sp_squads_email_footer() {
 function sp_squads_mailer_headers() {
     return [
         'Content-Type: text/html; charset=UTF-8',
-        'From: Small Poles <noreply@smallpoles.online>',
+        'From: Small Poles <info@smallpoles.online>',
     ];
 }
 
@@ -3388,24 +3394,41 @@ function sp_scoring_render_match_list(): void {
     <h1 class="wp-heading-inline">Match Scoring</h1>
     <hr class="wp-header-end" style="margin-bottom:16px">
 
+    <?php $sp_ms_nations = get_option( 'sb_teams', sb_teams_default() ); ?>
     <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;margin-bottom:24px">
         <h2 style="margin-top:0">Add Match by Fixture ID</h2>
-        <p style="color:#666;margin-top:-8px">Enter the API-Football fixture ID. Use <strong>Fetch from API</strong> to auto-fill team names &amp; score.</p>
+        <p style="color:#666;margin-top:-8px">Enter the API-Football fixture ID. Use <strong>Fetch from API</strong> to auto-fill team names &amp; score. Or type in the team boxes to filter nations.</p>
+        <style>
+        .sp-ms-team-label {
+            display: flex; flex-direction: column; gap: 4px; font-weight: 600;
+            padding: 6px 10px; border: 2px solid transparent; border-radius: 6px;
+            margin: -6px -10px; transition: border-color .15s, background .15s;
+        }
+        .sp-ms-team-label:focus-within {
+            border-color: #2271b1;
+            background: #f0f6fc;
+        }
+        </style>
         <form method="post" id="sp-add-match-form">
             <?php wp_nonce_field( 'sp_add_match' ); ?>
+            <datalist id="sp-nations-datalist">
+                <?php foreach ( $sp_ms_nations as $n ) : ?>
+                <option value="<?php echo esc_attr( $n['name'] ); ?>"><?php echo esc_html( ( $n['flag'] ?? '' ) . ' ' . $n['name'] ); ?></option>
+                <?php endforeach; ?>
+            </datalist>
             <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
                 <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
                     Fixture ID *
                     <input type="number" name="fixture_id" id="sp-fid-input" class="regular-text" required placeholder="e.g. 1489385" style="width:140px">
                 </label>
                 <button type="button" id="sp-fetch-fixture-btn" class="button">⬇ Fetch from API</button>
-                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                <label class="sp-ms-team-label">
                     Home Team
-                    <input type="text" name="home_team" id="sp-home-team" placeholder="England" style="width:130px">
+                    <input type="text" name="home_team" id="sp-home-team" list="sp-nations-datalist" placeholder="Type to filter…" autocomplete="off" style="width:160px">
                 </label>
-                <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
+                <label class="sp-ms-team-label">
                     Away Team
-                    <input type="text" name="away_team" id="sp-away-team" placeholder="Germany" style="width:130px">
+                    <input type="text" name="away_team" id="sp-away-team" list="sp-nations-datalist" placeholder="Type to filter…" autocomplete="off" style="width:160px">
                 </label>
                 <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">
                     Score
@@ -3604,10 +3627,23 @@ function sp_scoring_render_players_view( int $match_id ): void {
     </h1>
     <hr class="wp-header-end" style="margin-bottom:16px">
 
-    <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
+    <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
         <button type="button" id="sp-load-api-players" class="button button-primary">⬇ Load / Refresh Player Stats from API</button>
         <span id="sp-api-status" style="color:#666;font-size:13px"></span>
     </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;background:#f6f7f7;border:1px solid #ddd;border-radius:4px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:#444;margin-right:4px">Filter squad map by nation:</span>
+        <button type="button" class="button button-small sp-nation-filter active" data-nation="all">All Nations</button>
+        <button type="button" class="button button-small sp-nation-filter" data-nation="<?php echo esc_attr( $match->home_team ); ?>"><?php echo esc_html( $match->home_team ); ?> (Home)</button>
+        <button type="button" class="button button-small sp-nation-filter" data-nation="<?php echo esc_attr( $match->away_team ); ?>"><?php echo esc_html( $match->away_team ); ?> (Away)</button>
+        <span style="font-size:11px;color:#888;margin-left:4px">Filters the options in the "Map to Squad Player" column</span>
+    </div>
+
+    <style>
+    .sp-nation-filter.active { background:#0073aa!important;border-color:#0073aa!important;color:#fff!important; }
+    #sp-player-tbody tr.sp-row-active { outline:2px solid #2271b1; outline-offset:-2px; background:#f0f6fc!important; }
+    </style>
 
     <form method="post" id="sp-player-stats-form">
         <?php wp_nonce_field( 'sp_save_ps_' . $match_id ); ?>
@@ -3815,6 +3851,58 @@ function sp_scoring_render_players_view( int $match_id ): void {
         // Recalculate all on form load
         document.querySelectorAll('#sp-player-tbody tr').forEach(calcPts);
 
+        /* ── Nation filter ── */
+        var currentNationFilter = 'all';
+
+        function applyNationFilter(nation) {
+            currentNationFilter = nation;
+            document.querySelectorAll('#sp-player-tbody tr[data-pid]').forEach(function (tr) {
+                var sel = tr.querySelector('.sp-map-sel');
+                if (!sel) return;
+                // Rebuild options scoped to the chosen nation
+                var teamLower = nation === 'all' ? null : nation.toLowerCase();
+                var keys = Object.keys(playerOpts);
+                var filtered = teamLower
+                    ? keys.filter(function (k) { return k.split('|')[0].toLowerCase() === teamLower; })
+                    : keys;
+                if (!filtered.length) filtered = keys; // fallback: show all if nation not in squad list
+                filtered.sort(function (a, b) { return playerOpts[a].localeCompare(playerOpts[b]); });
+
+                var cur = sel.value;
+                var opts = '<option value="">— Not mapped —</option>';
+                if (teamLower && !keys.some(function (k) { return k.split('|')[0].toLowerCase() === teamLower; })) {
+                    opts += '<option disabled style="color:#d63638">⚠ Nation not in squad list</option>';
+                }
+                filtered.forEach(function (k) {
+                    var label = teamLower
+                        ? playerOpts[k].replace(/^\[[^\]]+\]\s*/, '')
+                        : playerOpts[k];
+                    opts += '<option value="' + escAttr(k) + '"' + (k === cur ? ' selected' : '') + '>' + escHtml(label) + '</option>';
+                });
+                sel.innerHTML = opts;
+            });
+        }
+
+        document.querySelectorAll('.sp-nation-filter').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.sp-nation-filter').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                applyNationFilter(btn.dataset.nation);
+            });
+        });
+
+        /* ── Row highlight on Map dropdown focus ── */
+        document.getElementById('sp-player-tbody').addEventListener('focusin', function (e) {
+            if (!e.target.classList.contains('sp-map-sel')) return;
+            var tr = e.target.closest('tr');
+            if (tr) tr.classList.add('sp-row-active');
+        });
+        document.getElementById('sp-player-tbody').addEventListener('focusout', function (e) {
+            if (!e.target.classList.contains('sp-map-sel')) return;
+            var tr = e.target.closest('tr');
+            if (tr) tr.classList.remove('sp-row-active');
+        });
+
         document.getElementById('sp-load-api-players').addEventListener('click', function(){
             var btn = this, status = document.getElementById('sp-api-status');
             btn.disabled = true; btn.textContent = 'Loading…'; status.textContent = '';
@@ -3852,6 +3940,9 @@ function sp_scoring_render_players_view( int $match_id ): void {
                             wireRow(tr);
                         }
                     });
+
+                    // Re-apply any active nation filter to the freshly built rows
+                    if (currentNationFilter !== 'all') applyNationFilter(currentNationFilter);
 
                     // Show the save button
                     var formEl = document.getElementById('sp-player-stats-form');
